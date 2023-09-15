@@ -1,0 +1,12 @@
+id: openfeature-java-provider
+description: |
+  Library providing open feature components, in particular a provider for our resolvement API
+system: openfeature-java-provider
+owner: konfidens
+visibility: private
+dependencies: []
+
+facts:
+  component_type: library
+  lifecycle: experimental
+  library_name: com.spotify:openfeature-java-provider
