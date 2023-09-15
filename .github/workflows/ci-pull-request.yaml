@@ -1,0 +1,37 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Build/Test
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java_version: [11, 17]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java_version }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: ${{ matrix.java_version }}
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3.3.1
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-java-${{ matrix.java_version }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-java-${{ matrix.java_version }}-m2
+
+      - name: Build with Maven
+        run: mvn --batch-mode --update-snapshots verify

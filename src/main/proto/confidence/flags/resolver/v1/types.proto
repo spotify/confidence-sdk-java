@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package confidence.flags.resolver.v1;
+
+option java_package = "com.spotify.confidence.flags.resolver.v1";
+option java_multiple_files = true;
+option java_outer_classname = "TypesProto";
+
+enum ResolveReason {
+  // Unspecified enum.
+  RESOLVE_REASON_UNSPECIFIED = 0;
+  // The flag was successfully resolved because one rule matched.
+  RESOLVE_REASON_MATCH = 1;
+  // The flag could not be resolved because no rule matched.
+  RESOLVE_REASON_NO_SEGMENT_MATCH = 2;
+  // The flag could not be resolved because the matching rule had no variant
+  // that could be assigned.
+  RESOLVE_REASON_NO_TREATMENT_MATCH = 3 [deprecated = true];
+  // The flag could not be resolved because it was archived.
+  RESOLVE_REASON_FLAG_ARCHIVED = 4;
+  // Unknown error occurred during the resolve
+  RESOLVE_REASON_ERROR = 5;
+}
