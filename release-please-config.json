@@ -2,7 +2,7 @@
   "bootstrap-sha": "5ce2b8192476750dc738ac725ec50017c7cd17f4",
   "packages": {
     ".": {
-      "package-name": "dev.openfeature.contrib.providers.confidence",
+      "package-name": "com.spotify.confidence-openfeature-provider",
       "release-type": "maven",
       "monorepo-tags": false,
       "include-component-in-tag": false,
