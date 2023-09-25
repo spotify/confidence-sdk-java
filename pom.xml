@@ -15,7 +15,7 @@
 
   <groupId>com.spotify</groupId>
   <artifactId>confidence-openfeature-provider</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.2-SNAPSHOT</version>
 
 <!--  <url>TODO UPDATE THIS</url>-->
   <description>Confidence OpenFeature provider for Java</description>
