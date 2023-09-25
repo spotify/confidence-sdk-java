@@ -59,4 +59,3 @@ jobs:
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-          SIGN_KEY_PASSWORD: ${{ secrets.SIGN_KEY_PASS }}
