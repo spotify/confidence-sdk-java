@@ -36,8 +36,7 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -61,7 +60,7 @@ final class FeatureProviderTest {
             .setValue(
                 Struct.newBuilder()
                     .putAllFields(
-                        Map.of(
+                        createMap(
                             "prop-A",
                             Values.of(false),
                             "prop-B",
@@ -72,7 +71,7 @@ final class FeatureProviderTest {
                             "prop-E",
                             Values.of(50),
                             "prop-F",
-                            Values.of(List.of(Values.of("a"), Values.of("b"))),
+                            Values.of(createList(Values.of("a"), Values.of("b"))),
                             "prop-G",
                             Values.of(
                                 Structs.of(
@@ -82,7 +81,7 @@ final class FeatureProviderTest {
             .setFlagSchema(
                 StructFlagSchema.newBuilder()
                     .putAllSchema(
-                        Map.of(
+                        createMap(
                             "prop-A",
                             FlagSchema.newBuilder()
                                 .setBoolSchema(BoolFlagSchema.getDefaultInstance())
@@ -92,7 +91,7 @@ final class FeatureProviderTest {
                                 .setStructSchema(
                                     StructFlagSchema.newBuilder()
                                         .putAllSchema(
-                                            Map.of(
+                                            createMap(
                                                 "prop-C",
                                                 FlagSchema.newBuilder()
                                                     .setStringSchema(
@@ -125,7 +124,7 @@ final class FeatureProviderTest {
                                 .setStructSchema(
                                     StructFlagSchema.newBuilder()
                                         .putAllSchema(
-                                            Map.of(
+                                            createMap(
                                                 "prop-H",
                                                 FlagSchema.newBuilder()
                                                     .setStringSchema(
@@ -144,7 +143,7 @@ final class FeatureProviderTest {
   }
 
   private static final EvaluationContext SAMPLE_CONTEXT =
-      new MutableContext("my-targeting-key", Map.of("my-key", new Value(true)));
+      new MutableContext("my-targeting-key", createMap("my-key", new Value(true)));
 
   @BeforeAll
   static void before() throws IOException {
@@ -196,7 +195,8 @@ final class FeatureProviderTest {
             DEFAULT_VALUE,
             new MutableContext(
                 "my-targeting-key-1",
-                Map.of(ConfidenceFeatureProvider.TARGETING_KEY, new Value("my-targeting-key-2"))));
+                createMap(
+                    ConfidenceFeatureProvider.TARGETING_KEY, new Value("my-targeting-key-2"))));
 
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
     assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.INVALID_CONTEXT);
@@ -331,21 +331,22 @@ final class FeatureProviderTest {
         .isEqualTo(
             new Value(
                 new MutableStructure(
-                    Map.of(
+                    createMap(
                         "prop-A",
                         new Value(false),
                         "prop-B",
                         new Value(
                             new MutableStructure(
-                                Map.of("prop-C", new Value("str-val"), "prop-D", new Value(5.3)))),
+                                createMap(
+                                    "prop-C", new Value("str-val"), "prop-D", new Value(5.3)))),
                         "prop-E",
                         new Value(50),
                         "prop-F",
-                        new Value(List.of(new Value("a"), new Value("b"))),
+                        new Value(createList(new Value("a"), new Value("b"))),
                         "prop-G",
                         new Value(
                             new MutableStructure(
-                                Map.of(
+                                createMap(
                                     "prop-H", new Value(),
                                     "prop-I", new Value())))))));
   }
@@ -372,7 +373,7 @@ final class FeatureProviderTest {
         .isEqualTo(
             new Value(
                 new MutableStructure(
-                    Map.of("prop-C", new Value("str-val"), "prop-D", new Value(5.3)))));
+                    createMap("prop-C", new Value("str-val"), "prop-D", new Value(5.3)))));
 
     // 2-element path to non-structure
     evaluationDetails =
@@ -413,21 +414,22 @@ final class FeatureProviderTest {
             String.format(
                 "Illegal attempt to derive non-existing field 'not-exist' on structure value '%s'",
                 new MutableStructure(
-                    Map.of(
+                    createMap(
                         "prop-A",
                         new Value(false),
                         "prop-B",
                         new Value(
                             new MutableStructure(
-                                Map.of("prop-C", new Value("str-val"), "prop-D", new Value(5.3)))),
+                                createMap(
+                                    "prop-C", new Value("str-val"), "prop-D", new Value(5.3)))),
                         "prop-E",
                         new Value(50),
                         "prop-F",
-                        new Value(List.of(new Value("a"), new Value("b"))),
+                        new Value(createList(new Value("a"), new Value("b"))),
                         "prop-G",
                         new Value(
                             new MutableStructure(
-                                Map.of(
+                                createMap(
                                     "prop-H", new Value(),
                                     "prop-I", new Value())))))));
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
@@ -531,5 +533,28 @@ final class FeatureProviderTest {
           streamObserver.onNext(SAMPLE_RESPONSE);
           streamObserver.onCompleted();
         });
+  }
+
+  @SafeVarargs
+  private static <T> List<T> createList(T... elements) {
+    final List<T> list = new ArrayList<>(elements.length);
+    Collections.addAll(list, elements);
+    return list;
+  }
+
+  private static <T> Map<String, T> createMap(Object... keyValuePairs) {
+    if (keyValuePairs.length % 2 != 0) {
+      throw new IllegalArgumentException(
+          "Invalid number of arguments. Key-value pairs must be provided in pairs.");
+    }
+
+    final Map<String, T> map = new HashMap<>();
+    for (int i = 0; i < keyValuePairs.length; i += 2) {
+      final String key = (String) keyValuePairs[i];
+      final T value = (T) keyValuePairs[i + 1];
+      map.put(key, value);
+    }
+
+    return map;
   }
 }
