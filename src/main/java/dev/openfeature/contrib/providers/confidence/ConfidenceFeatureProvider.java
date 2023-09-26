@@ -25,6 +25,7 @@ import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -142,7 +143,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
               .resolveFlags(
                   ResolveFlagsRequest.newBuilder()
                       .setClientSecret(clientSecret)
-                      .addAllFlags(List.of(requestFlagName))
+                      .addFlags(requestFlagName)
                       .setEvaluationContext(evaluationContext.build())
                       .setApply(true)
                       .build());
@@ -241,7 +242,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
       throw new GeneralError(String.format("Illegal path string '%s'", str));
     } else if (parts.length == 1) {
       // str doesn't contain the delimiter
-      return new FlagPath(str, List.of());
+      return new FlagPath(str, Collections.emptyList());
     } else {
       return new FlagPath(parts[0], Arrays.asList(parts).subList(1, parts.length));
     }
