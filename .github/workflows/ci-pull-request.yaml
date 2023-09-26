@@ -72,4 +72,10 @@ jobs:
           restore-keys: ${{ runner.os }}-java-${{ matrix.java_version }}-m2
 
       - name: Deploy
-        run: mvn --batch-mode clean verify deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+        run: | 
+          mvn --batch-mode \
+          --settings release/m2-settings.xml \
+          clean verify deploy
