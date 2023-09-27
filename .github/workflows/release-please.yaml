@@ -26,12 +26,12 @@ jobs:
   java-release:
     needs: release-please
     runs-on: ubuntu-latest
-    if: ${{ needs.release-please.outputs.release_created }}
+    if: ${{ steps.release.outputs.release_created }}
     steps:
       - name: Check out src from Git
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release-please.outputs.release_tag_name }}
+          ref: ${{ steps.release.outputs.tag_name }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
