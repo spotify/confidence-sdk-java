@@ -3,16 +3,21 @@ on:
   pull_request:
     branches:
       - main
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java_version: [11, 17]
+
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Maven Central Repository
+      - name: Set up SDK ${{ matrix.java_version }}
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
-          distribution: 'temurin'
+          distribution: 'zulu'
+          java-version: ${{ matrix.java_version }}
           server-id: ossrh
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
