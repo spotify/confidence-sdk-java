@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.2](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.1...v0.0.2) (2023-09-27)
+
+
+### 🧹 Chore
+
+* define username/pass in m2-settings.xml to use with ossrh ([#21](https://github.com/spotify/confidence-openfeature-provider-java/issues/21)) ([5de1a72](https://github.com/spotify/confidence-openfeature-provider-java/commit/5de1a72a019e8799274fb1985709c96b63cef107))
+* **main:** release 0.0.1 ([#24](https://github.com/spotify/confidence-openfeature-provider-java/issues/24)) ([706ab6d](https://github.com/spotify/confidence-openfeature-provider-java/commit/706ab6de5861181353a8db92c0a6659c8fcd9c1b))
+* **main:** release 0.0.2 ([#23](https://github.com/spotify/confidence-openfeature-provider-java/issues/23)) ([91c73f9](https://github.com/spotify/confidence-openfeature-provider-java/commit/91c73f9329217df212c1058c9883646ee44ed0b0))
+* **main:** release 0.0.2-SNAPSHOT ([#16](https://github.com/spotify/confidence-openfeature-provider-java/issues/16)) ([eaa1093](https://github.com/spotify/confidence-openfeature-provider-java/commit/eaa10930bf5a1248ede1edcee80888f5eb45d4bd))
+
+
+### 📚 Documentation
+
+* pom url update ([#22](https://github.com/spotify/confidence-openfeature-provider-java/issues/22)) ([ed67dbe](https://github.com/spotify/confidence-openfeature-provider-java/commit/ed67dbe7b099fdae742914ffedd0da1847c68b55)), closes [#10](https://github.com/spotify/confidence-openfeature-provider-java/issues/10)
+
 ## [0.0.1](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.2...v0.0.1) (2023-09-25)
 
 
