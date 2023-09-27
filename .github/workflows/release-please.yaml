@@ -58,3 +58,4 @@ jobs:
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          GPG_PASS: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
