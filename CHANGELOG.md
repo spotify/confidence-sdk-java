@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.3](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.2...v0.0.3) (2023-09-27)
+
+
+### 🐛 Bug Fixes
+
+* Don't use m2-settings.xml in release-please ([#29](https://github.com/spotify/confidence-openfeature-provider-java/issues/29)) ([3f75401](https://github.com/spotify/confidence-openfeature-provider-java/commit/3f75401e84e5ac294eafcde292e887a8f39004f6))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.3-SNAPSHOT ([#28](https://github.com/spotify/confidence-openfeature-provider-java/issues/28)) ([ddf0320](https://github.com/spotify/confidence-openfeature-provider-java/commit/ddf0320c0c68fe939c592e3c8c06586413f4533a))
+
 ## [0.0.2](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.1...v0.0.2) (2023-09-27)
 
 
