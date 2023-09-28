@@ -255,9 +255,6 @@
             <arg>loopback</arg>
             <arg>--no-tty</arg>
           </gpgArguments>
-          <passphrase>
-            ${env.GPG_PASS}
-          </passphrase>
         </configuration>
         <executions>
           <execution>
