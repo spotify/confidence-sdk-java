@@ -7,15 +7,11 @@
       <id>ossrh</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
   </distributionManagement>
 
   <groupId>com.spotify</groupId>
   <artifactId>confidence-openfeature-provider</artifactId>
-  <version>0.0.0-SNAPSHOT</version>
+  <version>0.0.1-SNAPSHOT</version>
 
   <url>https://github.com/spotify/confidence-openfeature-provider-java</url>
   <description>Confidence OpenFeature provider for Java</description>
@@ -239,6 +235,32 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+         <groupId>org.apache.maven.plugins</groupId>
+         <artifactId>maven-deploy-plugin</artifactId>
+         <configuration>
+            <skip>true</skip>
+         </configuration>
+      </plugin>
+      <plugin>
+         <groupId>org.sonatype.plugins</groupId>
+         <artifactId>nexus-staging-maven-plugin</artifactId>
+         <version>1.6.13</version>
+         <executions>
+            <execution>
+               <id>default-deploy</id>
+               <phase>deploy</phase>
+               <goals>
+                  <goal>deploy</goal>
+               </goals>
+            </execution>
+         </executions>
+         <configuration>
+            <serverId>ossrh</serverId>
+            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+         </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-source-plugin</artifactId>
