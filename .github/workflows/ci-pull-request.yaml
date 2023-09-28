@@ -33,8 +33,8 @@ jobs:
           distribution: 'zulu'
           java-version: ${{ matrix.java_version }}
           server-id: ossrh
-          server-username: ${{ secrets.OSSRH_USERNAME }} # username for Sonatype JIRA login
-          server-password: ${{ secrets.OSSRH_TOKEN }} # password for Sonatype JIRA login
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Full private key blob
           gpg-passphrase: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
 
@@ -46,3 +46,6 @@ jobs:
       
       - name: Deploy
         run: mvn --batch-mode --update-snapshots deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }} # username for Sonatype JIRA login
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }} # password for Sonatype JIRA login
