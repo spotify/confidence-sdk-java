@@ -1,5 +1,5 @@
 {
-  "bootstrap-sha": "eb0f2119e301bb82a313e53a3636048b27a6dae4",
+  "bootstrap-sha": "188faf7e47b03bde3bf02c3521771301c77580d6",
   "packages": {
     ".": {
       "package-name": "com.spotify.confidence-openfeature-provider",
