@@ -49,3 +49,4 @@ jobs:
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }} # username for Sonatype JIRA login
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }} # password for Sonatype JIRA login
+          GPG_PASS: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
