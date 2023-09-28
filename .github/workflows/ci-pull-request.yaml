@@ -9,44 +9,8 @@ on:
       - main
 
 jobs:
-  tmp_deploy:
-    name: Tmp step
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out src from Git
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.release-please.outputs.release_tag_name }}
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: 17
-          server-id: ossrh
-          server-username: ${{ secrets.OSSRH_USERNAME }} # username for Sonatype JIRA login
-          server-password: ${{ secrets.OSSRH_TOKEN }} # password for Sonatype JIRA login
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Full private key blob
-          gpg-passphrase: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
-
-      - name: Cache Maven packages
-        uses: actions/cache@v3.3.1
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-java-17-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-java-17-m2
-
-      - name: Deploy with Maven
-        run: |
-          mvn --batch-mode \
-          --settings release/m2-settings.xml \
-          clean deploy
-        env:
-          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-          GPG_PASS: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
   test:
-    name: Build/Test
+    name: Build, Test & Deploy snapshot
 
     runs-on: ubuntu-latest
 
@@ -61,6 +25,11 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: ${{ matrix.java_version }}
+          server-id: ossrh
+          server-username: ${{ secrets.OSSRH_USERNAME }} # username for Sonatype JIRA login
+          server-password: ${{ secrets.OSSRH_TOKEN }} # password for Sonatype JIRA login
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Full private key blob
+          gpg-passphrase: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
 
       - name: Cache Maven packages
         uses: actions/cache@v3.3.1
@@ -71,3 +40,15 @@ jobs:
 
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots verify
+
+      - name: Deploy snapshot
+        if: ${{ matrix.java_version == 17 }} # No purpose in doing this part multiple times...
+        run: |
+          mvn --batch-mode \
+          --settings release/m2-settings.xml \
+          clean deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          GPG_PASS: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
+
