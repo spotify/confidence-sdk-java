@@ -36,7 +36,7 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Full private key blob
-          gpg-passphrase: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
+          gpg-passphrase: GPG_PASS
 
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots verify
