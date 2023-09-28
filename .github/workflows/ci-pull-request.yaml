@@ -25,6 +25,11 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: ${{ matrix.java_version }}
+          server-id: ossrh
+          server-username: ${{ secrets.OSSRH_USERNAME }} # username for Sonatype JIRA login
+          server-password: ${{ secrets.OSSRH_TOKEN }} # password for Sonatype JIRA login
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Full private key blob
+          gpg-passphrase: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
 
       - name: Cache Maven packages
         uses: actions/cache@v3.3.1
@@ -35,3 +40,6 @@ jobs:
 
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots verify
+      
+      - name: Deploy
+        run: mvn --batch-mode --update-snapshots deploy
