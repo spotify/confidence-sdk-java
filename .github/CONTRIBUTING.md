@@ -21,3 +21,9 @@ You can use `fmt` to format your code using:
 ```shell
 mvn com.spotify.fmt:fmt-maven-plugin:format
 ```
+
+### Signing
+Maven is configured to sign the generated artifacts using GPG. This is a security measure required for uploading to Maven Central.
+
+Signing passphrases are securely stored in Github's CI, but the signing operation is not needed when developing locally and can always
+be skipped via the argument `-Dgpg.skip`
