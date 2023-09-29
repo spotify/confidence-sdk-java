@@ -34,4 +34,4 @@ Github Actions are set up that are able to:
 - Manage versioning automatically (including the `pom.xml` file)
 - Upload the generated artifacts to Maven Central **Staging**
 
-In order to promote an artifact from **Staging** to **Release** (hence making it openly available on [Maven Central Search](https://central.sonatype.com/)) a user with the right credentials must login into the the [Sonatype UI](https://oss.sonatype.org/#welcome) and perform the release process manually.
+In order to promote an uploaded version from **Staging** to **Release** (hence making it openly available on [Maven Central Search](https://central.sonatype.com/)) a user with the right credentials must login into the the [Sonatype UI](https://oss.sonatype.org/#welcome) and perform the release process manually.
