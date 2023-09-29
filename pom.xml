@@ -191,6 +191,11 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <excludePackageNames>
+            com.spotify.confidence.flags.*
+          </excludePackageNames>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.xolstice.maven.plugins</groupId>
