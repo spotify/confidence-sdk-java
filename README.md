@@ -20,7 +20,7 @@ management API. After that all interaction with the feature flags happens using 
 ```java
 package com.spotify.confidence.openfeature;
 
-import dev.openfeature.contrib.providers.confidence.ConfidenceFeatureProvider;
+import com.spotify.confidence.ConfidenceFeatureProvider;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.MutableContext;
 import dev.openfeature.sdk.OpenFeatureAPI;

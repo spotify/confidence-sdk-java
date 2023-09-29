@@ -1,4 +1,4 @@
-package dev.openfeature.contrib.providers.confidence;
+package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Values;
@@ -34,12 +34,13 @@ class TypeMapper {
       case NUMBER_VALUE:
         switch (schema.getSchemaTypeCase()) {
           case INT_SCHEMA:
-            final long intVal = (long) value.getNumberValue();
+            final int intVal = (int) value.getNumberValue();
             if (intVal != value.getNumberValue()) {
               throw new ParseError(
-                  String.format("%s value should be an int64, but it is a double", mismatchPrefix));
+                  String.format(
+                      "%s value should be an int, but it is a double/long", mismatchPrefix));
             }
-            return new Value(value.getNumberValue());
+            return new Value(intVal);
           case DOUBLE_SCHEMA:
             return new Value(value.getNumberValue());
           default:

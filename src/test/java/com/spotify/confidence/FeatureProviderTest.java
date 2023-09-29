@@ -1,4 +1,4 @@
-package dev.openfeature.contrib.providers.confidence;
+package com.spotify.confidence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -160,7 +160,7 @@ final class FeatureProviderTest {
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
 
     final FeatureProvider featureProvider =
-        new ConfidenceFeatureProvider(
+        new com.spotify.confidence.ConfidenceFeatureProvider(
             "fake-secret", FlagResolverServiceGrpc.newBlockingStub(channel));
 
     final OpenFeatureAPI api = OpenFeatureAPI.getInstance();
@@ -196,7 +196,9 @@ final class FeatureProviderTest {
             DEFAULT_VALUE,
             new MutableContext(
                 "my-targeting-key-1",
-                Map.of(ConfidenceFeatureProvider.TARGETING_KEY, new Value("my-targeting-key-2"))));
+                Map.of(
+                    com.spotify.confidence.ConfidenceFeatureProvider.TARGETING_KEY,
+                    new Value("my-targeting-key-2"))));
 
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
     assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.INVALID_CONTEXT);
