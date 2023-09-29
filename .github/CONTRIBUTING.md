@@ -27,3 +27,11 @@ Maven is configured to sign the generated artifacts using GPG. This is a securit
 
 Signing passphrases are securely stored in Github's CI, but the signing operation is not needed when developing locally and can always
 be skipped via the argument `-Dgpg.skip`
+
+### Releasing
+Github Actions are set up to auto-generate PRs that are able to:
+- Create new Github tags/releases
+- Manage versioning automatically (including the `pom.xml` file)
+- Upload the generated artifacts to Maven Central **Staging**
+
+In order to promote an artifact from **Staging** to **Release** (hence making it openly available on [Maven Central Search](https://central.sonatype.com/)) a user with the right credentials must login into the the [Sonatype UI](https://oss.sonatype.org/#welcome) and perform the release process manually.
