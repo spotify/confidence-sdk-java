@@ -35,6 +35,57 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+  <name>Confidence OpenFeature Provider</name>
+  <organization>
+      <name>com.spotify</name>
+      <url>https://github.com/spotify</url>
+  </organization>
+
+  <issueManagement>
+      <system>GitHub</system>
+      <url>https://github.com/spotify/confidence-openfeature-provider-java/issues</url>
+  </issueManagement>
+
+  <licenses>
+      <license>
+          <name>Apache License 2.0</name>
+          <url>https://github.com/spotify/confidence-openfeature-provider-java/blob/main/LICENSE</url>
+          <distribution>repo</distribution>
+      </license>
+  </licenses>
+
+  <scm>
+      <url>https://github.com/spotify/confidence-openfeature-provider-java</url>
+      <connection>
+          scm:git:git@github.com:spotify/confidence-openfeature-provider-java.git
+      </connection>
+      <developerConnection>
+          scm:git:git@github.com:spotify/confidence-openfeature-provider-java.git
+      </developerConnection>
+  </scm>
+  <developers>
+      <developer>
+        <id>fdema</id>
+        <email>fdema@spotify.com</email>
+        <name>Fabrizio Demaria</name>
+      </developer>
+      <developer>
+          <id>nicklasl</id>
+          <email>nicklasl@spotify.com</email>
+          <name>Nicklas Lundin</name>
+      </developer>
+      <developer>
+          <id>DennisPersson</id>
+          <email>dennisp@spotify.com</email>
+          <name>Dennis Persson</name>
+      </developer>
+      <developer>
+          <id>mfranberg</id>
+          <email>mfranberg@spotify.com</email>
+          <name>Mattias Frånberg</name>
+      </developer>
+  </developers>
+
   <dependencies>
     <!-- compile scope -->
     <dependency>
