@@ -1,4 +1,4 @@
-package dev.openfeature.contrib.providers.confidence;
+package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Values;
