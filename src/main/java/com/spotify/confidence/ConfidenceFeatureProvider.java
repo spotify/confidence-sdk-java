@@ -30,19 +30,32 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+/** OpenFeature Provider for feature flagging with the Confidence platform */
 public class ConfidenceFeatureProvider implements FeatureProvider {
 
+  // Deadline in seconds
   public static final int DEADLINE_AFTER_SECONDS = 10;
   private final FlagResolverServiceBlockingStub stub;
   private final String clientSecret;
 
   static final String TARGETING_KEY = "targeting_key";
 
+  /**
+   * ConfidenceFeatureProvider constructor
+   *
+   * @param clientSecret generated from Confidence
+   * @param stub for testing
+   */
   public ConfidenceFeatureProvider(String clientSecret, FlagResolverServiceBlockingStub stub) {
     this.clientSecret = clientSecret;
     this.stub = stub;
   }
 
+  /**
+   * ConfidenceFeatureProvider constructor
+   *
+   * @param clientSecret generated from Confidence
+   */
   public ConfidenceFeatureProvider(String clientSecret) {
     final ManagedChannel channel =
         ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build();
