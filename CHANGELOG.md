@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.0.2](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.1...v0.0.2) (2023-09-29)
+
+
+### 🐛 Bug Fixes
+
+* attach sources to deployment ([#51](https://github.com/spotify/confidence-openfeature-provider-java/issues/51)) ([d8b07f3](https://github.com/spotify/confidence-openfeature-provider-java/commit/d8b07f3a79c58b1ec2df341c513a5579973a9267))
+* Testing fixes and package renaming ([#45](https://github.com/spotify/confidence-openfeature-provider-java/issues/45)) ([f143c4a](https://github.com/spotify/confidence-openfeature-provider-java/commit/f143c4af59a1eb244ab5a8774ac37a40b28d1f47))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.2-SNAPSHOT ([#43](https://github.com/spotify/confidence-openfeature-provider-java/issues/43)) ([77be02a](https://github.com/spotify/confidence-openfeature-provider-java/commit/77be02a10f556defb6b1cba5d55b5e971c710123))
+
+
+### 📚 Documentation
+
+* Add metadata to pom ([#52](https://github.com/spotify/confidence-openfeature-provider-java/issues/52)) ([037ba8d](https://github.com/spotify/confidence-openfeature-provider-java/commit/037ba8dbf8beee5315be49d60d1ba502e4170f48))
+* Build javadocs jar ([#53](https://github.com/spotify/confidence-openfeature-provider-java/issues/53)) ([ff92968](https://github.com/spotify/confidence-openfeature-provider-java/commit/ff929688851deed478b87251c69714f7b8427212))
+* Note about signing on local dev ([#50](https://github.com/spotify/confidence-openfeature-provider-java/issues/50)) ([c48f962](https://github.com/spotify/confidence-openfeature-provider-java/commit/c48f962963ec4018b7776082c489a98e383a6b65))
+
 ## 0.0.1 (2023-09-28)
 
 
