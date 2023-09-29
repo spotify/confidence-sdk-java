@@ -29,8 +29,8 @@ Signing passphrases are securely stored in Github's CI, but the signing operatio
 be skipped via the argument `-Dgpg.skip`
 
 ### Releasing
-Github Actions are set up to auto-generate PRs that are able to:
-- Create new Github tags/releases
+Github Actions are set up that are able to:
+- Create automated PRs to manage new Github tags/releases
 - Manage versioning automatically (including the `pom.xml` file)
 - Upload the generated artifacts to Maven Central **Staging**
 
