@@ -14,7 +14,7 @@
   </distributionManagement>
 
   <groupId>com.spotify</groupId>
-  <artifactId>confidence-openfeature-provider</artifactId>
+  <artifactId>confidence-openfeature-provider-java</artifactId>
   <version>0.0.3-SNAPSHOT</version>
 
   <url>https://github.com/spotify/confidence-openfeature-provider-java</url>
