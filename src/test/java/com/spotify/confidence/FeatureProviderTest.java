@@ -553,9 +553,9 @@ final class FeatureProviderTest {
 
     additionalProps.forEach(
         (valueSchemaHolder) -> {
-          valueBuilder.putFields(valueSchemaHolder.flag, valueSchemaHolder.value);
+          valueBuilder.putFields(valueSchemaHolder.prop, valueSchemaHolder.value);
           final FlagSchema.Builder builder = getSchemaBuilder(valueSchemaHolder);
-          schemaBuilder.putSchema(valueSchemaHolder.flag, builder.build());
+          schemaBuilder.putSchema(valueSchemaHolder.prop, builder.build());
         });
 
     return ResolvedFlag.newBuilder()
@@ -595,13 +595,13 @@ final class FeatureProviderTest {
 
   private static class ValueSchemaHolder {
     public ValueSchemaHolder(
-        String flag, com.google.protobuf.Value value, FlagSchema.SchemaTypeCase schemaTypeCase) {
-      this.flag = flag;
+        String prop, com.google.protobuf.Value value, FlagSchema.SchemaTypeCase schemaTypeCase) {
+      this.prop = prop;
       this.value = value;
       this.schemaTypeCase = schemaTypeCase;
     }
 
-    String flag;
+    String prop;
     com.google.protobuf.Value value;
     FlagSchema.SchemaTypeCase schemaTypeCase;
   }
