@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.3](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.2...v0.0.3) (2023-10-02)
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.3-SNAPSHOT ([#55](https://github.com/spotify/confidence-openfeature-provider-java/issues/55)) ([10d0b85](https://github.com/spotify/confidence-openfeature-provider-java/commit/10d0b8516945aa1ca8864fc672a3d30dc7336472))
+
+
+### 📚 Documentation
+
+* Release guidelines ([#57](https://github.com/spotify/confidence-openfeature-provider-java/issues/57)) ([579793a](https://github.com/spotify/confidence-openfeature-provider-java/commit/579793a214d0fce301d0aa6de7ff436b993498d5))
+
 ## [0.0.2](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.1...v0.0.2) (2023-09-29)
 
 
