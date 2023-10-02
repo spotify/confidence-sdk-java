@@ -36,8 +36,7 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -48,99 +47,15 @@ final class FeatureProviderTest {
   private static Server server;
   private static ManagedChannel channel;
   private static final Value DEFAULT_VALUE = new Value("string-default");
-  private static FlagResolverServiceImplBase serviceImpl = mock(FlagResolverServiceImplBase.class);
+  private static final FlagResolverServiceImplBase serviceImpl =
+      mock(FlagResolverServiceImplBase.class);
   private static Client client;
 
-  private static final ResolveFlagsResponse SAMPLE_RESPONSE;
-
-  static {
-    final ResolvedFlag resolvedFlag1 =
-        ResolvedFlag.newBuilder()
-            .setFlag("flags/flag")
-            .setVariant("flags/flag/variants/var-A")
-            .setValue(
-                Struct.newBuilder()
-                    .putAllFields(
-                        Map.of(
-                            "prop-A",
-                            Values.of(false),
-                            "prop-B",
-                            Values.of(
-                                Structs.of(
-                                    "prop-C", Values.of("str-val"),
-                                    "prop-D", Values.of(5.3))),
-                            "prop-E",
-                            Values.of(50),
-                            "prop-F",
-                            Values.of(List.of(Values.of("a"), Values.of("b"))),
-                            "prop-G",
-                            Values.of(
-                                Structs.of(
-                                    "prop-H", Values.ofNull(),
-                                    "prop-I", Values.ofNull()))))
-                    .build())
-            .setFlagSchema(
-                StructFlagSchema.newBuilder()
-                    .putAllSchema(
-                        Map.of(
-                            "prop-A",
-                            FlagSchema.newBuilder()
-                                .setBoolSchema(BoolFlagSchema.getDefaultInstance())
-                                .build(),
-                            "prop-B",
-                            FlagSchema.newBuilder()
-                                .setStructSchema(
-                                    StructFlagSchema.newBuilder()
-                                        .putAllSchema(
-                                            Map.of(
-                                                "prop-C",
-                                                FlagSchema.newBuilder()
-                                                    .setStringSchema(
-                                                        StringFlagSchema.getDefaultInstance())
-                                                    .build(),
-                                                "prop-D",
-                                                FlagSchema.newBuilder()
-                                                    .setDoubleSchema(
-                                                        DoubleFlagSchema.getDefaultInstance())
-                                                    .build()))
-                                        .build())
-                                .build(),
-                            "prop-E",
-                            FlagSchema.newBuilder()
-                                .setIntSchema(IntFlagSchema.getDefaultInstance())
-                                .build(),
-                            "prop-F",
-                            FlagSchema.newBuilder()
-                                .setListSchema(
-                                    ListFlagSchema.newBuilder()
-                                        .setElementSchema(
-                                            FlagSchema.newBuilder()
-                                                .setStringSchema(
-                                                    StringFlagSchema.getDefaultInstance())
-                                                .build())
-                                        .build())
-                                .build(),
-                            "prop-G",
-                            FlagSchema.newBuilder()
-                                .setStructSchema(
-                                    StructFlagSchema.newBuilder()
-                                        .putAllSchema(
-                                            Map.of(
-                                                "prop-H",
-                                                FlagSchema.newBuilder()
-                                                    .setStringSchema(
-                                                        StringFlagSchema.getDefaultInstance())
-                                                    .build(),
-                                                "prop-I",
-                                                FlagSchema.newBuilder()
-                                                    .setIntSchema(
-                                                        IntFlagSchema.getDefaultInstance())
-                                                    .build()))
-                                        .build())
-                                .build()))
-                    .build())
-            .build();
-    SAMPLE_RESPONSE = ResolveFlagsResponse.newBuilder().addResolvedFlags(resolvedFlag1).build();
+  private static ResolveFlagsResponse generateSampleResponse(
+      List<ValueSchemaHolder> additionalProps) {
+    return ResolveFlagsResponse.newBuilder()
+        .addResolvedFlags(generateResolvedFlag(additionalProps))
+        .build();
   }
 
   private static final EvaluationContext SAMPLE_CONTEXT =
@@ -319,7 +234,7 @@ final class FeatureProviderTest {
                   Structs.of(
                       "my-key", Values.of(true), "targeting_key", Values.of("my-targeting-key")));
 
-          streamObserver.onNext(SAMPLE_RESPONSE);
+          streamObserver.onNext(generateSampleResponse(Collections.emptyList()));
           streamObserver.onCompleted();
         });
 
@@ -496,6 +411,26 @@ final class FeatureProviderTest {
   }
 
   @Test
+  public void longValueInIntegerSchemaResolveShouldFail() {
+    mockSampleResponse(
+        Collections.singletonList(
+            new ValueSchemaHolder(
+                "prop-X",
+                Values.of(Integer.MAX_VALUE + 1L),
+                FlagSchema.SchemaTypeCase.INT_SCHEMA)));
+
+    final FlagEvaluationDetails<Integer> evaluationDetails =
+        client.getIntegerDetails("flag.prop-X", 10, SAMPLE_CONTEXT);
+
+    assertThat(evaluationDetails.getValue()).isEqualTo(10);
+    assertThat(evaluationDetails.getVariant()).isNull();
+    assertThat(evaluationDetails.getErrorMessage())
+        .isEqualTo(
+            "Mismatch between schema and value: value should be an int, but it is a double/long");
+    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.PARSE_ERROR);
+  }
+
+  @Test
   public void castingWithWrongType() {
     mockSampleResponse();
 
@@ -527,11 +462,147 @@ final class FeatureProviderTest {
   }
 
   private void mockSampleResponse() {
+    mockSampleResponse(Collections.emptyList());
+  }
+
+  private void mockSampleResponse(List<ValueSchemaHolder> additionalProps) {
     mockResolve(
         (resolveFlagRequest, streamObserver) -> {
           assertThat(resolveFlagRequest.getFlags(0)).isEqualTo("flags/flag");
-          streamObserver.onNext(SAMPLE_RESPONSE);
+          streamObserver.onNext(generateSampleResponse(additionalProps));
           streamObserver.onCompleted();
         });
+  }
+
+  private static ResolvedFlag generateResolvedFlag(List<ValueSchemaHolder> additionalProps) {
+    final Struct.Builder valueBuilder =
+        Struct.newBuilder()
+            .putAllFields(
+                Map.of(
+                    "prop-A",
+                    Values.of(false),
+                    "prop-B",
+                    Values.of(
+                        Structs.of(
+                            "prop-C", Values.of("str-val"),
+                            "prop-D", Values.of(5.3))),
+                    "prop-E",
+                    Values.of(50),
+                    "prop-F",
+                    Values.of(List.of(Values.of("a"), Values.of("b"))),
+                    "prop-G",
+                    Values.of(
+                        Structs.of(
+                            "prop-H", Values.ofNull(),
+                            "prop-I", Values.ofNull()))));
+
+    final StructFlagSchema.Builder schemaBuilder =
+        StructFlagSchema.newBuilder()
+            .putAllSchema(
+                Map.of(
+                    "prop-A",
+                    FlagSchema.newBuilder()
+                        .setBoolSchema(BoolFlagSchema.getDefaultInstance())
+                        .build(),
+                    "prop-B",
+                    FlagSchema.newBuilder()
+                        .setStructSchema(
+                            StructFlagSchema.newBuilder()
+                                .putAllSchema(
+                                    Map.of(
+                                        "prop-C",
+                                        FlagSchema.newBuilder()
+                                            .setStringSchema(StringFlagSchema.getDefaultInstance())
+                                            .build(),
+                                        "prop-D",
+                                        FlagSchema.newBuilder()
+                                            .setDoubleSchema(DoubleFlagSchema.getDefaultInstance())
+                                            .build()))
+                                .build())
+                        .build(),
+                    "prop-E",
+                    FlagSchema.newBuilder()
+                        .setIntSchema(IntFlagSchema.getDefaultInstance())
+                        .build(),
+                    "prop-F",
+                    FlagSchema.newBuilder()
+                        .setListSchema(
+                            ListFlagSchema.newBuilder()
+                                .setElementSchema(
+                                    FlagSchema.newBuilder()
+                                        .setStringSchema(StringFlagSchema.getDefaultInstance())
+                                        .build())
+                                .build())
+                        .build(),
+                    "prop-G",
+                    FlagSchema.newBuilder()
+                        .setStructSchema(
+                            StructFlagSchema.newBuilder()
+                                .putAllSchema(
+                                    Map.of(
+                                        "prop-H",
+                                        FlagSchema.newBuilder()
+                                            .setStringSchema(StringFlagSchema.getDefaultInstance())
+                                            .build(),
+                                        "prop-I",
+                                        FlagSchema.newBuilder()
+                                            .setIntSchema(IntFlagSchema.getDefaultInstance())
+                                            .build()))
+                                .build())
+                        .build()));
+
+    additionalProps.forEach(
+        (valueSchemaHolder) -> {
+          valueBuilder.putFields(valueSchemaHolder.flag, valueSchemaHolder.value);
+          final FlagSchema.Builder builder = getSchemaBuilder(valueSchemaHolder);
+          schemaBuilder.putSchema(valueSchemaHolder.flag, builder.build());
+        });
+
+    return ResolvedFlag.newBuilder()
+        .setFlag("flags/flag")
+        .setVariant("flags/flag/variants/var-A")
+        .setValue(valueBuilder)
+        .setFlagSchema(schemaBuilder)
+        .build();
+  }
+
+  private static FlagSchema.Builder getSchemaBuilder(ValueSchemaHolder valueSchemaHolder) {
+    final FlagSchema.Builder builder = FlagSchema.newBuilder();
+    switch (valueSchemaHolder.schemaTypeCase) {
+      case STRUCT_SCHEMA:
+        builder.setStructSchema(StructFlagSchema.getDefaultInstance());
+        break;
+      case LIST_SCHEMA:
+        builder.setListSchema(ListFlagSchema.getDefaultInstance());
+        break;
+      case INT_SCHEMA:
+        builder.setIntSchema(IntFlagSchema.getDefaultInstance());
+        break;
+      case DOUBLE_SCHEMA:
+        builder.setDoubleSchema(DoubleFlagSchema.getDefaultInstance());
+        break;
+      case STRING_SCHEMA:
+        builder.setStringSchema(StringFlagSchema.getDefaultInstance());
+        break;
+      case BOOL_SCHEMA:
+        builder.setBoolSchema(BoolFlagSchema.getDefaultInstance());
+        break;
+      case SCHEMATYPE_NOT_SET:
+        break;
+    }
+    return builder;
+  }
+
+  private static class ValueSchemaHolder {
+    public ValueSchemaHolder(
+        String flag, com.google.protobuf.Value value, FlagSchema.SchemaTypeCase schemaTypeCase) {
+      this.flag = flag;
+      this.value = value;
+      this.schemaTypeCase = schemaTypeCase;
+    }
+
+    String flag;
+    com.google.protobuf.Value value;
+    FlagSchema.SchemaTypeCase schemaTypeCase;
   }
 }
