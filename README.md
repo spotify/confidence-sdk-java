@@ -10,12 +10,24 @@ To learn more about the basic concepts (flags, targeting key, evaluation context
 the [OpenFeature reference documentation](https://openfeature.dev/docs/reference/intro) can be
 useful.
 
-# Using the provider
+## Install
+
+### Maven
+ 
+<!-- x-release-please-start-version -->
+```xml
+<dependency>
+    <groupId>com.spotify.confidence</groupId>
+    <artifactId>openfeature-provider</artifactId>
+    <version>0.0.3</version>
+</dependency>
+```
+<!---x-release-please-end-->
+
+## Usage
 
 The provider is instantiated using a client token that is configured in the Confidence UI or via the
 management API. After that all interaction with the feature flags happens using the OpenFeature client APIs. 
-
-## Example
 
 ```java
 package com.spotify.confidence.openfeature;
