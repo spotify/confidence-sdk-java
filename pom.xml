@@ -13,8 +13,8 @@
     </repository>
   </distributionManagement>
 
-  <groupId>com.spotify</groupId>
-  <artifactId>confidence-openfeature-provider</artifactId>
+  <groupId>com.spotify.confidence</groupId>
+  <artifactId>openfeature-provider</artifactId>
   <version>0.0.3-SNAPSHOT</version>
 
   <url>https://github.com/spotify/confidence-openfeature-provider-java</url>
