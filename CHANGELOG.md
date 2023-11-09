@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.0.4](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.3...v0.0.4) (2023-11-09)
+
+
+### ✨ New Features
+
+* Add SDK id and version to requests ([#66](https://github.com/spotify/confidence-openfeature-provider-java/issues/66)) ([eb97dc7](https://github.com/spotify/confidence-openfeature-provider-java/commit/eb97dc7bb69608feb099831a82bec37673c0adb6))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.4-SNAPSHOT ([#63](https://github.com/spotify/confidence-openfeature-provider-java/issues/63)) ([470494e](https://github.com/spotify/confidence-openfeature-provider-java/commit/470494e9266f3060b62ac0b914db486d61e005d9))
+
+
+### 📚 Documentation
+
+* Install instructions in README ([#65](https://github.com/spotify/confidence-openfeature-provider-java/issues/65)) ([77ecd7d](https://github.com/spotify/confidence-openfeature-provider-java/commit/77ecd7d466b626e4953a659e783c30f76caba945))
+
 ## [0.0.3](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.2...v0.0.3) (2023-10-09)
 
 
