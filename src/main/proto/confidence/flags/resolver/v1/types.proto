@@ -2,9 +2,28 @@ syntax = "proto3";
 
 package confidence.flags.resolver.v1;
 
+import "google/api/field_behavior.proto";
+
 option java_package = "com.spotify.confidence.flags.resolver.v1";
 option java_multiple_files = true;
 option java_outer_classname = "TypesProto";
+
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: SDKs are not internal Confidence resources. --)
+message Sdk {
+  // Identifier of the SDK used to interact with the API.
+  oneof sdk {
+    // Name of a Confidence SDKs.
+    SdkId id = 1;
+    // Custom name for non-Confidence SDKs.
+    string custom_id = 2;
+  }
+
+  // Version of the SDK.
+  string version = 3 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
 
 enum ResolveReason {
   // Unspecified enum.
@@ -18,6 +37,27 @@ enum ResolveReason {
   RESOLVE_REASON_NO_TREATMENT_MATCH = 3 [deprecated = true];
   // The flag could not be resolved because it was archived.
   RESOLVE_REASON_FLAG_ARCHIVED = 4;
+  // The flag could not be resolved because the targeting key field was invalid
+  RESOLVE_REASON_TARGETING_KEY_ERROR = 5;
   // Unknown error occurred during the resolve
-  RESOLVE_REASON_ERROR = 5;
+  RESOLVE_REASON_ERROR = 6;
+}
+
+enum SdkId {
+  // Unspecified enum.
+  SDK_ID_UNSPECIFIED = 0;
+  // Confidence OpenFeature Java Provider.
+  SDK_ID_JAVA_PROVIDER = 1;
+  // Confidence OpenFeature Kotlin Provider.
+  SDK_ID_KOTLIN_PROVIDER = 2;
+  // Confidence OpenFeature Swift Provider.
+  SDK_ID_SWIFT_PROVIDER = 3;
+  // Confidence OpenFeature JavaScript Provider for Web (client).
+  SDK_ID_JS_WEB_PROVIDER = 4;
+  // Confidence OpenFeature JavaScript Provider for server.
+  SDK_ID_JS_SERVER_PROVIDER = 5;
+  // Confidence OpenFeature Python Provider.
+  SDK_ID_PYTHON_PROVIDER = 6;
+  // Confidence OpenFeature GO Provider.
+  SDK_ID_GO_PROVIDER = 7;
 }

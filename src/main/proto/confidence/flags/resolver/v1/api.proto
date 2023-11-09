@@ -72,6 +72,11 @@ message ResolveFlagsRequest {
   bool apply = 4 [
     (google.api.field_behavior) = REQUIRED
   ];
+
+  // Information about the SDK used to initiate the request.
+  Sdk sdk = 5 [
+    (google.api.field_behavior) = OPTIONAL
+  ];
 }
 
 message ResolveFlagsResponse {
@@ -82,6 +87,9 @@ message ResolveFlagsResponse {
   // An opaque token that is used when `apply` is set to false in `ResolveFlags`.
   // When `apply` is set to false, the token must be passed to `ApplyFlags`.
   bytes resolve_token = 2;
+
+  // Unique identifier for this particular resolve request.
+  string resolve_id = 3;
 }
 
 message ApplyFlagsRequest {
@@ -103,6 +111,11 @@ message ApplyFlagsRequest {
   // clock skew from the client.
   google.protobuf.Timestamp send_time = 4 [
     (google.api.field_behavior) = REQUIRED
+  ];
+
+  // Information about the SDK used to initiate the request.
+  Sdk sdk = 5 [
+    (google.api.field_behavior) = OPTIONAL
   ];
 }
 
