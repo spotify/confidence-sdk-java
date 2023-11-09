@@ -19,7 +19,7 @@ useful.
 <dependency>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>openfeature-provider</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5-SNAPSHOT</version>
 </dependency>
 ```
 <!---x-release-please-end-->
