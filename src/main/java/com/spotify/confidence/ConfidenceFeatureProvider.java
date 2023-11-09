@@ -8,6 +8,8 @@ import com.spotify.confidence.flags.resolver.v1.FlagResolverServiceGrpc.FlagReso
 import com.spotify.confidence.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.flags.resolver.v1.ResolvedFlag;
+import com.spotify.confidence.flags.resolver.v1.Sdk;
+import com.spotify.confidence.flags.resolver.v1.SdkId;
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FeatureProvider;
 import dev.openfeature.sdk.Metadata;
@@ -19,13 +21,14 @@ import dev.openfeature.sdk.exceptions.GeneralError;
 import dev.openfeature.sdk.exceptions.InvalidContextError;
 import dev.openfeature.sdk.exceptions.TargetingKeyMissingError;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
-import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -38,6 +41,9 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
   private final FlagResolverServiceBlockingStub stub;
   private final String clientSecret;
 
+  private final String SDK_VERSION;
+  private static final SdkId SDK_ID = SdkId.SDK_ID_JAVA_PROVIDER;
+
   static final String TARGETING_KEY = "targeting_key";
 
   /**
@@ -49,6 +55,18 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
   public ConfidenceFeatureProvider(String clientSecret, FlagResolverServiceBlockingStub stub) {
     this.clientSecret = clientSecret;
     this.stub = stub;
+
+    if (Strings.isNullOrEmpty(clientSecret)) {
+      throw new IllegalArgumentException("clientSecret must be a non-empty string.");
+    }
+
+    try {
+      final Properties prop = new Properties();
+      prop.load(this.getClass().getResourceAsStream("/version.properties"));
+      this.SDK_VERSION = prop.getProperty("version");
+    } catch (IOException e) {
+      throw new RuntimeException("Can't determine version of the SDK", e);
+    }
   }
 
   /**
@@ -57,14 +75,10 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    * @param clientSecret generated from Confidence
    */
   public ConfidenceFeatureProvider(String clientSecret) {
-    final ManagedChannel channel =
-        ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build();
-    this.stub = FlagResolverServiceGrpc.newBlockingStub(channel);
-
-    if (Strings.isNullOrEmpty(clientSecret)) {
-      throw new IllegalArgumentException("clientSecret must be a non-empty string.");
-    }
-    this.clientSecret = clientSecret;
+    this(
+        clientSecret,
+        FlagResolverServiceGrpc.newBlockingStub(
+            ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build()));
   }
 
   @Override
@@ -157,6 +171,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
                       .setClientSecret(clientSecret)
                       .addAllFlags(List.of(requestFlagName))
                       .setEvaluationContext(evaluationContext.build())
+                      .setSdk(Sdk.newBuilder().setId(SDK_ID).setVersion(SDK_VERSION).build())
                       .setApply(true)
                       .build());
 
