@@ -1,6 +1,6 @@
 # Confidence OpenFeature Java Provider
 
-Java library for the Confidence feature flag provider.
+Java library for the [Confidence](https://confidence.spotify.com/) feature flag provider.
 
 The library includes a `Provider` for
 the [OpenFeature Java SDK](https://openfeature.dev/docs/tutorials/getting-started/java), that can be
