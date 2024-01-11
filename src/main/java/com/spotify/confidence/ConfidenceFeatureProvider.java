@@ -21,6 +21,7 @@ import dev.openfeature.sdk.exceptions.GeneralError;
 import dev.openfeature.sdk.exceptions.InvalidContextError;
 import dev.openfeature.sdk.exceptions.TargetingKeyMissingError;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
+import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
@@ -38,6 +39,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
 
   // Deadline in seconds
   public static final int DEADLINE_AFTER_SECONDS = 10;
+  private final ManagedChannel managedChannel;
   private final FlagResolverServiceBlockingStub stub;
   private final String clientSecret;
 
@@ -50,11 +52,12 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    * ConfidenceFeatureProvider constructor
    *
    * @param clientSecret generated from Confidence
-   * @param stub for testing
+   * @param managedChannel for testing
    */
-  public ConfidenceFeatureProvider(String clientSecret, FlagResolverServiceBlockingStub stub) {
+  ConfidenceFeatureProvider(String clientSecret, ManagedChannel managedChannel) {
     this.clientSecret = clientSecret;
-    this.stub = stub;
+    this.managedChannel = managedChannel;
+    this.stub = FlagResolverServiceGrpc.newBlockingStub(managedChannel);
 
     if (Strings.isNullOrEmpty(clientSecret)) {
       throw new IllegalArgumentException("clientSecret must be a non-empty string.");
@@ -75,10 +78,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    * @param clientSecret generated from Confidence
    */
   public ConfidenceFeatureProvider(String clientSecret) {
-    this(
-        clientSecret,
-        FlagResolverServiceGrpc.newBlockingStub(
-            ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build()));
+    this(clientSecret, ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
   }
 
   @Override
@@ -231,6 +231,11 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
                 e.getStatus().getCode()));
       }
     }
+  }
+
+  @Override
+  public void shutdown() {
+    managedChannel.shutdownNow();
   }
 
   private static Value getValueForPath(List<String> path, Value fullValue) {

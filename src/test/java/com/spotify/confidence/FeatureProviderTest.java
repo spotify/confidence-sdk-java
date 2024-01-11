@@ -8,7 +8,6 @@ import static org.mockito.Mockito.mock;
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
-import com.spotify.confidence.flags.resolver.v1.FlagResolverServiceGrpc;
 import com.spotify.confidence.flags.resolver.v1.FlagResolverServiceGrpc.FlagResolverServiceImplBase;
 import com.spotify.confidence.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.flags.resolver.v1.ResolveFlagsResponse;
@@ -28,6 +27,7 @@ import dev.openfeature.sdk.FlagEvaluationDetails;
 import dev.openfeature.sdk.MutableContext;
 import dev.openfeature.sdk.MutableStructure;
 import dev.openfeature.sdk.OpenFeatureAPI;
+import dev.openfeature.sdk.ProviderState;
 import dev.openfeature.sdk.Value;
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 final class FeatureProviderTest {
@@ -50,6 +51,7 @@ final class FeatureProviderTest {
   private static final FlagResolverServiceImplBase serviceImpl =
       mock(FlagResolverServiceImplBase.class);
   private static Client client;
+  private static OpenFeatureAPI openFeatureAPI;
 
   private static ResolveFlagsResponse generateSampleResponse(
       List<ValueSchemaHolder> additionalProps) {
@@ -61,9 +63,10 @@ final class FeatureProviderTest {
   private static final EvaluationContext SAMPLE_CONTEXT =
       new MutableContext("my-targeting-key", Map.of("my-key", new Value(true)));
 
+  static final String serverName = InProcessServerBuilder.generateName();
+
   @BeforeAll
   static void before() throws IOException {
-    final String serverName = InProcessServerBuilder.generateName();
 
     server =
         InProcessServerBuilder.forName(serverName)
@@ -71,17 +74,18 @@ final class FeatureProviderTest {
             .addService(serviceImpl)
             .build()
             .start();
+  }
 
+  @BeforeEach
+  void beforeEach() {
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
 
-    final FeatureProvider featureProvider =
-        new com.spotify.confidence.ConfidenceFeatureProvider(
-            "fake-secret", FlagResolverServiceGrpc.newBlockingStub(channel));
+    final FeatureProvider featureProvider = new ConfidenceFeatureProvider("fake-secret", channel);
 
-    final OpenFeatureAPI api = OpenFeatureAPI.getInstance();
-    api.setProvider(featureProvider);
+    openFeatureAPI = OpenFeatureAPI.getInstance();
+    openFeatureAPI.setProvider(featureProvider);
 
-    client = api.getClient();
+    client = openFeatureAPI.getClient();
   }
 
   @AfterAll
@@ -441,6 +445,21 @@ final class FeatureProviderTest {
     assertThat(evaluationDetails.getErrorMessage())
         .isEqualTo("Cannot cast value '%s' to expected type", new Value("str-val"));
     assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.TYPE_MISMATCH);
+  }
+
+  @Test
+  public void shutdownShouldGiveStateNotReadyAndDefaultValues() {
+    mockSampleResponse();
+    openFeatureAPI.shutdown();
+
+    final int defaultValue = 1000;
+    final FlagEvaluationDetails<Integer> evaluationDetails =
+        client.getIntegerDetails("flag.prop-E", defaultValue, SAMPLE_CONTEXT);
+
+    final ProviderState state = openFeatureAPI.getProvider().getState();
+
+    assertThat(state).isEqualTo(ProviderState.NOT_READY);
+    assertThat(evaluationDetails.getValue()).isEqualTo(defaultValue);
   }
 
   //////
