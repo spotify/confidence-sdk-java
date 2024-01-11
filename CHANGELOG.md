@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.0.5](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.4...v0.0.5) (2024-01-11)
+
+
+### 🐛 Bug Fixes
+
+* implement the shutdown function ([#70](https://github.com/spotify/confidence-openfeature-provider-java/issues/70)) ([659605c](https://github.com/spotify/confidence-openfeature-provider-java/commit/659605c2b52743569b0170ac3f4f8b3e78d7a330))
+* implement the shutdown function to shutdown the grpc channel ([659605c](https://github.com/spotify/confidence-openfeature-provider-java/commit/659605c2b52743569b0170ac3f4f8b3e78d7a330))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.5-SNAPSHOT ([#67](https://github.com/spotify/confidence-openfeature-provider-java/issues/67)) ([f0af5eb](https://github.com/spotify/confidence-openfeature-provider-java/commit/f0af5eb4883f4c22bacf330b85b580d858c55529))
+
+
+### 📚 Documentation
+
+* Add Confidence link to the README ([#69](https://github.com/spotify/confidence-openfeature-provider-java/issues/69)) ([65af2dc](https://github.com/spotify/confidence-openfeature-provider-java/commit/65af2dc5edf10717b1a41718d85d26d0ae921504))
+
 ## [0.0.4](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.3...v0.0.4) (2023-11-09)
 
 
