@@ -330,25 +330,64 @@
           </execution>
         </executions>
       </plugin>
+<!--      <plugin>-->
+<!--        <groupId>org.apache.maven.plugins</groupId>-->
+<!--        <artifactId>maven-gpg-plugin</artifactId>-->
+<!--        <version>3.1.0</version>-->
+<!--        <configuration>-->
+<!--          &lt;!&ndash; Prevent gpg from using pinentry programs &ndash;&gt;-->
+<!--          <gpgArguments>-->
+<!--            <arg>&#45;&#45;pinentry-mode</arg>-->
+<!--            <arg>loopback</arg>-->
+<!--            <arg>&#45;&#45;no-tty</arg>-->
+<!--          </gpgArguments>-->
+<!--        </configuration>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <id>sign-artifacts</id>-->
+<!--            <phase>install</phase>-->
+<!--            <goals>-->
+<!--              <goal>sign</goal>-->
+<!--            </goals>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-gpg-plugin</artifactId>
-        <version>3.1.0</version>
-        <configuration>
-          <!-- Prevent gpg from using pinentry programs -->
-          <gpgArguments>
-            <arg>--pinentry-mode</arg>
-            <arg>loopback</arg>
-            <arg>--no-tty</arg>
-          </gpgArguments>
-        </configuration>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.1</version>
         <executions>
           <execution>
-            <id>sign-artifacts</id>
-            <phase>install</phase>
+            <phase>package</phase>
             <goals>
-              <goal>sign</goal>
+              <goal>shade</goal>
             </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>.proto</resource>
+                </transformer>
+              </transformers>
+              <relocations>
+                <relocation>
+                  <pattern>com.google</pattern>
+                  <shadedPattern>com.spotify.confidence.shaded.com.google</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>io.grpc</pattern>
+                  <shadedPattern>com.spotify.confidence.shaded.io.grpc</shadedPattern>
+                </relocation>
+              </relocations>
+              <artifactSet>
+                <excludes>
+                  <exclude>dev.openfeature:sdk</exclude>
+                  <exclude>org.slf4j:slf4j-api</exclude>
+                  <exclude>javax.annotation:javax.annotation-api</exclude>
+                  <exclude>org.checkerframework:checker-qual</exclude>
+                  <exclude>io.perfmark:perfmark-api</exclude>
+                </excludes>
+              </artifactSet>
+            </configuration>
           </execution>
         </executions>
       </plugin>
