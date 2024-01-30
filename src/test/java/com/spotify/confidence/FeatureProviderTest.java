@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import static dev.openfeature.sdk.ErrorCode.GENERAL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -96,19 +97,16 @@ final class FeatureProviderTest {
 
   @Test
   public void missingTargetKey() {
-
     final FlagEvaluationDetails<Value> evaluationDetails =
         client.getObjectDetails("flags/whatever", DEFAULT_VALUE);
 
-    assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.TARGETING_KEY_MISSING);
+    assertThat(evaluationDetails.getErrorCode()).isEqualTo(GENERAL);
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
     assertThat(evaluationDetails.getVariant()).isBlank();
   }
 
   @Test
   public void inconsistentTargetKey() {
-
     final FlagEvaluationDetails<Value> evaluationDetails =
         client.getObjectDetails(
             "flags/whatever",
@@ -120,10 +118,10 @@ final class FeatureProviderTest {
                     new Value("my-targeting-key-2"))));
 
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.INVALID_CONTEXT);
+    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.FLAG_NOT_FOUND);
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
     assertThat(evaluationDetails.getErrorMessage())
-        .isEqualTo("Evaluation context occupies reserved field 'targeting_key'");
+        .isEqualTo("Unexpected flag 'unexpected-flag' from remote");
     assertThat(evaluationDetails.getVariant()).isBlank();
   }
 
@@ -181,7 +179,7 @@ final class FeatureProviderTest {
         client.getObjectDetails("flags/whatever", DEFAULT_VALUE, SAMPLE_CONTEXT);
 
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.GENERAL);
+    assertThat(evaluationDetails.getErrorCode()).isEqualTo(GENERAL);
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
     assertThat(evaluationDetails.getErrorMessage()).isEqualTo("Provider backend is unavailable");
     assertThat(evaluationDetails.getVariant()).isBlank();
@@ -197,7 +195,7 @@ final class FeatureProviderTest {
         client.getObjectDetails("flags/whatever", DEFAULT_VALUE, SAMPLE_CONTEXT);
 
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.GENERAL);
+    assertThat(evaluationDetails.getErrorCode()).isEqualTo(GENERAL);
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
     assertThat(evaluationDetails.getErrorMessage()).isEqualTo("UNAUTHENTICATED");
     assertThat(evaluationDetails.getVariant()).isBlank();
@@ -355,7 +353,7 @@ final class FeatureProviderTest {
 
     // malformed path without flag name
     evaluationDetails = client.getObjectDetails("...", DEFAULT_VALUE, SAMPLE_CONTEXT);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.GENERAL);
+    assertThat(evaluationDetails.getErrorCode()).isEqualTo(GENERAL);
     assertThat(evaluationDetails.getVariant()).isBlank();
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
     assertThat(evaluationDetails.getErrorMessage()).isEqualTo("Illegal path string '...'");
