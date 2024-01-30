@@ -377,8 +377,12 @@
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
                   <resource>.proto</resource>
+                  <resource>checkstyle.xml</resource>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer">
+                  <addHeader>true</addHeader>
+                </transformer>
               </transformers>
               <relocations>
                 <relocation>
