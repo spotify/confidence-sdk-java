@@ -139,6 +139,14 @@
       <version>1.6.1</version>
     </dependency>
 
+    <!-- runtime scope -->
+    <dependency>
+      <groupId>io.perfmark</groupId>
+      <artifactId>perfmark-api</artifactId>
+      <version>0.26.0</version>
+      <scope>runtime</scope>
+    </dependency>
+
     <!-- test scope -->
     <dependency>
       <groupId>org.assertj</groupId>
@@ -374,10 +382,6 @@
               </transformers>
               <relocations>
                 <relocation>
-                  <pattern>google</pattern>
-                  <shadedPattern>com.spotify.confidence.shaded.google</shadedPattern>
-                </relocation>
-                <relocation>
                   <pattern>com.google</pattern>
                   <shadedPattern>com.spotify.confidence.shaded.com.google</shadedPattern>
                 </relocation>
@@ -392,6 +396,10 @@
                   <exclude>org.slf4j:slf4j-api</exclude>
                   <exclude>javax.annotation:javax.annotation-api</exclude>
                   <exclude>org.checkerframework:checker-qual</exclude>
+                  <exclude>com.google.code.findbugs:jsr305</exclude>
+                  <exclude>com.google.android:annotations</exclude>
+                  <exclude>org.codehaus.mojo:animal-sniffer-annotations</exclude>
+                  <exclude>io.perfmark:perfmark-api</exclude>
                 </excludes>
               </artifactSet>
             </configuration>
