@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.6](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.5...v0.0.6) (2024-01-30)
+
+
+### 🐛 Bug Fixes
+
+* Shade dependencies ([#73](https://github.com/spotify/confidence-openfeature-provider-java/issues/73)) ([158bfd0](https://github.com/spotify/confidence-openfeature-provider-java/commit/158bfd0e87215619077dfb1861e477f0d2913398))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.6-SNAPSHOT ([#71](https://github.com/spotify/confidence-openfeature-provider-java/issues/71)) ([e30bb9d](https://github.com/spotify/confidence-openfeature-provider-java/commit/e30bb9d13ad7d1f005f7e45338f1a2022542a2cf))
+
 ## [0.0.5](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.4...v0.0.5) (2024-01-11)
 
 
