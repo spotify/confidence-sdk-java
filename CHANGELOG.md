@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.7](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.6...v0.0.7) (2024-01-31)
+
+
+### 🐛 Bug Fixes
+
+* remove enforcing the targeting key to be present ([#77](https://github.com/spotify/confidence-openfeature-provider-java/issues/77)) ([3a0a4ef](https://github.com/spotify/confidence-openfeature-provider-java/commit/3a0a4ef5d26a3996c1360b4ffdbb7bd0a8b91720))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.7-SNAPSHOT ([#75](https://github.com/spotify/confidence-openfeature-provider-java/issues/75)) ([d9d8f5c](https://github.com/spotify/confidence-openfeature-provider-java/commit/d9d8f5cf202f963490368395ae2dbac9036b2e13))
+
 ## [0.0.6](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.5...v0.0.6) (2024-01-30)
 
 
