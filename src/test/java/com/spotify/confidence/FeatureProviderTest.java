@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import static dev.openfeature.sdk.ErrorCode.GENERAL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -60,6 +61,16 @@ final class FeatureProviderTest {
         .build();
   }
 
+  private static final EvaluationContext SAMPLE_CONTEXT_WITHOUT_TARGETING_KEY =
+      new MutableContext(Map.of("my-key", new Value(true)));
+
+  private static final EvaluationContext SAMPLE_CONTEXT_2_TARGETING_KEYS =
+      new MutableContext(
+          "my-targeting-key-1",
+          Map.of(
+              com.spotify.confidence.ConfidenceFeatureProvider.TARGETING_KEY,
+              new Value("my-targeting-key-2")));
+
   private static final EvaluationContext SAMPLE_CONTEXT =
       new MutableContext("my-targeting-key", Map.of("my-key", new Value(true)));
 
@@ -92,39 +103,6 @@ final class FeatureProviderTest {
   static void after() {
     channel.shutdownNow();
     server.shutdownNow();
-  }
-
-  @Test
-  public void missingTargetKey() {
-
-    final FlagEvaluationDetails<Value> evaluationDetails =
-        client.getObjectDetails("flags/whatever", DEFAULT_VALUE);
-
-    assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.TARGETING_KEY_MISSING);
-    assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
-    assertThat(evaluationDetails.getVariant()).isBlank();
-  }
-
-  @Test
-  public void inconsistentTargetKey() {
-
-    final FlagEvaluationDetails<Value> evaluationDetails =
-        client.getObjectDetails(
-            "flags/whatever",
-            DEFAULT_VALUE,
-            new MutableContext(
-                "my-targeting-key-1",
-                Map.of(
-                    com.spotify.confidence.ConfidenceFeatureProvider.TARGETING_KEY,
-                    new Value("my-targeting-key-2"))));
-
-    assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.INVALID_CONTEXT);
-    assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
-    assertThat(evaluationDetails.getErrorMessage())
-        .isEqualTo("Evaluation context occupies reserved field 'targeting_key'");
-    assertThat(evaluationDetails.getVariant()).isBlank();
   }
 
   @Test
@@ -181,7 +159,7 @@ final class FeatureProviderTest {
         client.getObjectDetails("flags/whatever", DEFAULT_VALUE, SAMPLE_CONTEXT);
 
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.GENERAL);
+    assertThat(evaluationDetails.getErrorCode()).isEqualTo(GENERAL);
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
     assertThat(evaluationDetails.getErrorMessage()).isEqualTo("Provider backend is unavailable");
     assertThat(evaluationDetails.getVariant()).isBlank();
@@ -197,7 +175,7 @@ final class FeatureProviderTest {
         client.getObjectDetails("flags/whatever", DEFAULT_VALUE, SAMPLE_CONTEXT);
 
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.GENERAL);
+    assertThat(evaluationDetails.getErrorCode()).isEqualTo(GENERAL);
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
     assertThat(evaluationDetails.getErrorMessage()).isEqualTo("UNAUTHENTICATED");
     assertThat(evaluationDetails.getVariant()).isBlank();
@@ -244,6 +222,92 @@ final class FeatureProviderTest {
 
     final FlagEvaluationDetails<Value> evaluationDetails =
         client.getObjectDetails("flag", DEFAULT_VALUE, SAMPLE_CONTEXT);
+
+    assertThat(evaluationDetails.getErrorCode()).isNull();
+    assertThat(evaluationDetails.getVariant()).isEqualTo("flags/flag/variants/var-A");
+    assertThat(evaluationDetails.getErrorMessage()).isBlank();
+    assertThat(evaluationDetails.getValue())
+        .isEqualTo(
+            new Value(
+                new MutableStructure(
+                    Map.of(
+                        "prop-A",
+                        new Value(false),
+                        "prop-B",
+                        new Value(
+                            new MutableStructure(
+                                Map.of("prop-C", new Value("str-val"), "prop-D", new Value(5.3)))),
+                        "prop-E",
+                        new Value(50),
+                        "prop-F",
+                        new Value(List.of(new Value("a"), new Value("b"))),
+                        "prop-G",
+                        new Value(
+                            new MutableStructure(
+                                Map.of(
+                                    "prop-H", new Value(),
+                                    "prop-I", new Value())))))));
+  }
+
+  @Test
+  public void regularResolveWithoutTargetingKey() {
+
+    mockResolve(
+        (ResolveFlagsRequest, streamObserver) -> {
+          assertThat(ResolveFlagsRequest.getFlags(0)).isEqualTo("flags/flag");
+
+          assertThat(ResolveFlagsRequest.getEvaluationContext())
+              .isEqualTo(Structs.of("my-key", Values.of(true)));
+
+          streamObserver.onNext(generateSampleResponse(Collections.emptyList()));
+          streamObserver.onCompleted();
+        });
+
+    final FlagEvaluationDetails<Value> evaluationDetails =
+        client.getObjectDetails("flag", DEFAULT_VALUE, SAMPLE_CONTEXT_WITHOUT_TARGETING_KEY);
+
+    assertThat(evaluationDetails.getErrorCode()).isNull();
+    assertThat(evaluationDetails.getVariant()).isEqualTo("flags/flag/variants/var-A");
+    assertThat(evaluationDetails.getErrorMessage()).isBlank();
+    assertThat(evaluationDetails.getValue())
+        .isEqualTo(
+            new Value(
+                new MutableStructure(
+                    Map.of(
+                        "prop-A",
+                        new Value(false),
+                        "prop-B",
+                        new Value(
+                            new MutableStructure(
+                                Map.of("prop-C", new Value("str-val"), "prop-D", new Value(5.3)))),
+                        "prop-E",
+                        new Value(50),
+                        "prop-F",
+                        new Value(List.of(new Value("a"), new Value("b"))),
+                        "prop-G",
+                        new Value(
+                            new MutableStructure(
+                                Map.of(
+                                    "prop-H", new Value(),
+                                    "prop-I", new Value())))))));
+  }
+
+  @Test
+  public void regularResolveWith2TargetingKeyShouldPrioritiseApiOverMap() {
+
+    mockResolve(
+        (ResolveFlagsRequest, streamObserver) -> {
+          assertThat(ResolveFlagsRequest.getFlags(0)).isEqualTo("flags/flag");
+
+          assertThat(ResolveFlagsRequest.getEvaluationContext())
+              .isEqualTo(Structs.of("targeting_key", Values.of("my-targeting-key-1")));
+
+          streamObserver.onNext(generateSampleResponse(Collections.emptyList()));
+          streamObserver.onCompleted();
+        });
+
+    final FlagEvaluationDetails<Value> evaluationDetails =
+        client.getObjectDetails("flag", DEFAULT_VALUE, SAMPLE_CONTEXT_2_TARGETING_KEYS);
 
     assertThat(evaluationDetails.getErrorCode()).isNull();
     assertThat(evaluationDetails.getVariant()).isEqualTo("flags/flag/variants/var-A");
@@ -355,7 +419,7 @@ final class FeatureProviderTest {
 
     // malformed path without flag name
     evaluationDetails = client.getObjectDetails("...", DEFAULT_VALUE, SAMPLE_CONTEXT);
-    assertThat(evaluationDetails.getErrorCode()).isEqualTo(ErrorCode.GENERAL);
+    assertThat(evaluationDetails.getErrorCode()).isEqualTo(GENERAL);
     assertThat(evaluationDetails.getVariant()).isBlank();
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
     assertThat(evaluationDetails.getErrorMessage()).isEqualTo("Illegal path string '...'");

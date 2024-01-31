@@ -18,8 +18,6 @@ import dev.openfeature.sdk.Structure;
 import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.FlagNotFoundError;
 import dev.openfeature.sdk.exceptions.GeneralError;
-import dev.openfeature.sdk.exceptions.InvalidContextError;
-import dev.openfeature.sdk.exceptions.TargetingKeyMissingError;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -152,13 +150,9 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
             });
 
     // add targeting key as a regular value to proto struct
-    if (StringUtil.isNullOrEmpty(ctx.getTargetingKey())) {
-      throw new TargetingKeyMissingError();
-    } else if (ctx.keySet().contains(TARGETING_KEY)) {
-      throw new InvalidContextError(
-          String.format("Evaluation context occupies reserved field '%s'", TARGETING_KEY));
+    if (!StringUtil.isNullOrEmpty(ctx.getTargetingKey())) {
+      evaluationContext.putFields(TARGETING_KEY, Values.of(ctx.getTargetingKey()));
     }
-    evaluationContext.putFields(TARGETING_KEY, Values.of(ctx.getTargetingKey()));
 
     // resolve the flag by calling the resolver API
     final ResolveFlagsResponse resolveFlagResponse;
