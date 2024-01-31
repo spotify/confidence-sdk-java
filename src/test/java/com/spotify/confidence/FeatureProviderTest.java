@@ -293,7 +293,7 @@ final class FeatureProviderTest {
   }
 
   @Test
-  public void regularResolveWith2TargetingKey() {
+  public void regularResolveWith2TargetingKeyShouldPrioritiseApiOverMap() {
 
     mockResolve(
         (ResolveFlagsRequest, streamObserver) -> {
