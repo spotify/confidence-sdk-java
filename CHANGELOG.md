@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.8](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.7...v0.0.8) (2024-02-01)
+
+
+### ✨ New Features
+
+* Enable users to customize the host and port for local resolver ([#80](https://github.com/spotify/confidence-openfeature-provider-java/issues/80)) ([10d5c6a](https://github.com/spotify/confidence-openfeature-provider-java/commit/10d5c6a0150d2392c22b3fa00d80069219f18ca6))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.8-SNAPSHOT ([#78](https://github.com/spotify/confidence-openfeature-provider-java/issues/78)) ([19d2809](https://github.com/spotify/confidence-openfeature-provider-java/commit/19d28099f6d9abe3e22c741b52981882087413c0))
+
 ## [0.0.7](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.6...v0.0.7) (2024-01-31)
 
 
