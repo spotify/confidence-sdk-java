@@ -2,9 +2,9 @@ package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Values;
-import com.spotify.confidence.flags.types.v1.FlagSchema;
-import com.spotify.confidence.flags.types.v1.FlagSchema.SchemaTypeCase;
-import com.spotify.confidence.flags.types.v1.FlagSchema.StructFlagSchema;
+import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
+import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.SchemaTypeCase;
+import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StructFlagSchema;
 import dev.openfeature.sdk.MutableStructure;
 import dev.openfeature.sdk.Structure;
 import dev.openfeature.sdk.Value;

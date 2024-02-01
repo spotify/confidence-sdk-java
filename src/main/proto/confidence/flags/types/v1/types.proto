@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package confidence.flags.types.v1;
 
-option java_package = "com.spotify.confidence.flags.types.v1";
+option java_package = "com.spotify.confidence.shaded.flags.types.v1";
 option java_multiple_files = true;
 option java_outer_classname = "TypesProto";
 
