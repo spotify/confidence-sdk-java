@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.9](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.8...v0.0.9) (2024-02-01)
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.9-SNAPSHOT ([#81](https://github.com/spotify/confidence-openfeature-provider-java/issues/81)) ([d5b1be8](https://github.com/spotify/confidence-openfeature-provider-java/commit/d5b1be8c91401ffbf68ea29051939d801be0f58e))
+* Put generated protos under a different name ([#85](https://github.com/spotify/confidence-openfeature-provider-java/issues/85)) ([2e487cb](https://github.com/spotify/confidence-openfeature-provider-java/commit/2e487cbb52a487f1c5485fcee475773b2ebe9e47))
+
 ## [0.0.8](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.7...v0.0.8) (2024-02-01)
 
 
