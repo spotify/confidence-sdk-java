@@ -4,7 +4,7 @@ package confidence.flags.resolver.v1;
 
 import "google/api/field_behavior.proto";
 
-option java_package = "com.spotify.confidence.flags.resolver.v1";
+option java_package = "com.spotify.confidence.shaded.flags.resolver.v1";
 option java_multiple_files = true;
 option java_outer_classname = "TypesProto";
 
