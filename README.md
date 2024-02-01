@@ -24,6 +24,18 @@ useful.
 ```
 <!---x-release-please-end-->
 
+#### Depending on a development snapshot
+We deploy snapshots from the `main` branch to [Sonatype OSSRH](https://oss.sonatype.org/content/repositories/snapshots/com/spotify/confidence/openfeature-provider/).
+To use a snapshot, add the following repository to your `pom.xml`:
+```xml
+<distributionManagement>
+    <snapshotRepository>
+        <id>oss.snapshots</id>
+        <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    </snapshotRepository>
+</distributionManagement>
+```
+
 ## Usage
 
 The provider is instantiated using a client token that is configured in the Confidence UI or via the
