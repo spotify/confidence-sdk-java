@@ -50,9 +50,9 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    * ConfidenceFeatureProvider constructor
    *
    * @param clientSecret generated from Confidence
-   * @param managedChannel for testing
+   * @param managedChannel gRPC channel
    */
-  ConfidenceFeatureProvider(String clientSecret, ManagedChannel managedChannel) {
+  public ConfidenceFeatureProvider(String clientSecret, ManagedChannel managedChannel) {
     this.clientSecret = clientSecret;
     this.managedChannel = managedChannel;
     this.stub = FlagResolverServiceGrpc.newBlockingStub(managedChannel);
@@ -77,6 +77,18 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    */
   public ConfidenceFeatureProvider(String clientSecret) {
     this(clientSecret, ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
+  }
+
+  /**
+   * ConfidenceFeatureProvider constructor that allows you to override the default gRPC host and
+   * port, used for local resolver.
+   *
+   * @param clientSecret generated from Confidence
+   * @param host gRPC host you want to connect to.
+   * @param port port of the gRPC host that you want to use.
+   */
+  public ConfidenceFeatureProvider(String clientSecret, String host, int port) {
+    this(clientSecret, ManagedChannelBuilder.forAddress(host, port).build());
   }
 
   @Override
