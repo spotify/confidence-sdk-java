@@ -5,9 +5,9 @@ import java.util.List;
 interface EventSenderStorage {
   void write(Event event);
 
-  void batch();
+  void createBatch();
 
-  List<EventBatch> readyEvents();
+  List<EventBatch> getBatches();
 
   void deleteBatch(String batchId);
 }

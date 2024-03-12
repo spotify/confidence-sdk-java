@@ -31,7 +31,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
 
           if (flushPolicies.stream().anyMatch(FlushPolicy::shouldFlush)) {
             flushPolicies.forEach(FlushPolicy::reset);
-            eventStorage.batch();
+            eventStorage.createBatch();
             uploadQueue.add(new Object());
           }
         } catch (InterruptedException e) {
@@ -55,7 +55,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
       while (!isStopped) {
         try {
           uploadQueue.take();
-          List<EventBatch> batches = List.copyOf(eventStorage.readyEvents());
+          List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
           if (batches.isEmpty()) {
             continue;
           }

@@ -6,15 +6,30 @@ import java.util.concurrent.Semaphore;
 
 public class InMemoryStorage implements EventSenderStorage {
   private final List<Event> events = new ArrayList<>();
-  private final List<EventBatch> readyBatches = new ArrayList<>();
+  private final List<EventBatch> batches = new ArrayList<>();
   final Semaphore semaphore = new Semaphore(1);
 
   @Override
   public void write(Event event) {
+    runWithSemaphore(() -> this.events.add(event));
+  }
+
+  public void createBatch() {
     runWithSemaphore(
         () -> {
-          this.events.add(event);
+          EventBatch batch = new EventBatch(List.copyOf(events));
+          events.clear();
+          batches.add(batch);
         });
+  }
+
+  public List<EventBatch> getBatches() {
+    return batches;
+  }
+
+  @Override
+  public void deleteBatch(String batchId) {
+    runWithSemaphore(() -> batches.removeIf(eventBatch -> eventBatch.id().equals(batchId)));
   }
 
   void runWithSemaphore(Runnable codeBlock) {
@@ -27,28 +42,5 @@ public class InMemoryStorage implements EventSenderStorage {
     } finally {
       semaphore.release(); // Release the semaphore after executing the code block
     }
-  }
-
-  @Override
-  public void batch() {
-    runWithSemaphore(
-        () -> {
-          EventBatch batch = new EventBatch(List.copyOf(events));
-          events.clear();
-          readyBatches.add(batch);
-        });
-  }
-
-  @Override
-  public List<EventBatch> readyEvents() {
-    return readyBatches;
-  }
-
-  @Override
-  public void deleteBatch(String batchId) {
-    runWithSemaphore(
-        () -> {
-          readyBatches.removeIf(eventBatch -> eventBatch.id().equals(batchId));
-        });
   }
 }
