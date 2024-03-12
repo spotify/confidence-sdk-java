@@ -1,0 +1,45 @@
+syntax = "proto3";
+package confidence.events.v1;
+
+
+import "google/api/resource.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "confidence/api/annotations.proto";
+
+option java_package = "com.spotify.confidence.events.v1";
+option java_multiple_files = true;
+option java_outer_classname = "TypesProto";
+
+
+message Event {
+  string event_definition = 1 [
+    (google.api.resource_reference).type = "events.confidence.dev/EventDefinition",
+    (google.api.field_behavior) = REQUIRED
+  ];
+  google.protobuf.Struct payload = 2 [(google.api.field_behavior) = OPTIONAL];
+  // The client time when the event occurred.
+  google.protobuf.Timestamp event_time = 3 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+
+message EventError {
+  // The index (zero based) of the event in the request that could not be published.
+  int32 index = 1;
+
+  // The reason for why the event could not be ingested.
+  Reason reason = 2;
+
+  // An optional, human-readable error message set for certain error types.
+  string message = 3;
+
+  enum Reason {
+    REASON_UNSPECIFIED = 0; // unknown error
+    EVENT_DEFINITION_NOT_FOUND = 1; // not transient: the event definition was not found
+    EVENT_SCHEMA_VALIDATION_FAILED = 2; // not transient: the schema validation failed
+  }
+}

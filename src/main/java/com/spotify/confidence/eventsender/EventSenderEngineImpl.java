@@ -42,13 +42,20 @@ class EventSenderEngineImpl implements EventSenderEngine {
   }
 
   class UploadPoller implements Runnable {
-    private final EventUploader uploader =
-        event -> {
-          System.out.println(
-              "Sending batch: "
-                  + event.events().stream().map(e -> e.name).collect(Collectors.toList()));
-          return CompletableFuture.completedFuture(true);
-        };
+    private final EventUploader uploader = new EventUploader() {
+      @Override
+      public CompletableFuture<Boolean> upload(EventBatch batch) {
+        System.out.println(
+                "Sending batch: "
+                        + batch.events().stream().map(e -> e.name()).collect(Collectors.toList()));
+        return null;
+      }
+
+      @Override
+      public void close() {
+
+      }
+    };
 
     @Override
     public void run() {

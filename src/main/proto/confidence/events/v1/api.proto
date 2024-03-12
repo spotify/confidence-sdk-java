@@ -1,0 +1,45 @@
+syntax = "proto3";
+package confidence.events.v1;
+
+import "google/api/resource.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "confidence/api/annotations.proto";
+import "confidence/events/v1/types.proto";
+option java_package = "com.spotify.confidence.events.v1";
+option java_multiple_files = true;
+option java_outer_classname = "ApiProto";
+
+service EventsService {
+  option (confidence.api.service_name) = "Events";
+  option (confidence.api.hosts) = "events.eu.confidence.dev";
+  option (confidence.api.hosts) = "events.us.confidence.dev";
+
+  rpc PublishEvents(PublishEventsRequest) returns (PublishEventsResponse) {
+    // (-- api-linter: core::0136::http-uri-suffix=disabled
+    option (google.api.http) = {
+      post: "/v1/events:publish"
+      body: "*"
+    };
+  }
+}
+
+message PublishEventsRequest {
+  string client_secret = 1 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+  repeated Event events = 2 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+  // The client time when the request was sent.
+  google.protobuf.Timestamp send_time = 3 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+
+message PublishEventsResponse {
+  repeated EventError errors = 1;
+}

@@ -10,6 +10,7 @@ class EventSenderEngineImplTest {
 
   @Test
   public void printStepsTemporaryTest() {
+
     try (EventSenderEngine engine = new EventSenderEngineImpl(getFlushPolicies())) {
       int size = 0;
       while (size++ < 12) {

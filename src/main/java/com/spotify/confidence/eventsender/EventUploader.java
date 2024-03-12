@@ -1,7 +1,9 @@
 package com.spotify.confidence.eventsender;
 
+import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 
-interface EventUploader {
-  CompletableFuture<Boolean> upload(EventBatch event);
+interface EventUploader extends Closeable {
+  CompletableFuture<Boolean> upload(EventBatch batch);
+
 }
