@@ -49,7 +49,6 @@ public class InMemoryStorage implements EventSenderStorage {
     runWithSemaphore(
         () -> {
           readyBatches.removeIf(eventBatch -> eventBatch.id().equals(batchId));
-          System.out.println("deleted");
         });
   }
 }

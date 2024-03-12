@@ -12,12 +12,10 @@ class EventSenderEngineImplTest {
   public void printStepsTemporaryTest() {
     try (EventSenderEngine engine = new EventSenderEngineImpl(getFlushPolicies())) {
       int size = 0;
-      while (size++ < 0) {
-        engine.send("sample " + size, ConfidenceValue.of(ImmutableMap.of()));
+      while (size++ < 12) {
+        engine.send("event-" + size, ConfidenceValue.of(ImmutableMap.of()));
         Thread.sleep(10);
       }
-      engine.close();
-      engine.send("sample extra", ConfidenceValue.of(ImmutableMap.of()));
     } catch (InterruptedException | IOException e) {
       throw new RuntimeException(e);
     }
