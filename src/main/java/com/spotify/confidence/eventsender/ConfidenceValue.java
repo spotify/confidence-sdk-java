@@ -9,15 +9,19 @@ abstract class ConfidenceValue {
     return new ConfidenceValue.Struct(map);
   }
 
-  static ConfidenceValue.String of(String value) {
+  static ConfidenceValue.String of(java.lang.String value) {
     return new ConfidenceValue.String(value);
   }
 
   static class String extends ConfidenceValue {
-    private final String value;
+    private final java.lang.String value;
 
-    public String(String value) {
+    public String(java.lang.String value) {
       this.value = value;
+    }
+
+    public java.lang.String toString() {
+      return value;
     }
   }
 
@@ -26,6 +30,10 @@ abstract class ConfidenceValue {
 
     public Struct(ImmutableMap<String, ConfidenceValue> map) {
       this.value = map;
+    }
+
+    public Map<String, ConfidenceValue> toMap() {
+      return value;
     }
   }
 }
