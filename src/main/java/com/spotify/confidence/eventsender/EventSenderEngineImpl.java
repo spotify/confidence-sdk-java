@@ -1,10 +1,8 @@
 package com.spotify.confidence.eventsender;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 class EventSenderEngineImpl implements EventSenderEngine {
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();

@@ -3,10 +3,6 @@ package com.spotify.confidence.eventsender;
 import java.util.List;
 import java.util.UUID;
 
-
-import java.util.List;
-import java.util.UUID;
-
 class EventBatch {
   private final List<Event> events;
   private final String id = UUID.randomUUID().toString();

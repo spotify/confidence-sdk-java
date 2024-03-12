@@ -21,15 +21,15 @@ public class EventSenderEngineImplTest {
 
   @BeforeEach
   public void setup() {
-    when(eventUploader.upload(any()))
-        .thenReturn(CompletableFuture.completedFuture(true));
+    when(eventUploader.upload(any())).thenReturn(CompletableFuture.completedFuture(true));
   }
 
   @Test
   public void testEngineUploads() {
     int batchSize = 6;
     int numEvents = 14;
-    try (EventSenderEngine engine = new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), eventUploader)) {
+    try (EventSenderEngine engine =
+        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), eventUploader)) {
       int size = 0;
       while (size++ < numEvents) {
         engine.send("event-" + size, ConfidenceValue.of(ImmutableMap.of()));
@@ -39,8 +39,7 @@ public class EventSenderEngineImplTest {
       engine.close(); // Should trigger the upload of an additional incomplete batch
       int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
 
-      verify(eventUploader, times(numEvents/batchSize + additionalBatch))
-          .upload(any());
+      verify(eventUploader, times(numEvents / batchSize + additionalBatch)).upload(any());
     } catch (IOException | InterruptedException e) {
       throw new RuntimeException(e);
     }

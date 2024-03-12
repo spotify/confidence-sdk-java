@@ -1,6 +1,5 @@
 package com.spotify.confidence.eventsender;
 
-
 class Event {
   private final String name;
   private final ConfidenceValue.Struct message;
@@ -25,6 +24,7 @@ class Event {
   public ConfidenceValue.Struct message() {
     return message;
   }
+
   public ConfidenceValue.Struct context() {
     return context;
   }
