@@ -31,8 +31,10 @@ public class EventSenderEngineImplTest {
     try (EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), eventUploader)) {
       int size = 0;
-      while (size++ < numEvents) {
-        engine.send("event-" + size, ConfidenceValue.of(ImmutableMap.of()));
+      while (size++ < 12) {
+        engine.send(
+            "eventDefinitions/navigate",
+            ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
       }
       Thread.sleep(1000); // Wait for "close" and the correct uploading of events
 
