@@ -5,11 +5,19 @@ import java.util.List;
 import java.util.concurrent.*;
 
 class EventSenderEngineImpl implements EventSenderEngine {
+  private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
+  private final ExecutorService uploadThread = Executors.newSingleThreadExecutor();
   private final BlockingQueue<Event> writeQueue = new LinkedBlockingQueue<>();
   private final BlockingQueue<String> uploadQueue = new LinkedBlockingQueue<>();
   private final EventSenderStorage eventStorage = new InMemoryStorage();
   private final List<FlushPolicy> flushPolicies;
   private boolean isStopped = false;
+
+  public EventSenderEngineImpl(List<FlushPolicy> flushPolicyList) {
+    this.flushPolicies = flushPolicyList;
+    writeThread.submit(new WritePoller());
+    uploadThread.submit(new UploadPoller());
+  }
 
   class WritePoller implements Runnable {
     @Override
@@ -76,22 +84,13 @@ class EventSenderEngineImpl implements EventSenderEngine {
     isStopped = true;
   }
 
-  ExecutorService writeThread = Executors.newSingleThreadExecutor();
-  ExecutorService uploadThread = Executors.newSingleThreadExecutor();
-
-  EventSenderEngineImpl(List<FlushPolicy> flushPolicyList) {
-    this.flushPolicies = flushPolicyList;
-    writeThread.submit(new WritePoller());
-    uploadThread.submit(new UploadPoller());
+  @Override
+  public void send(String name, ConfidenceValue.Struct context) {
+    send(name, ConfidenceValue.of(ImmutableMap.of()), context);
   }
 
   @Override
   public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
-    boolean offer = writeQueue.add(new Event(name, message, context));
-  }
-
-  @Override
-  public void send(String name, ConfidenceValue.Struct context) {
-    send(name, ConfidenceValue.of(ImmutableMap.of()), context);
+    writeQueue.add(new Event(name, message, context));
   }
 }
