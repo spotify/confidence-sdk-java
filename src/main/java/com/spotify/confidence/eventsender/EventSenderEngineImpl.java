@@ -1,5 +1,6 @@
 package com.spotify.confidence.eventsender;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.concurrent.*;
@@ -11,11 +12,14 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private final BlockingQueue<Event> writeQueue = new LinkedBlockingQueue<>();
   private final BlockingQueue<Object> uploadQueue = new LinkedBlockingQueue<>();
   private final EventSenderStorage eventStorage = new InMemoryStorage();
+  private final EventUploader eventUploader;
   private final List<FlushPolicy> flushPolicies;
+
   private boolean isStopped = false;
 
-  public EventSenderEngineImpl(List<FlushPolicy> flushPolicyList) {
+  public EventSenderEngineImpl(List<FlushPolicy> flushPolicyList, EventUploader eventUploader) {
     this.flushPolicies = flushPolicyList;
+    this.eventUploader = eventUploader;
     writeThread.submit(new WritePoller());
     uploadThread.submit(new UploadPoller());
   }
@@ -42,21 +46,6 @@ class EventSenderEngineImpl implements EventSenderEngine {
   }
 
   class UploadPoller implements Runnable {
-    private final EventUploader uploader = new EventUploader() {
-      @Override
-      public CompletableFuture<Boolean> upload(EventBatch batch) {
-        System.out.println(
-                "Sending batch: "
-                        + batch.events().stream().map(e -> e.name()).collect(Collectors.toList()));
-        return null;
-      }
-
-      @Override
-      public void close() {
-
-      }
-    };
-
     @Override
     public void run() {
       while (!isStopped) {
@@ -67,7 +56,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
             continue;
           }
           for (EventBatch batch : batches) {
-            boolean uploadSuccessful = uploader.upload(batch).get();
+            boolean uploadSuccessful = eventUploader.upload(batch).get();
             if (uploadSuccessful) {
               eventStorage.deleteBatch(batch.id());
             }
@@ -93,7 +82,9 @@ class EventSenderEngineImpl implements EventSenderEngine {
   public void close() {
     // Prevent runnables from waiting on the blocking queues
     isStopped = true;
-    // Trigger the runnables one more time if waiting on blocking queues
+    // Make remaining non-batched events ready for upload
+    eventStorage.createBatch();
+    // Trigger the upload runnable one more time
     uploadQueue.add(new Object());
     writeThread.shutdown();
     uploadThread.shutdown();

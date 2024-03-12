@@ -8,7 +8,7 @@ public final class EventSenderTestUtils {
 
   public EventSenderTestUtils() {}
 
-  static List<FlushPolicy> getFlushPolicies() {
+  static List<FlushPolicy> getFlushPolicies(int minInterval, int minSize) {
     List<FlushPolicy> flushPolicyList = new ArrayList<>();
     FlushPolicy sizeFlushPolicy =
         new FlushPolicy() {
@@ -21,7 +21,7 @@ public final class EventSenderTestUtils {
 
           @Override
           public boolean shouldFlush() {
-            return size.get() >= 5;
+            return size.get() >= minSize;
           }
 
           @Override
@@ -41,7 +41,7 @@ public final class EventSenderTestUtils {
           @Override
           public boolean shouldFlush() {
             long currentTime = System.currentTimeMillis();
-            return currentTime - lastFlush > 20;
+            return currentTime - lastFlush > minInterval;
           }
 
           @Override
