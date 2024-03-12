@@ -78,7 +78,7 @@ public class GrpcEventUploader implements EventUploader {
 
   @Override
   public void close() {
-    managedChannel.shutdownNow();
+    managedChannel.shutdown();
   }
 
   private Map<String, Value> toProtoMap(Map<String, ConfidenceValue> confidenceValueMap) {
