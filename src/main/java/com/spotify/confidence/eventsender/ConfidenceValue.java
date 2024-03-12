@@ -1,4 +1,4 @@
-package com.spotify.confidence;
+package com.spotify.confidence.eventsender;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
