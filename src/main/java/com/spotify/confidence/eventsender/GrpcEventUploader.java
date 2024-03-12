@@ -60,19 +60,13 @@ public class GrpcEventUploader implements EventUploader {
     ListenableFuture<PublishEventsResponse> response =
         stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request);
 
-    PublishEventsResponse publishEventsResponse = null;
     try {
-      publishEventsResponse = response.get();
+      PublishEventsResponse publishEventsResponse = response.get();
       System.out.println("response: " + publishEventsResponse);
-    } catch (InterruptedException e) {
+    } catch (ExecutionException | InterruptedException e) {
       e.printStackTrace();
-      throw new RuntimeException(e);
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      return CompletableFuture.completedFuture(false);
     }
-    System.out.println(publishEventsResponse);
-
     return CompletableFuture.completedFuture(true);
   }
 
