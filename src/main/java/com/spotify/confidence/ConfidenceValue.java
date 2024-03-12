@@ -1,8 +1,6 @@
 package com.spotify.confidence;
 
-
 import com.google.common.collect.ImmutableMap;
-
 import java.util.Map;
 
 // Immutable value hierarchy
