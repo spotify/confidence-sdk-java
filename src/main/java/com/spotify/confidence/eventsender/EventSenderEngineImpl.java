@@ -3,6 +3,7 @@ package com.spotify.confidence.eventsender;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 class EventSenderEngineImpl implements EventSenderEngine {
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
@@ -44,7 +45,9 @@ class EventSenderEngineImpl implements EventSenderEngine {
   class UploadPoller implements Runnable {
     private final EventUploader uploader =
         event -> {
-          System.out.println("Event uploader -> batch -> " + event.events());
+          System.out.println(
+              "Event uploader -> batch -> "
+                  + event.events().stream().map(e -> e.name).collect(Collectors.toList()));
           return CompletableFuture.completedFuture(true);
         };
 
@@ -72,7 +75,17 @@ class EventSenderEngineImpl implements EventSenderEngine {
   }
 
   @Override
-  public void shutdown() {
+  public void send(String name, ConfidenceValue.Struct context) {
+    send(name, ConfidenceValue.of(ImmutableMap.of()), context);
+  }
+
+  @Override
+  public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
+    writeQueue.add(new Event(name, message, context));
+  }
+
+  @Override
+  public void close() {
     eventStorage.batch();
     uploadQueue.add("UPLOAD");
     try {
@@ -82,15 +95,5 @@ class EventSenderEngineImpl implements EventSenderEngine {
       e.printStackTrace();
     }
     isStopped = true;
-  }
-
-  @Override
-  public void send(String name, ConfidenceValue.Struct context) {
-    send(name, ConfidenceValue.of(ImmutableMap.of()), context);
-  }
-
-  @Override
-  public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
-    writeQueue.add(new Event(name, message, context));
   }
 }

@@ -1,9 +1,9 @@
 package com.spotify.confidence.eventsender;
 
 public class Event {
-  private final String name;
-  private final ConfidenceValue.Struct message;
-  private final ConfidenceValue.Struct context;
+  final String name;
+  final ConfidenceValue.Struct message;
+  final ConfidenceValue.Struct context;
 
   public Event(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
     this.name = name;
