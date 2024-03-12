@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 // Immutable value hierarchy
-abstract class ConfidenceValue {
+public abstract class ConfidenceValue {
   static ConfidenceValue.Struct of(ImmutableMap<String, ConfidenceValue> map) {
     return new ConfidenceValue.Struct(map);
   }
@@ -13,7 +13,7 @@ abstract class ConfidenceValue {
     return new ConfidenceValue.String(value);
   }
 
-  static class String extends ConfidenceValue {
+  public static class String extends ConfidenceValue {
     private final java.lang.String value;
 
     public String(java.lang.String value) {
@@ -25,7 +25,7 @@ abstract class ConfidenceValue {
     }
   }
 
-  static class Struct extends ConfidenceValue {
+  public static class Struct extends ConfidenceValue {
     private final Map<String, ConfidenceValue> value;
 
     public Struct(ImmutableMap<String, ConfidenceValue> map) {

@@ -14,9 +14,9 @@ class EventSenderEngineImplTest {
       int size = 0;
       while (size++ < 12) {
         engine.send("event-" + size, ConfidenceValue.of(ImmutableMap.of()));
-        Thread.sleep(10);
       }
-    } catch (InterruptedException | IOException e) {
+      Thread.sleep(1000); // Wait for "close" and the correct uploading of events
+    } catch (IOException | InterruptedException e) {
       throw new RuntimeException(e);
     }
   }
