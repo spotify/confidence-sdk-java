@@ -24,7 +24,6 @@ public class EventSenderEngineImplTest {
           "eventDefinitions/navigate",
           ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
     }
-    Thread.sleep(1000); // Wait for "close" and the correct uploading of events
 
     engine.close(); // Should trigger the upload of an additional incomplete batch
     int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
@@ -49,7 +48,6 @@ public class EventSenderEngineImplTest {
           "eventDefinitions/navigate",
           ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size=" + size))));
     }
-    Thread.sleep(1000); // Wait for "close" and the correct uploading of events
 
     engine.close(); // Should trigger the upload of an additional incomplete batch
     int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;

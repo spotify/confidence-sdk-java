@@ -3,18 +3,20 @@ package com.spotify.confidence.eventsender;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 class EventSenderEngineImpl implements EventSenderEngine {
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
   private final ExecutorService uploadThread = Executors.newSingleThreadExecutor();
   private final BlockingQueue<Event> writeQueue = new LinkedBlockingQueue<>();
-  private final BlockingQueue<Object> uploadQueue = new LinkedBlockingQueue<>();
+  private final BlockingQueue<String> shutdownQueue = new LinkedBlockingQueue<>(1);
+  private final BlockingQueue<String> uploadQueue = new LinkedBlockingQueue<>();
   private final EventSenderStorage eventStorage = new InMemoryStorage();
   private final EventUploader eventUploader;
   private final List<FlushPolicy> flushPolicies;
-
-  private AtomicBoolean isStopped = new AtomicBoolean(false);
+  private static final String UPLOAD_SIG = "UPLOAD";
+  private static final String SHUTDOWN_UPLOAD = "SHUTDOWN_UPLOAD";
+  private static final String SHUTDOWN_WRITE = "SHUTDOWN_WRITE";
+  private boolean isStopped = false;
 
   public EventSenderEngineImpl(List<FlushPolicy> flushPolicyList, EventUploader eventUploader) {
     this.flushPolicies = flushPolicyList;
@@ -26,7 +28,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   class WritePoller implements Runnable {
     @Override
     public void run() {
-      while (!isStopped.get()) {
+      while (true) {
         try {
           Event event = writeQueue.take();
           eventStorage.write(event);
@@ -35,8 +37,13 @@ class EventSenderEngineImpl implements EventSenderEngine {
           if (flushPolicies.stream().anyMatch(FlushPolicy::shouldFlush)) {
             flushPolicies.forEach(FlushPolicy::reset);
             eventStorage.createBatch();
-            uploadQueue.add(new Object());
+            uploadQueue.add(UPLOAD_SIG);
           }
+
+          if (isStopped && writeQueue.isEmpty()) {
+            shutdownQueue.add(SHUTDOWN_WRITE);
+          }
+
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
@@ -47,18 +54,19 @@ class EventSenderEngineImpl implements EventSenderEngine {
   class UploadPoller implements Runnable {
     @Override
     public void run() {
-      while (!isStopped.get()) {
+      while (true) {
         try {
-          uploadQueue.take();
+          final String signal = uploadQueue.take();
           List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
-          if (batches.isEmpty()) {
-            continue;
-          }
           for (EventBatch batch : batches) {
             boolean uploadSuccessful = eventUploader.upload(batch).get();
             if (uploadSuccessful) {
               eventStorage.deleteBatch(batch.id());
             }
+          }
+
+          if (signal.equals(SHUTDOWN_UPLOAD)) {
+            shutdownQueue.add(SHUTDOWN_UPLOAD);
           }
         } catch (InterruptedException | ExecutionException e) {
           throw new RuntimeException(e);
@@ -74,25 +82,26 @@ class EventSenderEngineImpl implements EventSenderEngine {
 
   @Override
   public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
-    writeQueue.add(new Event(name, message, context));
+    if (!isStopped) {
+      writeQueue.add(new Event(name, message, context));
+    }
   }
 
   @Override
   public void close() {
-    // Prevent runnables from waiting on the blocking queues
-    isStopped.set(true);
-    // Make remaining non-batched events ready for upload
-    eventStorage.createBatch();
-    // Trigger the upload runnable one more time
-    uploadQueue.add(new Object());
-    writeThread.shutdown();
-    uploadThread.shutdown();
+    // stop accepting new events
+    isStopped = true;
     try {
-      boolean isUploadTerminated = uploadThread.awaitTermination(10, TimeUnit.SECONDS);
-      System.out.printf(
-          "Termination complete, upload thread correct termination %S%n", isUploadTerminated);
+      // wait until all the events in the queue are written
+      shutdownQueue.take();
+      eventStorage.createBatch();
+      uploadQueue.add(SHUTDOWN_UPLOAD);
+      // wait until all the written events are uploaded
+      shutdownQueue.take();
     } catch (InterruptedException e) {
-      System.out.println(e.getMessage());
+      throw new RuntimeException(e);
     }
+    writeThread.shutdownNow();
+    uploadThread.shutdownNow();
   }
 }
