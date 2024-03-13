@@ -10,4 +10,6 @@ interface EventSenderStorage {
   List<EventBatch> getBatches();
 
   void deleteBatch(String batchId);
+
+  void deleteBatch(String id, List<Event> toBeRetried);
 }

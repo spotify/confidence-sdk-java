@@ -3,6 +3,7 @@ package com.spotify.confidence.eventsender;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 public class InMemoryStorage implements EventSenderStorage {
   private final List<Event> events = new ArrayList<>();
@@ -20,6 +21,11 @@ public class InMemoryStorage implements EventSenderStorage {
           EventBatch batch = new EventBatch(List.copyOf(events));
           events.clear();
           batches.add(batch);
+          System.out.println(
+              "Created batch "
+                  + batch.id()
+                  + " with "
+                  + batch.events.stream().map(e -> e.name()).collect(Collectors.toList()));
         });
   }
 
@@ -30,6 +36,20 @@ public class InMemoryStorage implements EventSenderStorage {
   @Override
   public void deleteBatch(String batchId) {
     runWithSemaphore(() -> batches.removeIf(eventBatch -> eventBatch.id().equals(batchId)));
+  }
+
+  @Override
+  public void deleteBatch(String batchId, List<Event> toBeRetried) {
+    runWithSemaphore(
+        () -> {
+          batches.removeIf(eventBatch -> eventBatch.id().equals(batchId));
+          events.addAll(toBeRetried);
+          System.out.println(
+              "Deleted batch "
+                  + batchId
+                  + ". Adding events: "
+                  + toBeRetried.stream().map(e -> e.name()).collect(Collectors.toList()));
+        });
   }
 
   void runWithSemaphore(Runnable codeBlock) {

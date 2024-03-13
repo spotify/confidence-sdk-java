@@ -3,6 +3,7 @@ package com.spotify.confidence.eventsender;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 class EventSenderEngineImpl implements EventSenderEngine {
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
@@ -58,13 +59,19 @@ class EventSenderEngineImpl implements EventSenderEngine {
         try {
           final String signal = uploadQueue.take();
           List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
+          System.out.println(
+              "New upload loop "
+                  + batches.stream()
+                      .flatMap(e -> e.events().stream().map(v -> v.name()))
+                      .collect(Collectors.toList()));
           for (EventBatch batch : batches) {
-            boolean uploadSuccessful = eventUploader.upload(batch).get();
-            if (uploadSuccessful) {
+            List<Event> toBeRetried = eventUploader.upload(batch).get();
+            if (!toBeRetried.isEmpty()) {
+              eventStorage.deleteBatch(batch.id(), toBeRetried);
+            } else {
               eventStorage.deleteBatch(batch.id());
             }
           }
-
           if (signal.equals(SHUTDOWN_UPLOAD)) {
             shutdownQueue.add(SHUTDOWN_UPLOAD);
           }
@@ -89,6 +96,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
 
   @Override
   public void close() {
+    System.out.println("Closing...");
     // stop accepting new events
     final ExecutorService thread = Executors.newSingleThreadExecutor();
     thread.submit(
