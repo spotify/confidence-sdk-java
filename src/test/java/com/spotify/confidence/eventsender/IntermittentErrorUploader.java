@@ -1,9 +1,9 @@
 package com.spotify.confidence.eventsender;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class IntermittentErrorUploader implements EventUploader {
   private final List<Integer> failAtUploadWithIndex;
@@ -16,6 +16,9 @@ public class IntermittentErrorUploader implements EventUploader {
 
   @Override
   public CompletableFuture<Boolean> upload(EventBatch batch) {
+    System.out.println(
+        "Uploading batch: "
+            + batch.events().stream().map(Event::name).collect(Collectors.toList()));
     uploadCount++;
     uploadCalls.add(batch.id());
     if (failAtUploadWithIndex.contains(uploadCount)) {
@@ -25,7 +28,7 @@ public class IntermittentErrorUploader implements EventUploader {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     uploadCount = 0;
     uploadCalls.clear();
     // no-op

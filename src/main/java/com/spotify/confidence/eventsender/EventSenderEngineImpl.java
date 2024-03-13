@@ -14,7 +14,8 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private final EventUploader eventUploader;
   private final List<FlushPolicy> flushPolicies;
 
-  private AtomicBoolean isStopped = new AtomicBoolean(false);
+  private final AtomicBoolean isStopped = new AtomicBoolean(false);
+  private final AtomicBoolean writerStopped = new AtomicBoolean(false);
 
   public EventSenderEngineImpl(List<FlushPolicy> flushPolicyList, EventUploader eventUploader) {
     this.flushPolicies = flushPolicyList;
@@ -26,9 +27,12 @@ class EventSenderEngineImpl implements EventSenderEngine {
   class WritePoller implements Runnable {
     @Override
     public void run() {
-      while (!isStopped.get()) {
+      while (!isStopped.get() || (isStopped.get() && !writeQueue.isEmpty())) {
         try {
-          Event event = writeQueue.take();
+          Event event = writeQueue.poll(5, TimeUnit.SECONDS);
+          if (event == null) {
+            continue;
+          }
           eventStorage.write(event);
           flushPolicies.forEach(FlushPolicy::hit);
 
@@ -41,13 +45,17 @@ class EventSenderEngineImpl implements EventSenderEngine {
           throw new RuntimeException(e);
         }
       }
+      // Make remaining events ready for upload, then trigger a new upload signal
+      eventStorage.createBatch();
+      uploadQueue.add(new Object());
+      writerStopped.set(true);
     }
   }
 
   class UploadPoller implements Runnable {
     @Override
     public void run() {
-      while (!isStopped.get()) {
+      while (!writerStopped.get() || (writerStopped.get() && !uploadQueue.isEmpty())) {
         try {
           uploadQueue.take();
           List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
@@ -74,23 +82,24 @@ class EventSenderEngineImpl implements EventSenderEngine {
 
   @Override
   public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
-    writeQueue.add(new Event(name, message, context));
+    if (!isStopped.get()) {
+      writeQueue.add(new Event(name, message, context));
+    } else {
+      System.out.println("The EventSender is closed");
+    }
   }
 
   @Override
   public void close() {
-    // Prevent runnables from waiting on the blocking queues
     isStopped.set(true);
-    // Make remaining non-batched events ready for upload
-    eventStorage.createBatch();
-    // Trigger the upload runnable one more time
-    uploadQueue.add(new Object());
     writeThread.shutdown();
     uploadThread.shutdown();
     try {
       boolean isUploadTerminated = uploadThread.awaitTermination(10, TimeUnit.SECONDS);
+      boolean isWriteTerminated = writeThread.awaitTermination(10, TimeUnit.SECONDS);
       System.out.printf(
-          "Termination complete, upload thread correct termination %S%n", isUploadTerminated);
+          "Termination complete. Writes completed: %S, uploads completed: %S%n",
+          isWriteTerminated, isUploadTerminated);
     } catch (InterruptedException e) {
       System.out.println(e.getMessage());
     }

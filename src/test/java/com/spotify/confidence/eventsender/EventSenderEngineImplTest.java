@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class EventSenderEngineImplTest {
 
   @Test
-  public void testEngineUploads() {
+  public void testEngineUploads() throws InterruptedException {
     IntermittentErrorUploader alwaysSucceedUploader = new IntermittentErrorUploader(List.of());
     int batchSize = 6;
     int numEvents = 14;
@@ -24,17 +24,16 @@ public class EventSenderEngineImplTest {
       int size = 0;
       while (size++ < numEvents) {
         engine.send(
-            "eventDefinitions/navigate",
+            "eventDefinitions/navigate" + size,
             ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
       }
-      Thread.sleep(1000); // Wait for "close" and the correct uploading of events
-
-      engine.close(); // Should trigger the upload of an additional incomplete batch
+      engine
+          .close(); // Early close to make sure all events are processed and flushed before
+                    // assertions
       int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
-
       assertThat(alwaysSucceedUploader.uploadCalls.size())
           .isEqualTo((numEvents / batchSize + additionalBatch));
-    } catch (IOException | InterruptedException e) {
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
@@ -54,8 +53,6 @@ public class EventSenderEngineImplTest {
             "eventDefinitions/navigate",
             ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size=" + size))));
       }
-      Thread.sleep(1000); // Wait for "close" and the correct uploading of events
-
       engine.close(); // Should trigger the upload of an additional incomplete batch
       int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
 
@@ -65,7 +62,7 @@ public class EventSenderEngineImplTest {
       // Verify we had the correct number of unique calls to the uploader
       assertThat(Set.copyOf(fakeUploader.uploadCalls).size())
           .isEqualTo((numEvents / batchSize + additionalBatch));
-    } catch (IOException | InterruptedException e) {
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
