@@ -52,6 +52,7 @@ public class GrpcEventUploader implements EventUploader {
                                 .setEventTime(Timestamp.newBuilder().setSeconds(event.emitTime()))
                                 .setPayload(
                                     Struct.newBuilder()
+                                        .putAllFields(toProtoMap(event.context().value()))
                                         .putAllFields(toProtoMap(event.message().value()))
                                         .build())
                                 .build())
@@ -61,8 +62,7 @@ public class GrpcEventUploader implements EventUploader {
         stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request);
 
     try {
-      PublishEventsResponse publishEventsResponse = response.get();
-      System.out.println("response: " + publishEventsResponse);
+      response.get();
     } catch (ExecutionException | InterruptedException e) {
       e.printStackTrace();
       return CompletableFuture.completedFuture(false);
