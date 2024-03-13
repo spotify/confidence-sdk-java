@@ -1,6 +1,6 @@
 package com.spotify.confidence.eventsender;
 
-class Event {
+public class Event {
   private final String name;
   private final Value.Struct message;
   private final Value.Struct context;
