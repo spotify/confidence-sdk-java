@@ -1,6 +1,5 @@
 package com.spotify.confidence.eventsender;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.concurrent.*;
@@ -9,7 +8,7 @@ import java.util.stream.Collectors;
 class EventSenderEngineImpl implements EventSenderEngine {
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
   private final ExecutorService uploadThread = Executors.newSingleThreadExecutor();
-  private final BlockingQueue<Optional<Event>> writeQueue = new LinkedBlockingQueue<>();
+  private final BlockingQueue<Event> writeQueue = new LinkedBlockingQueue<>();
   private final BlockingQueue<String> uploadQueue = new LinkedBlockingQueue<>();
   private final BlockingQueue<String> shutdownQueue = new LinkedBlockingQueue<>(1);
   private final EventSenderStorage eventStorage = new InMemoryStorage();
@@ -32,17 +31,14 @@ class EventSenderEngineImpl implements EventSenderEngine {
     public void run() {
       while (true) {
         try {
-          Optional<Event> writeMessage = writeQueue.take();
-          if(writeMessage.isPresent()) {
-            Event event = writeMessage.get();
-            eventStorage.write(event);
-            flushPolicies.forEach(FlushPolicy::hit);
+          Event event = writeQueue.take();
+          eventStorage.write(event);
+          flushPolicies.forEach(FlushPolicy::hit);
 
-            if (flushPolicies.stream().anyMatch(FlushPolicy::shouldFlush)) {
-              flushPolicies.forEach(FlushPolicy::reset);
-              eventStorage.createBatch();
-              uploadQueue.add(UPLOAD_SIG);
-            }
+          if (flushPolicies.stream().anyMatch(FlushPolicy::shouldFlush)) {
+            flushPolicies.forEach(FlushPolicy::reset);
+            eventStorage.createBatch();
+            uploadQueue.add(UPLOAD_SIG);
           }
 
           if (isStopped && writeQueue.isEmpty()) {
@@ -94,7 +90,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   @Override
   public void send(String name, Value.Struct message, Value.Struct context) {
     if (!isStopped) {
-      writeQueue.add(Optional.of(new Event(name, message, context)));
+      writeQueue.add(new Event(name, message, context));
     }
   }
 
@@ -107,8 +103,10 @@ class EventSenderEngineImpl implements EventSenderEngine {
         () -> {
           try {
             // wait until all the events in the queue are written
-            sendFlushEvent();
-            shutdownQueue.take();
+            // if write queue is not empty, wait for the events to be written
+            if (!writeQueue.isEmpty()) {
+              shutdownQueue.take();
+            }
             // create the final batch
             eventStorage.createBatch();
             uploadQueue.add(SHUTDOWN_UPLOAD);
@@ -129,9 +127,5 @@ class EventSenderEngineImpl implements EventSenderEngine {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private void sendFlushEvent() {
-    writeQueue.add(Optional.absent());
   }
 }
