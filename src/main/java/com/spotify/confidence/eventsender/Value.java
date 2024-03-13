@@ -46,20 +46,28 @@ abstract class Value {
     return false;
   }
 
+  public boolean isList() {
+    return false;
+  }
+
   public Struct asStruct() {
     throw new IllegalStateException("Not a StructValue");
   }
 
   public String asString() {
-    throw new IllegalStateException("Not a StructValue");
+    throw new IllegalStateException("Not a StringValue");
   }
 
   public double asNumber() {
-    throw new IllegalStateException("Not a StructValue");
+    throw new IllegalStateException("Not a NumberValue");
   }
 
   public boolean asBoolean() {
-    throw new IllegalStateException("Not a StructValue");
+    throw new IllegalStateException("Not a BooleanValue");
+  }
+
+  public java.util.List<Value> asList() {
+    throw new IllegalStateException("Not a ListValue");
   }
 
   public static Value of(double value) {
@@ -72,6 +80,10 @@ abstract class Value {
 
   public static Value of(boolean value) {
     return new BooleanValue(value);
+  }
+
+  public static List of(java.util.List<Value> values) {
+    return new List(values);
   }
 
   public static Struct of(Map<String, Value> values) {
@@ -124,6 +136,11 @@ abstract class Value {
     com.google.protobuf.Value toProto() {
       return com.google.protobuf.Value.newBuilder().setStringValue(value).build();
     }
+
+    @Override
+    public String toString() {
+      return value;
+    }
   }
 
   public static class BooleanValue extends Value {
@@ -141,6 +158,11 @@ abstract class Value {
     @Override
     public boolean asBoolean() {
       return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
     }
 
     @Override
@@ -168,6 +190,11 @@ abstract class Value {
     }
 
     @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @Override
     com.google.protobuf.Value toProto() {
       return com.google.protobuf.Value.newBuilder().setNumberValue(value).build();
     }
@@ -178,6 +205,21 @@ abstract class Value {
 
     public List(java.util.List<Value> values) {
       this.values = ImmutableList.copyOf(values);
+    }
+
+    @Override
+    public boolean isList() {
+      return true;
+    }
+
+    @Override
+    public java.util.List<Value> asList() {
+      return ImmutableList.copyOf(values);
+    }
+
+    @Override
+    public String toString() {
+      return "[" + values + "]";
     }
 
     @Override
@@ -201,6 +243,16 @@ abstract class Value {
 
     protected Struct(Map<String, Value> values) {
       this.values = ImmutableMap.copyOf(values);
+    }
+
+    @Override
+    public boolean isStruct() {
+      return true;
+    }
+
+    @Override
+    public Struct asStruct() {
+      return new Struct(values);
     }
 
     public Value get(String... path) {
@@ -273,5 +325,21 @@ abstract class Value {
         return new Struct(builder.build());
       }
     }
+  }
+
+  @Override
+  public int hashCode() {
+    return toProto().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (obj.getClass() != this.getClass()) {
+      return false;
+    }
+    return toProto().equals(((Value) obj).toProto());
   }
 }
