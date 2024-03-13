@@ -27,9 +27,8 @@ public class EventSenderEngineImplTest {
             "eventDefinitions/navigate" + size,
             ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
       }
-      engine
-          .close(); // Early close to make sure all events are processed and flushed before
-                    // assertions
+      engine.close(); // Early close to make sure all events are processed and flushed before
+      // assertions
       int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
       assertThat(alwaysSucceedUploader.uploadCalls.size())
           .isEqualTo((numEvents / batchSize + additionalBatch));
