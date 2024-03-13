@@ -3,6 +3,7 @@ package com.spotify.confidence.eventsender;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class EventSenderEngineImpl implements EventSenderEngine {
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
@@ -13,7 +14,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private final EventUploader eventUploader;
   private final List<FlushPolicy> flushPolicies;
 
-  private boolean isStopped = false;
+  private AtomicBoolean isStopped = new AtomicBoolean(false);
 
   public EventSenderEngineImpl(List<FlushPolicy> flushPolicyList, EventUploader eventUploader) {
     this.flushPolicies = flushPolicyList;
@@ -25,7 +26,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   class WritePoller implements Runnable {
     @Override
     public void run() {
-      while (!isStopped) {
+      while (!isStopped.get()) {
         try {
           Event event = writeQueue.take();
           eventStorage.write(event);
@@ -46,7 +47,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   class UploadPoller implements Runnable {
     @Override
     public void run() {
-      while (!isStopped) {
+      while (!isStopped.get()) {
         try {
           uploadQueue.take();
           List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
@@ -79,7 +80,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   @Override
   public void close() {
     // Prevent runnables from waiting on the blocking queues
-    isStopped = true;
+    isStopped.set(true);
     // Make remaining non-batched events ready for upload
     eventStorage.createBatch();
     // Trigger the upload runnable one more time
