@@ -3,7 +3,6 @@ package com.spotify.confidence.eventsender;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.protobuf.Value;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
 import com.spotify.confidence.events.v1.PublishEventsRequest;
 import com.spotify.confidence.events.v1.PublishEventsResponse;
@@ -88,9 +87,23 @@ class GrpcEventUploaderTest {
     com.spotify.confidence.events.v1.Event protoEvent = request.getEvents(0);
     assertThat(protoEvent.getEventDefinition()).isEqualTo("event1");
 
-    Map<String, Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
-    assertThat(fieldsMap.get("messageKey").getStringValue()).isEqualTo("value_1");
-    assertThat(fieldsMap.get("contextKey").getStringValue()).isEqualTo("value_1");
+    Map<String, com.google.protobuf.Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
+    assertThat(
+            fieldsMap
+                .get("message")
+                .getStructValue()
+                .getFieldsMap()
+                .get("messageKey")
+                .getStringValue())
+        .isEqualTo("value_1");
+    assertThat(
+            fieldsMap
+                .get("context")
+                .getStructValue()
+                .getFieldsMap()
+                .get("contextKey")
+                .getStringValue())
+        .isEqualTo("value_1");
   }
 
   @Test
@@ -112,9 +125,23 @@ class GrpcEventUploaderTest {
       com.spotify.confidence.events.v1.Event protoEvent = request.getEvents(i);
       assertThat(protoEvent.getEventDefinition()).isEqualTo("event" + (i + 1));
 
-      Map<String, Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
-      assertThat(fieldsMap.get("messageKey").getStringValue()).isEqualTo("value_m" + (i + 1));
-      assertThat(fieldsMap.get("contextKey").getStringValue()).isEqualTo("value_c" + (i + 1));
+      Map<String, com.google.protobuf.Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
+      assertThat(
+              fieldsMap
+                  .get("message")
+                  .getStructValue()
+                  .getFieldsMap()
+                  .get("messageKey")
+                  .getStringValue())
+          .isEqualTo("value_m" + (i + 1));
+      assertThat(
+              fieldsMap
+                  .get("context")
+                  .getStructValue()
+                  .getFieldsMap()
+                  .get("contextKey")
+                  .getStringValue())
+          .isEqualTo("value_c" + (i + 1));
     }
   }
 
@@ -129,31 +156,12 @@ class GrpcEventUploaderTest {
     assertThat(result).isFalse();
   }
 
-  @Test
-  public void testMappingMessageTakesPrecedence() {
-    ConfidenceValue.Struct message = contextStruct("keep");
-    ConfidenceValue.Struct context = contextStruct("discard");
-    // message and context now have the same key, but message should take precedence
-    EventBatch batch = new EventBatch(List.of(new Event("event1", message, context)));
-    uploader.upload(batch);
-    assertThat(fakedEventsService.requests).hasSize(1);
-
-    PublishEventsRequest request = fakedEventsService.requests.get(0);
-    assertThat(request.getEventsList()).hasSize(1);
-
-    com.spotify.confidence.events.v1.Event protoEvent = request.getEvents(0);
-    assertThat(protoEvent.getEventDefinition()).isEqualTo("event1");
-
-    Map<String, Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
-    assertThat(fieldsMap.get("contextKey").getStringValue()).isEqualTo("value_keep");
+  private Value.Struct contextStruct(String s) {
+    return Value.of(ImmutableMap.of("contextKey", Value.of("value_" + s)));
   }
 
-  private ConfidenceValue.Struct contextStruct(String s) {
-    return ConfidenceValue.of(ImmutableMap.of("contextKey", ConfidenceValue.of("value_" + s)));
-  }
-
-  private ConfidenceValue.Struct messageStruct(String s) {
-    return ConfidenceValue.of(ImmutableMap.of("messageKey", ConfidenceValue.of("value_" + s)));
+  private Value.Struct messageStruct(String s) {
+    return Value.of(ImmutableMap.of("messageKey", Value.of("value_" + s)));
   }
 
   private static class FakedEventsService extends EventsServiceGrpc.EventsServiceImplBase {

@@ -76,12 +76,12 @@ class EventSenderEngineImpl implements EventSenderEngine {
   }
 
   @Override
-  public void send(String name, ConfidenceValue.Struct context) {
-    send(name, ConfidenceValue.of(ImmutableMap.of()), context);
+  public void send(String name, Value.Struct context) {
+    send(name, Value.of(ImmutableMap.of()), context);
   }
 
   @Override
-  public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
+  public void send(String name, Value.Struct message, Value.Struct context) {
     if (!isStopped) {
       writeQueue.add(new Event(name, message, context));
     }

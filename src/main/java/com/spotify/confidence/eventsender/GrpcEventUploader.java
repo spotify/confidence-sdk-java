@@ -3,15 +3,12 @@ package com.spotify.confidence.eventsender;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Timestamp;
-import com.google.protobuf.Value;
 import com.spotify.confidence.events.v1.Event;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
 import com.spotify.confidence.events.v1.PublishEventsRequest;
 import com.spotify.confidence.events.v1.PublishEventsResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -64,9 +61,8 @@ public class GrpcEventUploader implements EventUploader {
                                 .setEventTime(Timestamp.newBuilder().setSeconds(event.emitTime()))
                                 .setPayload(
                                     Struct.newBuilder()
-                                        .putAllFields(toProtoMap(event.context().value()))
-                                        .putAllFields(toProtoMap(event.message().value()))
-                                        .build())
+                                        .putFields("message", event.message().toProto())
+                                        .putFields("context", event.context().toProto()))
                                 .build())
                     .collect(Collectors.toList()))
             .build();
@@ -85,25 +81,5 @@ public class GrpcEventUploader implements EventUploader {
   @Override
   public void close() {
     managedChannel.shutdown();
-  }
-
-  private Map<String, Value> toProtoMap(Map<String, ConfidenceValue> confidenceValueMap) {
-    Map<String, Value> result = new HashMap<>();
-    confidenceValueMap.forEach((key, value) -> result.put(key, toValue(value)));
-    return result;
-  }
-
-  private Value toValue(ConfidenceValue value) {
-    if (value instanceof ConfidenceValue.String) {
-      return Value.newBuilder().setStringValue(((ConfidenceValue.String) value).value()).build();
-    } else if (value instanceof ConfidenceValue.Struct) {
-      return Value.newBuilder()
-          .setStructValue(
-              Struct.newBuilder()
-                  .putAllFields(toProtoMap(((ConfidenceValue.Struct) value).value()))
-                  .build())
-          .build();
-    }
-    throw new IllegalArgumentException("Unsupported type: " + value.getClass());
   }
 }

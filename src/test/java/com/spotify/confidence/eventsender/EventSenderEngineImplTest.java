@@ -21,9 +21,7 @@ public class EventSenderEngineImplTest {
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader);
     int size = 0;
     while (size++ < numEvents) {
-      engine.send(
-          "eventDefinitions/navigate",
-          ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
+      engine.send("eventDefinitions/navigate", Value.of(ImmutableMap.of("key", Value.of("size"))));
     }
 
     engine.close(); // Should trigger the upload of an additional incomplete batch
@@ -46,8 +44,7 @@ public class EventSenderEngineImplTest {
     int size = 0;
     while (size++ < numEvents) {
       engine.send(
-          "eventDefinitions/navigate",
-          ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size=" + size))));
+          "eventDefinitions/navigate", Value.of(ImmutableMap.of("key", Value.of("size=" + size))));
     }
 
     engine.close(); // Should trigger the upload of an additional incomplete batch
