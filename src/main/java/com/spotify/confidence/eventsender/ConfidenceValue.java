@@ -13,14 +13,14 @@ abstract class ConfidenceValue {
     return new ConfidenceValue.String(value);
   }
 
-  public static ConfidenceValue.Struct empty() {
+  public static ConfidenceValue.Struct emptyStruct() {
     return new ConfidenceValue.Struct(ImmutableMap.of());
   }
 
   static class String extends ConfidenceValue {
     private final java.lang.String value;
 
-    public String(java.lang.String value) {
+    private String(java.lang.String value) {
       this.value = value;
     }
 
@@ -32,7 +32,7 @@ abstract class ConfidenceValue {
   static class Struct extends ConfidenceValue {
     private final Map<java.lang.String, ConfidenceValue> value;
 
-    public Struct(ImmutableMap<java.lang.String, ConfidenceValue> map) {
+    private Struct(ImmutableMap<java.lang.String, ConfidenceValue> map) {
       this.value = map;
     }
 

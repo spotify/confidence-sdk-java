@@ -12,11 +12,12 @@ import org.junit.jupiter.api.Test;
 public class EventSenderEngineImplTest {
 
   @Test
-  public void testEngineUploads() throws InterruptedException, IOException {
-    IntermittentErrorUploader alwaysSucceedUploader = new IntermittentErrorUploader(List.of());
-    int batchSize = 6;
-    int numEvents = 14;
-    EventSenderEngine engine =
+  public void testEngineUploads() throws IOException {
+    final IntermittentErrorUploader alwaysSucceedUploader =
+        new IntermittentErrorUploader(List.of());
+    final int batchSize = 6;
+    final int numEvents = 14;
+    final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader);
     int size = 0;
     while (size++ < numEvents) {
@@ -26,21 +27,21 @@ public class EventSenderEngineImplTest {
     }
 
     engine.close(); // Should trigger the upload of an additional incomplete batch
-    int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
+    final int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
 
     assertThat(alwaysSucceedUploader.uploadCalls.size())
         .isEqualTo((numEvents / batchSize + additionalBatch));
   }
 
   @Test
-  public void testEngineUploadsWhenIntermittentErrorWillRetry()
-      throws InterruptedException, IOException {
-    int batchSize = 3;
-    int numEvents = 14;
+  public void testEngineUploadsWhenIntermittentErrorWillRetry() throws IOException {
+    final int batchSize = 3;
+    final int numEvents = 14;
     // This will fail at the 2nd and 5th upload
-    List<Integer> failAtUploadWithIndex = List.of(2, 5);
-    IntermittentErrorUploader fakeUploader = new IntermittentErrorUploader(failAtUploadWithIndex);
-    EventSenderEngine engine =
+    final List<Integer> failAtUploadWithIndex = List.of(2, 5);
+    final IntermittentErrorUploader fakeUploader =
+        new IntermittentErrorUploader(failAtUploadWithIndex);
+    final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), fakeUploader);
     int size = 0;
     while (size++ < numEvents) {
@@ -50,7 +51,7 @@ public class EventSenderEngineImplTest {
     }
 
     engine.close(); // Should trigger the upload of an additional incomplete batch
-    int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
+    final int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
 
     // Verify we had the correct number of calls to the uploader (including retries)
     assertThat(fakeUploader.uploadCalls.size())

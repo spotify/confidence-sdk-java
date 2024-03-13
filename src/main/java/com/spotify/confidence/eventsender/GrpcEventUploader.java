@@ -22,19 +22,31 @@ public class GrpcEventUploader implements EventUploader {
   private final String clientSecret;
   private final ManagedChannel managedChannel;
   private final EventsServiceGrpc.EventsServiceFutureStub stub;
+  private final Clock clock;
 
   public GrpcEventUploader(String clientSecret) {
-    this(clientSecret, ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
+    this(
+        clientSecret,
+        new SystemClock(),
+        ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
+  }
+
+  public GrpcEventUploader(String clientSecret, Clock clock) {
+    this(
+        clientSecret,
+        clock,
+        ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
   }
 
   public GrpcEventUploader(String clientSecret, String host, int port) {
-    this(clientSecret, ManagedChannelBuilder.forAddress(host, port).build());
+    this(clientSecret, new SystemClock(), ManagedChannelBuilder.forAddress(host, port).build());
   }
 
-  public GrpcEventUploader(String clientSecret, ManagedChannel managedChannel) {
+  public GrpcEventUploader(String clientSecret, Clock clock, ManagedChannel managedChannel) {
     this.clientSecret = clientSecret;
     this.managedChannel = managedChannel;
     this.stub = EventsServiceGrpc.newFutureStub(managedChannel);
+    this.clock = clock;
   }
 
   @Override
@@ -42,7 +54,7 @@ public class GrpcEventUploader implements EventUploader {
     PublishEventsRequest request =
         PublishEventsRequest.newBuilder()
             .setClientSecret(clientSecret)
-            .setSendTime(Timestamp.newBuilder().setSeconds(System.currentTimeMillis() / 1000))
+            .setSendTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()))
             .addAllEvents(
                 batch.events().stream()
                     .map(
