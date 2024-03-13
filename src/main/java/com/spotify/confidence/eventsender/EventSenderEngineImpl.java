@@ -8,8 +8,8 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
   private final ExecutorService uploadThread = Executors.newSingleThreadExecutor();
   private final BlockingQueue<Event> writeQueue = new LinkedBlockingQueue<>();
-  private final BlockingQueue<String> shutdownQueue = new LinkedBlockingQueue<>(1);
   private final BlockingQueue<String> uploadQueue = new LinkedBlockingQueue<>();
+  private final BlockingQueue<String> shutdownQueue = new LinkedBlockingQueue<>(1);
   private final EventSenderStorage eventStorage = new InMemoryStorage();
   private final EventUploader eventUploader;
   private final List<FlushPolicy> flushPolicies;
@@ -90,18 +90,30 @@ class EventSenderEngineImpl implements EventSenderEngine {
   @Override
   public void close() {
     // stop accepting new events
+    final ExecutorService thread = Executors.newSingleThreadExecutor();
+    thread.submit(
+        () -> {
+          try {
+            // wait until all the events in the queue are written
+            shutdownQueue.take();
+            eventStorage.createBatch();
+            uploadQueue.add(SHUTDOWN_UPLOAD);
+            // wait until all the written events are uploaded
+            shutdownQueue.take();
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+          writeThread.shutdownNow();
+          uploadThread.shutdownNow();
+        });
     isStopped = true;
+
+    thread.shutdown();
+
     try {
-      // wait until all the events in the queue are written
-      shutdownQueue.take();
-      eventStorage.createBatch();
-      uploadQueue.add(SHUTDOWN_UPLOAD);
-      // wait until all the written events are uploaded
-      shutdownQueue.take();
+      thread.awaitTermination(20, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-    writeThread.shutdownNow();
-    uploadThread.shutdownNow();
   }
 }
