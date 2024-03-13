@@ -32,6 +32,17 @@ public class EventSenderEngineImplTest {
   }
 
   @Test
+  public void testEngineCloseSuccessfullyWithoutEventsQueued() throws IOException {
+    final IntermittentErrorUploader alwaysSucceedUploader =
+        new IntermittentErrorUploader(List.of());
+    final int batchSize = 6;
+    final EventSenderEngine engine =
+        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader);
+
+    engine.close(); // Should trigger the upload of an additional incomplete batch
+  }
+
+  @Test
   public void testEngineUploadsWhenIntermittentErrorWillRetry()
       throws IOException, InterruptedException {
     int batchSize = 3;
