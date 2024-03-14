@@ -31,7 +31,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
     public void run() {
       while (true) {
         try {
-          Event event = writeQueue.take();
+          final Event event = writeQueue.take();
           eventStorage.write(event);
           flushPolicies.forEach(FlushPolicy::hit);
 
@@ -58,14 +58,14 @@ class EventSenderEngineImpl implements EventSenderEngine {
       while (true) {
         try {
           final String signal = uploadQueue.take();
-          List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
+          final List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
           System.out.println(
               "New upload loop "
                   + batches.stream()
                       .flatMap(e -> e.events().stream().map(v -> v.name()))
                       .collect(Collectors.toList()));
           for (EventBatch batch : batches) {
-            List<Event> toBeRetried = eventUploader.upload(batch).get();
+            final List<Event> toBeRetried = eventUploader.upload(batch).get();
             if (!toBeRetried.isEmpty()) {
               eventStorage.deleteBatch(batch.id(), toBeRetried);
             } else {

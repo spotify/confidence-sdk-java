@@ -91,7 +91,7 @@ abstract class Value {
   }
 
   static Value fromProto(com.google.protobuf.Value protoValue) {
-    com.google.protobuf.Value.KindCase kind = protoValue.getKindCase();
+    final com.google.protobuf.Value.KindCase kind = protoValue.getKindCase();
     switch (kind) {
       case BOOL_VALUE:
         return Value.of(protoValue.getBoolValue());
@@ -104,7 +104,7 @@ abstract class Value {
       case STRUCT_VALUE:
         return Struct.fromProto(protoValue.getStructValue());
       case LIST_VALUE:
-        java.util.List<Value> list =
+        final java.util.List<Value> list =
             protoValue.getListValue().getValuesList().stream()
                 .map(Value::fromProto)
                 .collect(Collectors.toList());
@@ -224,7 +224,7 @@ abstract class Value {
 
     @Override
     com.google.protobuf.Value toProto() {
-      ListValue value =
+      final ListValue value =
           ListValue.newBuilder()
               .addAllValues(values.stream().map(Value::toProto).collect(Collectors.toList()))
               .build();

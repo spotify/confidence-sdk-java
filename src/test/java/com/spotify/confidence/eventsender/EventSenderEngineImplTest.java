@@ -45,8 +45,8 @@ public class EventSenderEngineImplTest {
   @Test
   public void testEngineUploadsWhenIntermittentErrorWillRetry()
       throws IOException, InterruptedException {
-    int batchSize = 3;
-    int numEvents = 14;
+    final int batchSize = 3;
+    final int numEvents = 14;
     // This will fail at the 2nd and 5th upload
     final List<Integer> failAtUploadWithIndex = List.of(2, 5);
     final IntermittentErrorUploader fakeUploader =

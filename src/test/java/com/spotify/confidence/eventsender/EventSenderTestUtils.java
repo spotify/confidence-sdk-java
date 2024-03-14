@@ -9,8 +9,8 @@ public final class EventSenderTestUtils {
   public EventSenderTestUtils() {}
 
   static List<FlushPolicy> getFlushPolicies(int minInterval, int minSize) {
-    List<FlushPolicy> flushPolicyList = new ArrayList<>();
-    FlushPolicy sizeFlushPolicy =
+    final List<FlushPolicy> flushPolicyList = new ArrayList<>();
+    final FlushPolicy sizeFlushPolicy =
         new FlushPolicy() {
           final AtomicInteger size = new AtomicInteger(0);
 
@@ -30,7 +30,7 @@ public final class EventSenderTestUtils {
           }
         };
 
-    FlushPolicy intervalFlushPolicy =
+    final FlushPolicy intervalFlushPolicy =
         new FlushPolicy() {
 
           long lastFlush = System.currentTimeMillis();
@@ -40,7 +40,7 @@ public final class EventSenderTestUtils {
 
           @Override
           public boolean shouldFlush() {
-            long currentTime = System.currentTimeMillis();
+            final long currentTime = System.currentTimeMillis();
             return currentTime - lastFlush > minInterval;
           }
 

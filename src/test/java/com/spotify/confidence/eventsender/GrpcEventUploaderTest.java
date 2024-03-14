@@ -31,7 +31,7 @@ class GrpcEventUploaderTest {
   @BeforeEach
   public void setUp() throws IOException {
     // Generate a unique in-process server name
-    String serverName = InProcessServerBuilder.generateName();
+    final String serverName = InProcessServerBuilder.generateName();
 
     // Create a service implementation
     fakedEventsService = new FakedEventsService();
@@ -62,32 +62,32 @@ class GrpcEventUploaderTest {
 
   @Test
   public void testSendTime() {
-    EventBatch batch =
+    final EventBatch batch =
         new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
     uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
 
-    PublishEventsRequest request = fakedEventsService.requests.get(0);
+    final PublishEventsRequest request = fakedEventsService.requests.get(0);
     assertThat(request.getSendTime().getSeconds()).isEqualTo(1337);
   }
 
   @Test
   public void testMapsSingleEventBatchToProtobuf() throws ExecutionException, InterruptedException {
-    EventBatch batch =
+    final EventBatch batch =
         new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
-    CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
-    boolean result = completableFuture.get();
+    final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
+    final boolean result = completableFuture.get();
     assertThat(result).isTrue();
 
     assertThat(fakedEventsService.requests).hasSize(1);
 
-    PublishEventsRequest request = fakedEventsService.requests.get(0);
+    final PublishEventsRequest request = fakedEventsService.requests.get(0);
     assertThat(request.getEventsList()).hasSize(1);
 
-    com.spotify.confidence.events.v1.Event protoEvent = request.getEvents(0);
+    final com.spotify.confidence.events.v1.Event protoEvent = request.getEvents(0);
     assertThat(protoEvent.getEventDefinition()).isEqualTo("event1");
 
-    Map<String, com.google.protobuf.Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
+    final Map<String, com.google.protobuf.Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
     assertThat(
             fieldsMap
                 .get("message")
@@ -108,7 +108,7 @@ class GrpcEventUploaderTest {
 
   @Test
   public void testMapsMultiEventBatchToProtobuf() {
-    EventBatch batch =
+    final EventBatch batch =
         new EventBatch(
             List.of(
                 new Event("event1", messageStruct("m1"), contextStruct("c1")),
@@ -118,14 +118,15 @@ class GrpcEventUploaderTest {
     uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
 
-    PublishEventsRequest request = fakedEventsService.requests.get(0);
+    final PublishEventsRequest request = fakedEventsService.requests.get(0);
     assertThat(request.getEventsList()).hasSize(4);
 
     for (int i = 0; i < batch.events().size(); i++) {
-      com.spotify.confidence.events.v1.Event protoEvent = request.getEvents(i);
+      final com.spotify.confidence.events.v1.Event protoEvent = request.getEvents(i);
       assertThat(protoEvent.getEventDefinition()).isEqualTo("event" + (i + 1));
 
-      Map<String, com.google.protobuf.Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
+      final Map<String, com.google.protobuf.Value> fieldsMap =
+          protoEvent.getPayload().getFieldsMap();
       assertThat(
               fieldsMap
                   .get("message")
@@ -148,11 +149,11 @@ class GrpcEventUploaderTest {
   @Test
   public void testServiceThrows() throws ExecutionException, InterruptedException {
     fakedEventsService.shouldError = true;
-    EventBatch batch =
+    final EventBatch batch =
         new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
-    CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
+    final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
-    boolean result = completableFuture.get();
+    final boolean result = completableFuture.get();
     assertThat(result).isFalse();
   }
 
@@ -166,7 +167,7 @@ class GrpcEventUploaderTest {
 
   private static class FakedEventsService extends EventsServiceGrpc.EventsServiceImplBase {
     public boolean shouldError;
-    List<PublishEventsRequest> requests = new ArrayList<>();
+    final List<PublishEventsRequest> requests = new ArrayList<>();
 
     public void clear() {
       requests.clear();

@@ -52,7 +52,7 @@ public class GrpcEventUploader implements EventUploader {
   @Override
   public CompletableFuture<List<com.spotify.confidence.eventsender.Event>> upload(
       EventBatch batch) {
-    PublishEventsRequest request =
+    final PublishEventsRequest request =
         PublishEventsRequest.newBuilder()
             .setClientSecret(clientSecret)
             .setSendTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()))
@@ -70,11 +70,11 @@ public class GrpcEventUploader implements EventUploader {
                                 .build())
                     .collect(Collectors.toList()))
             .build();
-    ListenableFuture<PublishEventsResponse> responseFuture =
+    final ListenableFuture<PublishEventsResponse> responseFuture =
         stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request);
 
     try {
-      PublishEventsResponse response = responseFuture.get();
+      final PublishEventsResponse response = responseFuture.get();
       return CompletableFuture.completedFuture(
           response.getErrorsList().stream()
               .filter(

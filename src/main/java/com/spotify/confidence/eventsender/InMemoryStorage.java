@@ -18,7 +18,7 @@ public class InMemoryStorage implements EventSenderStorage {
   public void createBatch() {
     runWithSemaphore(
         () -> {
-          EventBatch batch = new EventBatch(List.copyOf(events));
+          final EventBatch batch = new EventBatch(List.copyOf(events));
           events.clear();
           batches.add(batch);
           System.out.println(
