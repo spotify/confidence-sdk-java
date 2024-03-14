@@ -30,7 +30,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
     public void run() {
       while (true) {
         final Event event = writeQueue.poll();
-        if(event == null) {
+        if (event == null) {
           Thread.yield();
           continue;
         }
