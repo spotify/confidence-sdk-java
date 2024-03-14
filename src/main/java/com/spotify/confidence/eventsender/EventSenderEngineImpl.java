@@ -57,9 +57,9 @@ class EventSenderEngineImpl implements EventSenderEngine {
       while (true) {
         try {
           final String signal = uploadQueue.take();
-          List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
+          final List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
           for (EventBatch batch : batches) {
-            boolean uploadSuccessful = eventUploader.upload(batch).get();
+            final boolean uploadSuccessful = eventUploader.upload(batch).get();
             if (uploadSuccessful) {
               eventStorage.deleteBatch(batch.id());
             }

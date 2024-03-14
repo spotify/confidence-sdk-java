@@ -48,7 +48,7 @@ public class GrpcEventUploader implements EventUploader {
 
   @Override
   public CompletableFuture<Boolean> upload(EventBatch batch) {
-    PublishEventsRequest request =
+    final PublishEventsRequest request =
         PublishEventsRequest.newBuilder()
             .setClientSecret(clientSecret)
             .setSendTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()))
@@ -66,7 +66,7 @@ public class GrpcEventUploader implements EventUploader {
                                 .build())
                     .collect(Collectors.toList()))
             .build();
-    ListenableFuture<PublishEventsResponse> response =
+    final ListenableFuture<PublishEventsResponse> response =
         stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request);
 
     try {
