@@ -20,7 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class GrpcEventUploaderTest {
-
+  private static final String CONTEXT = "context";
   private GrpcEventUploader uploader;
   private Server server;
   private ManagedChannel channel;
@@ -88,17 +88,10 @@ class GrpcEventUploaderTest {
     assertThat(protoEvent.getEventDefinition()).isEqualTo("event1");
 
     final Map<String, com.google.protobuf.Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
+    assertThat(fieldsMap.get("messageKey").getStringValue()).isEqualTo("value_1");
     assertThat(
             fieldsMap
-                .get("message")
-                .getStructValue()
-                .getFieldsMap()
-                .get("messageKey")
-                .getStringValue())
-        .isEqualTo("value_1");
-    assertThat(
-            fieldsMap
-                .get("context")
+                .get(CONTEXT)
                 .getStructValue()
                 .getFieldsMap()
                 .get("contextKey")
@@ -127,17 +120,10 @@ class GrpcEventUploaderTest {
 
       final Map<String, com.google.protobuf.Value> fieldsMap =
           protoEvent.getPayload().getFieldsMap();
+      assertThat(fieldsMap.get("messageKey").getStringValue()).isEqualTo("value_m" + (i + 1));
       assertThat(
               fieldsMap
-                  .get("message")
-                  .getStructValue()
-                  .getFieldsMap()
-                  .get("messageKey")
-                  .getStringValue())
-          .isEqualTo("value_m" + (i + 1));
-      assertThat(
-              fieldsMap
-                  .get("context")
+                  .get(CONTEXT)
                   .getStructValue()
                   .getFieldsMap()
                   .get("contextKey")

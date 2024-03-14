@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 public class GrpcEventUploader implements EventUploader {
 
+  private static final String CONTEXT = "context";
   private final String clientSecret;
   private final ManagedChannel managedChannel;
   private final EventsServiceGrpc.EventsServiceFutureStub stub;
@@ -61,8 +62,8 @@ public class GrpcEventUploader implements EventUploader {
                                 .setEventTime(Timestamp.newBuilder().setSeconds(event.emitTime()))
                                 .setPayload(
                                     Struct.newBuilder()
-                                        .putFields("message", event.message().toProto())
-                                        .putFields("context", event.context().toProto()))
+                                        .putAllFields(event.message().asProtoMap())
+                                        .putFields(CONTEXT, event.context().toProto()))
                                 .build())
                     .collect(Collectors.toList()))
             .build();
