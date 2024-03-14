@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class EventBatch {
-  public final List<Event> events;
+  private final List<Event> events;
   private final String id = UUID.randomUUID().toString();
 
   public EventBatch(List<Event> events) {

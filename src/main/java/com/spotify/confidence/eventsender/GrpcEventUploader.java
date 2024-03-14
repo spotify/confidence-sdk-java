@@ -1,17 +1,14 @@
 package com.spotify.confidence.eventsender;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Timestamp;
 import com.spotify.confidence.events.v1.Event;
-import com.spotify.confidence.events.v1.EventError.Reason;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
 import com.spotify.confidence.events.v1.PublishEventsRequest;
 import com.spotify.confidence.events.v1.PublishEventsResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -50,9 +47,8 @@ public class GrpcEventUploader implements EventUploader {
   }
 
   @Override
-  public CompletableFuture<List<com.spotify.confidence.eventsender.Event>> upload(
-      EventBatch batch) {
-    final PublishEventsRequest request =
+  public CompletableFuture<Boolean> upload(EventBatch batch) {
+    PublishEventsRequest request =
         PublishEventsRequest.newBuilder()
             .setClientSecret(clientSecret)
             .setSendTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()))
@@ -70,23 +66,16 @@ public class GrpcEventUploader implements EventUploader {
                                 .build())
                     .collect(Collectors.toList()))
             .build();
-    final ListenableFuture<PublishEventsResponse> responseFuture =
+    ListenableFuture<PublishEventsResponse> response =
         stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request);
 
     try {
-      final PublishEventsResponse response = responseFuture.get();
-      return CompletableFuture.completedFuture(
-          response.getErrorsList().stream()
-              .filter(
-                  e ->
-                      e.getReason() == Reason.UNRECOGNIZED
-                          || e.getReason() == Reason.REASON_UNSPECIFIED)
-              .map(i -> batch.events.get(i.getIndex()))
-              .collect(Collectors.toList()));
+      response.get();
     } catch (ExecutionException | InterruptedException e) {
       e.printStackTrace();
-      return CompletableFuture.completedFuture(ImmutableList.copyOf(batch.events));
+      return CompletableFuture.completedFuture(false);
     }
+    return CompletableFuture.completedFuture(true);
   }
 
   @Override

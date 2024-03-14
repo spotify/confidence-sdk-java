@@ -11,6 +11,7 @@ import io.grpc.Server;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
+import java.awt.print.Book;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -75,9 +76,9 @@ class GrpcEventUploaderTest {
   public void testMapsSingleEventBatchToProtobuf() throws ExecutionException, InterruptedException {
     final EventBatch batch =
         new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
-    final CompletableFuture<List<Event>> completableFuture = uploader.upload(batch);
-    final List<Event> result = completableFuture.get();
-    assertThat(result.isEmpty()).isTrue();
+    final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
+    final Boolean result = completableFuture.get();
+    assertThat(result).isTrue();
 
     assertThat(fakedEventsService.requests).hasSize(1);
 
@@ -151,10 +152,10 @@ class GrpcEventUploaderTest {
     fakedEventsService.shouldError = true;
     final EventBatch batch =
         new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
-    final CompletableFuture<List<Event>> completableFuture = uploader.upload(batch);
+    final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
-    final List<Event> result = completableFuture.get();
-    assertThat(result.isEmpty()).isFalse();
+    final Boolean result = completableFuture.get();
+    assertThat(result).isFalse();
   }
 
   private Value.Struct contextStruct(String s) {

@@ -43,8 +43,7 @@ public class EventSenderEngineImplTest {
   }
 
   @Test
-  public void testEngineUploadsWhenIntermittentErrorWillRetry()
-      throws IOException, InterruptedException {
+  public void testEngineUploadsWhenIntermittentErrorWillRetry() throws IOException {
     final int batchSize = 3;
     final int numEvents = 14;
     // This will fail at the 2nd and 5th upload
@@ -58,7 +57,6 @@ public class EventSenderEngineImplTest {
       engine.send(
           "eventDefinitions/navigate", Value.of(ImmutableMap.of("key", Value.of("size=" + size))));
     }
-    Thread.sleep(5000);
 
     engine.close(); // Should trigger the upload of an additional incomplete batch
     final int additionalBatch = (numEvents % batchSize) > 0 ? 1 : 0;
