@@ -75,9 +75,9 @@ class GrpcEventUploaderTest {
   public void testMapsSingleEventBatchToProtobuf() throws ExecutionException, InterruptedException {
     final EventBatch batch =
         new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
-    final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
-    final boolean result = completableFuture.get();
-    assertThat(result).isTrue();
+    final CompletableFuture<List<Event>> completableFuture = uploader.upload(batch);
+    final List<Event> result = completableFuture.get();
+    assertThat(result.isEmpty()).isTrue();
 
     assertThat(fakedEventsService.requests).hasSize(1);
 
@@ -151,10 +151,10 @@ class GrpcEventUploaderTest {
     fakedEventsService.shouldError = true;
     final EventBatch batch =
         new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
-    final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
+    final CompletableFuture<List<Event>> completableFuture = uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
-    final boolean result = completableFuture.get();
-    assertThat(result).isFalse();
+    final List<Event> result = completableFuture.get();
+    assertThat(result.isEmpty()).isFalse();
   }
 
   private Value.Struct contextStruct(String s) {
