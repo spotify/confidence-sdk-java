@@ -7,7 +7,7 @@ import java.util.concurrent.*;
 class EventSenderEngineImpl implements EventSenderEngine {
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
   private final ExecutorService uploadThread = Executors.newSingleThreadExecutor();
-  private final BlockingQueue<Event> writeQueue = new LinkedBlockingQueue<>();
+  private final ConcurrentLinkedQueue<Event> writeQueue = new ConcurrentLinkedQueue<>();
   private final BlockingQueue<String> uploadQueue = new LinkedBlockingQueue<>();
   private final BlockingQueue<String> shutdownQueue = new LinkedBlockingQueue<>(1);
   private final EventSenderStorage eventStorage = new InMemoryStorage();
@@ -29,23 +29,22 @@ class EventSenderEngineImpl implements EventSenderEngine {
     @Override
     public void run() {
       while (true) {
-        try {
-          final Event event = writeQueue.take();
-          eventStorage.write(event);
-          flushPolicies.forEach(FlushPolicy::hit);
+        final Event event = writeQueue.poll();
+        if(event == null) {
+          Thread.yield();
+          continue;
+        }
+        eventStorage.write(event);
+        flushPolicies.forEach(FlushPolicy::hit);
 
-          if (flushPolicies.stream().anyMatch(FlushPolicy::shouldFlush)) {
-            flushPolicies.forEach(FlushPolicy::reset);
-            eventStorage.createBatch();
-            uploadQueue.add(UPLOAD_SIG);
-          }
+        if (flushPolicies.stream().anyMatch(FlushPolicy::shouldFlush)) {
+          flushPolicies.forEach(FlushPolicy::reset);
+          eventStorage.createBatch();
+          uploadQueue.add(UPLOAD_SIG);
+        }
 
-          if (isStopped && writeQueue.isEmpty()) {
-            shutdownQueue.add(SHUTDOWN_WRITE);
-          }
-
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
+        if (isStopped && writeQueue.isEmpty()) {
+          shutdownQueue.add(SHUTDOWN_WRITE);
         }
       }
     }
