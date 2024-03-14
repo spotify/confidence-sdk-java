@@ -10,17 +10,16 @@ public class InMemoryStorage implements EventSenderStorage {
   final Semaphore semaphore = new Semaphore(1);
 
   @Override
-  public void write(Event event) {
-    runWithSemaphore(() -> this.events.add(event));
+  public synchronized void write(Event event) {
+    this.events.add(event);
   }
 
-  public void createBatch() {
-    runWithSemaphore(
-        () -> {
-          final EventBatch batch = new EventBatch(List.copyOf(events));
-          events.clear();
-          batches.add(batch);
-        });
+  public synchronized void createBatch() {
+    if (!events.isEmpty()) {
+      final EventBatch batch = new EventBatch(List.copyOf(events));
+      events.clear();
+      batches.add(batch);
+    }
   }
 
   public List<EventBatch> getBatches() {
@@ -28,8 +27,8 @@ public class InMemoryStorage implements EventSenderStorage {
   }
 
   @Override
-  public void deleteBatch(String batchId) {
-    runWithSemaphore(() -> batches.removeIf(eventBatch -> eventBatch.id().equals(batchId)));
+  public synchronized void deleteBatch(String batchId) {
+    batches.removeIf(eventBatch -> eventBatch.id().equals(batchId));
   }
 
   void runWithSemaphore(Runnable codeBlock) {
