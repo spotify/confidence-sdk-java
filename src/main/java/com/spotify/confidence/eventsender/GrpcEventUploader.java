@@ -71,12 +71,15 @@ public class GrpcEventUploader implements EventUploader {
         stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request);
 
     try {
-      response.get();
+      final PublishEventsResponse publishEventsResponse = response.get();
+      if (publishEventsResponse.getErrorsCount() > 0) {
+        return CompletableFuture.completedFuture(false);
+      }
+      return CompletableFuture.completedFuture(true);
     } catch (ExecutionException | InterruptedException e) {
       e.printStackTrace();
       return CompletableFuture.completedFuture(false);
     }
-    return CompletableFuture.completedFuture(true);
   }
 
   @Override
