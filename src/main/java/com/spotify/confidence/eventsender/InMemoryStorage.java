@@ -12,15 +12,12 @@ public class InMemoryStorage implements EventSenderStorage {
     this.events.add(event);
   }
 
-  public synchronized void createBatch() {
+  public synchronized List<EventBatch> createBatch() {
     if (!events.isEmpty()) {
       final EventBatch batch = new EventBatch(List.copyOf(events));
       events.clear();
       batches.add(batch);
     }
-  }
-
-  public List<EventBatch> getBatches() {
     return batches;
   }
 

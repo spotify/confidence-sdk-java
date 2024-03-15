@@ -1,5 +1,6 @@
 package com.spotify.confidence.eventsender;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.concurrent.*;
@@ -8,7 +9,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
   private final ExecutorService uploadThread = Executors.newSingleThreadExecutor();
   private final ConcurrentLinkedQueue<Event> writeQueue = new ConcurrentLinkedQueue<>();
-  private final BlockingQueue<String> uploadQueue = new LinkedBlockingQueue<>();
+  private final BlockingQueue<UploadMsg> uploadQueue = new LinkedBlockingQueue<UploadMsg>();
   private final BlockingQueue<String> shutdownQueue = new LinkedBlockingQueue<>(1);
   private final EventSenderStorage eventStorage = new InMemoryStorage();
   private final EventUploader eventUploader;
@@ -43,8 +44,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
 
         if (flushPolicies.stream().anyMatch(FlushPolicy::shouldFlush)) {
           flushPolicies.forEach(FlushPolicy::reset);
-          eventStorage.createBatch();
-          uploadQueue.add(UPLOAD_SIG);
+          uploadQueue.add(new UploadMsg(UPLOAD_SIG, eventStorage.createBatch()));
         }
       }
     }
@@ -55,15 +55,14 @@ class EventSenderEngineImpl implements EventSenderEngine {
     public void run() {
       while (true) {
         try {
-          final String signal = uploadQueue.take();
-          final List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
-          for (EventBatch batch : batches) {
+          final UploadMsg msg = uploadQueue.take();
+          for (EventBatch batch : ImmutableList.copyOf(msg.batches)) {
             final boolean uploadSuccessful = eventUploader.upload(batch).get();
             if (uploadSuccessful) {
               eventStorage.deleteBatch(batch.id());
             }
           }
-          if (signal.equals(SHUTDOWN_UPLOAD)) {
+          if (msg.signal.equals(SHUTDOWN_UPLOAD)) {
             shutdownQueue.add(SHUTDOWN_UPLOAD_COMPLETED);
           }
         } catch (InterruptedException | ExecutionException e) {
@@ -96,8 +95,8 @@ class EventSenderEngineImpl implements EventSenderEngine {
             final String writeQueueShutdown = shutdownQueue.take();
             assert (writeQueueShutdown.equals(SHUTDOWN_WRITE_COMPLETED));
             // create the final batch
-            eventStorage.createBatch();
-            uploadQueue.add(SHUTDOWN_UPLOAD);
+            List<EventBatch> batches = eventStorage.createBatch();
+            uploadQueue.add(new UploadMsg(SHUTDOWN_UPLOAD, batches));
             // wait until all the written events are uploaded
             final String uploadQueueShutdown = shutdownQueue.take();
             assert (uploadQueueShutdown.equals(SHUTDOWN_UPLOAD_COMPLETED));
@@ -115,6 +114,15 @@ class EventSenderEngineImpl implements EventSenderEngine {
       thread.awaitTermination(20, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private class UploadMsg {
+    private final String signal;
+    private final List<EventBatch> batches;
+    public UploadMsg(String signal, List<EventBatch> batches) {
+      this.signal = signal;
+      this.batches = batches;
     }
   }
 }
