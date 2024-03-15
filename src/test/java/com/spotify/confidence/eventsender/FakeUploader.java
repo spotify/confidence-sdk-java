@@ -5,19 +5,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class IntermittentErrorUploader implements EventUploader {
+public class FakeUploader implements EventUploader {
   private final List<Integer> failAtUploadWithIndex;
   private int uploadCount = 0;
-  public List<String> uploadCalls = new ArrayList<>();
+  public List<EventBatch> uploadCalls = new ArrayList<>();
 
-  public IntermittentErrorUploader(List<Integer> failAtUploadWithIndex) {
+  public FakeUploader() {
+    this.failAtUploadWithIndex = List.of();
+  }
+
+  public FakeUploader(List<Integer> failAtUploadWithIndex) {
     this.failAtUploadWithIndex = failAtUploadWithIndex;
   }
 
   @Override
   public CompletableFuture<Boolean> upload(EventBatch batch) {
     uploadCount++;
-    uploadCalls.add(batch.id());
+    uploadCalls.add(batch);
     if (failAtUploadWithIndex.contains(uploadCount)) {
       return CompletableFuture.completedFuture(false);
     }
