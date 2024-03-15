@@ -107,7 +107,6 @@ public class EventSenderEngineImplTest {
               true);
       futures.add(future);
     }
-    long start = System.currentTimeMillis();
     futures.forEach(
         future -> {
           try {
@@ -117,8 +116,6 @@ public class EventSenderEngineImplTest {
           }
         });
     engine.close();
-    long end = System.currentTimeMillis();
-    System.out.println("Time taken: " + (end - start) + "ms");
     final int additionalBatch = (numberOfEvents % batchSize) > 0 ? 1 : 0;
     final int expectedNumberOfBatches = (numberOfEvents / batchSize) + additionalBatch;
     assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(expectedNumberOfBatches);

@@ -93,14 +93,14 @@ class EventSenderEngineImpl implements EventSenderEngine {
         () -> {
           try {
             // wait until all the events in the queue are written
-            String shutdownMsg = shutdownQueue.take();
-            assert(shutdownMsg.equals(SHUTDOWN_WRITE_COMPLETED));
+            final String writeQueueShutdown = shutdownQueue.take();
+            assert (writeQueueShutdown.equals(SHUTDOWN_WRITE_COMPLETED));
             // create the final batch
             eventStorage.createBatch();
             uploadQueue.add(SHUTDOWN_UPLOAD);
             // wait until all the written events are uploaded
-            String shutdownMsg2 = shutdownQueue.take();
-            assert(shutdownMsg2.equals(SHUTDOWN_UPLOAD_COMPLETED));
+            final String uploadQueueShutdown = shutdownQueue.take();
+            assert (uploadQueueShutdown.equals(SHUTDOWN_UPLOAD_COMPLETED));
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
