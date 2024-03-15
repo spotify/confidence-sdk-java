@@ -15,8 +15,9 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private final List<FlushPolicy> flushPolicies;
   private static final String UPLOAD_SIG = "UPLOAD";
   private static final String SHUTDOWN_UPLOAD = "SHUTDOWN_UPLOAD";
-  private static final String SHUTDOWN_WRITE = "SHUTDOWN_WRITE";
-  private boolean isStopped = false;
+  private static final String SHUTDOWN_UPLOAD_COMPLETED = "SHUTDOWN_UPLOAD_COMPLETED";
+  private static final String SHUTDOWN_WRITE_COMPLETED = "SHUTDOWN_WRITE_COMPLETED";
+  private volatile boolean isStopped = false;
 
   public EventSenderEngineImpl(List<FlushPolicy> flushPolicyList, EventUploader eventUploader) {
     this.flushPolicies = flushPolicyList;
@@ -30,7 +31,10 @@ class EventSenderEngineImpl implements EventSenderEngine {
     public void run() {
       while (true) {
         final Event event = writeQueue.poll();
-        if (event == null) {
+        if (event == null && isStopped) {
+          shutdownQueue.add(SHUTDOWN_WRITE_COMPLETED);
+          break;
+        } else if (event == null) {
           Thread.yield();
           continue;
         }
@@ -41,10 +45,6 @@ class EventSenderEngineImpl implements EventSenderEngine {
           flushPolicies.forEach(FlushPolicy::reset);
           eventStorage.createBatch();
           uploadQueue.add(UPLOAD_SIG);
-        }
-
-        if (isStopped && writeQueue.isEmpty()) {
-          shutdownQueue.add(SHUTDOWN_WRITE);
         }
       }
     }
@@ -63,9 +63,8 @@ class EventSenderEngineImpl implements EventSenderEngine {
               eventStorage.deleteBatch(batch.id());
             }
           }
-
           if (signal.equals(SHUTDOWN_UPLOAD)) {
-            shutdownQueue.add(SHUTDOWN_UPLOAD);
+            shutdownQueue.add(SHUTDOWN_UPLOAD_COMPLETED);
           }
         } catch (InterruptedException | ExecutionException e) {
           throw new RuntimeException(e);
@@ -94,15 +93,14 @@ class EventSenderEngineImpl implements EventSenderEngine {
         () -> {
           try {
             // wait until all the events in the queue are written
-            // if write queue is not empty, wait for the events to be written
-            if (!writeQueue.isEmpty()) {
-              shutdownQueue.take();
-            }
+            String shutdownMsg = shutdownQueue.take();
+            assert(shutdownMsg.equals(SHUTDOWN_WRITE_COMPLETED));
             // create the final batch
             eventStorage.createBatch();
             uploadQueue.add(SHUTDOWN_UPLOAD);
             // wait until all the written events are uploaded
-            shutdownQueue.take();
+            String shutdownMsg2 = shutdownQueue.take();
+            assert(shutdownMsg2.equals(SHUTDOWN_UPLOAD_COMPLETED));
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
