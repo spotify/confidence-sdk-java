@@ -15,7 +15,7 @@ public class ConfidenceContextTest {
   @Test
   public void getContextContainsParentContextValues() {
     final Confidence root = new Confidence(null, fakeEngine);
-    root.updateContext("page", ConfidenceValue.of("http://.."));
+    root.updateContextEntry("page", ConfidenceValue.of("http://.."));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("pants", ConfidenceValue.of("yellow")));
 
@@ -32,7 +32,7 @@ public class ConfidenceContextTest {
   @Test
   public void setContextOverwritesContext() {
     final Confidence root = new Confidence(null, fakeEngine);
-    root.updateContext("page", ConfidenceValue.of("http://.."));
+    root.updateContextEntry("page", ConfidenceValue.of("http://.."));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("pants", ConfidenceValue.of("yellow")));
 
@@ -56,7 +56,7 @@ public class ConfidenceContextTest {
   @Test
   public void parentContextFieldCanBeOverridden() {
     final Confidence root = new Confidence(null, fakeEngine);
-    root.updateContext("pants-color", ConfidenceValue.of("yellow"));
+    root.updateContextEntry("pants-color", ConfidenceValue.of("yellow"));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("pants-color", ConfidenceValue.of("blue")));
 
@@ -74,11 +74,11 @@ public class ConfidenceContextTest {
   @Test
   public void parentContextFieldCanBeOverriddenOrRemoved() {
     final Confidence root = new Confidence(null, fakeEngine);
-    root.updateContext("pants-color", ConfidenceValue.of("yellow"));
+    root.updateContextEntry("pants-color", ConfidenceValue.of("yellow"));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("shirt-color", ConfidenceValue.of("blue")));
 
-    confidence.removeContext("pants-color");
+    confidence.removeContextEntry("pants-color");
 
     assertThat(confidence.getContext().asMap().size()).isEqualTo(1);
     assertThat(confidence.getContext())

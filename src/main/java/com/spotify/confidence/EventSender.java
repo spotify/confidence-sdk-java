@@ -1,6 +1,6 @@
 package com.spotify.confidence;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
 public interface EventSender extends Contextual {
   public void send(String name, ConfidenceValue.Struct message);
@@ -10,10 +10,10 @@ public interface EventSender extends Contextual {
   }
 
   @Override
-  EventSender withContext(ConfidenceValue.Struct entries);
+  EventSender withContext(ConfidenceValue.Struct context);
 
   @Override
-  default EventSender withContext(ImmutableMap<String, ConfidenceValue> entries) {
-    return withContext(ConfidenceValue.Struct.of(entries));
+  default EventSender withContext(Map<String, ConfidenceValue> context) {
+    return withContext(ConfidenceValue.Struct.of(context));
   }
 }

@@ -1,26 +1,25 @@
 package com.spotify.confidence;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
 public interface Contextual {
   ConfidenceValue.Struct getContext();
 
   void setContext(ConfidenceValue.Struct context);
 
-  default void setContext(ImmutableMap<String, ConfidenceValue> context) {
+  default void setContext(Map<String, ConfidenceValue> context) {
     setContext(ConfidenceValue.Struct.of(context));
   }
-  ;
 
-  void updateContext(String key, ConfidenceValue value);
+  void updateContextEntry(String key, ConfidenceValue value);
 
-  void removeContext(String key);
+  void removeContextEntry(String key);
 
   void clearContext();
 
-  Contextual withContext(ConfidenceValue.Struct entries);
+  Contextual withContext(ConfidenceValue.Struct context);
 
-  default Contextual withContext(ImmutableMap<String, ConfidenceValue> entries) {
-    return withContext(ConfidenceValue.Struct.of(entries));
+  default Contextual withContext(Map<String, ConfidenceValue> context) {
+    return withContext(ConfidenceValue.Struct.of(context));
   }
 }

@@ -5,16 +5,17 @@ import com.google.common.collect.Maps;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class Confidence implements EventSender, Contextual {
 
   private Map<String, ConfidenceValue> context = Maps.newHashMap();
-  private final List<String> removed = new ArrayList<>();
+  private final Set<String> removedKeys = new HashSet<>();
 
   private final Contextual parent;
 
@@ -32,7 +33,7 @@ public class Confidence implements EventSender, Contextual {
     // merge the parentContext with context with precendence to context
     final Map<String, ConfidenceValue> mergedContext = Maps.newHashMap(parentContext.asMap());
     mergedContext.putAll(context);
-    removed.forEach(mergedContext::remove);
+    removedKeys.forEach(mergedContext::remove);
     return ConfidenceValue.of(mergedContext);
   }
 
@@ -42,24 +43,25 @@ public class Confidence implements EventSender, Contextual {
   }
 
   @Override
-  public void updateContext(String key, ConfidenceValue value) {
+  public void updateContextEntry(String key, ConfidenceValue value) {
     this.context.put(key, value);
   }
 
   @Override
-  public void removeContext(String key) {
-    removed.add(key);
+  public void removeContextEntry(String key) {
+    this.context.remove(key);
+    this.removedKeys.add(key);
   }
 
   @Override
   public void clearContext() {
-    context.clear();
+    this.context.clear();
   }
 
   @Override
-  public Confidence withContext(ConfidenceValue.Struct entries) {
+  public Confidence withContext(ConfidenceValue.Struct context) {
     final Confidence confidence = new Confidence(this, eventSenderEngine);
-    confidence.setContext(entries);
+    confidence.setContext(context);
     return confidence;
   }
 
