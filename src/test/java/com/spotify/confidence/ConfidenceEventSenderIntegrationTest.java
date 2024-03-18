@@ -15,6 +15,9 @@ import org.junit.jupiter.api.Test;
 
 public class ConfidenceEventSenderIntegrationTest {
 
+  private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
+      new ResolverClientTestUtils.FakeFlagResolverClient();
+
   @Test
   public void testEngineUploads() throws IOException {
     final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
@@ -22,7 +25,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final int numEvents = 14;
     final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader);
-    final Confidence confidence = new Confidence(null, engine);
+    final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
       confidence.send(
@@ -52,7 +55,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final int batchSize = 6;
     final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader);
-    final Confidence confidence = new Confidence(null, engine);
+    final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
 
     confidence.close(); // Should trigger the upload of an additional incomplete batch
     assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(0);
@@ -67,7 +70,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader fakeUploader = new FakeUploader(failAtUploadWithIndex);
     final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), fakeUploader);
-    final Confidence confidence = new Confidence(null, engine);
+    final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
       confidence.send(
@@ -96,7 +99,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader alwaysSucceedUploader = new FakeUploader();
     final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader);
-    final Confidence confidence = new Confidence(null, engine);
+    final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
     final List<Future<Boolean>> futures = new ArrayList<>();
     final ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
 

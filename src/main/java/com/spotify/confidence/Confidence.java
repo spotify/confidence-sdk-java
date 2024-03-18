@@ -2,6 +2,7 @@ package com.spotify.confidence;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
@@ -20,10 +21,15 @@ public class Confidence implements EventSender, Contextual {
   private final Contextual parent;
 
   private final EventSenderEngine eventSenderEngine;
+  private final FlagResolver flagResolverClient;
 
-  Confidence(@Nullable Contextual parent, EventSenderEngine eventSenderEngine) {
+  Confidence(
+      @Nullable Contextual parent,
+      EventSenderEngine eventSenderEngine,
+      FlagResolver flagResolverClient) {
     this.parent = parent;
     this.eventSenderEngine = eventSenderEngine;
+    this.flagResolverClient = flagResolverClient;
   }
 
   @Override
@@ -60,7 +66,7 @@ public class Confidence implements EventSender, Contextual {
 
   @Override
   public Confidence withContext(ConfidenceValue.Struct context) {
-    final Confidence confidence = new Confidence(this, eventSenderEngine);
+    final Confidence confidence = new Confidence(this, eventSenderEngine, flagResolverClient);
     confidence.setContext(context);
     return confidence;
   }
@@ -70,8 +76,13 @@ public class Confidence implements EventSender, Contextual {
     eventSenderEngine.send(name, message, getContext());
   }
 
+  ResolveFlagsResponse resolveFlags(String flagName) {
+    return flagResolverClient.resolveFlags(flagName, getContext());
+  }
+
   public void close() throws IOException {
     eventSenderEngine.close();
+    flagResolverClient.close();
   }
 
   public static Confidence.Builder builder(String clientSecret) {
@@ -100,11 +111,12 @@ public class Confidence implements EventSender, Contextual {
       if (managedChannel == null) {
         throw new IllegalStateException("ManagedChannel is not set");
       }
+      final FlagResolver flagResolver = new FlagResolverImpl(clientSecret, managedChannel);
       final GrpcEventUploader uploader =
           new GrpcEventUploader(clientSecret, new SystemClock(), managedChannel);
       final List<FlushPolicy> flushPolicies = ImmutableList.of(new BatchSizeFlushPolicy(5));
       final EventSenderEngine engine = new EventSenderEngineImpl(flushPolicies, uploader);
-      return new Confidence(null, engine);
+      return new Confidence(null, engine, flagResolver);
     }
   }
 }

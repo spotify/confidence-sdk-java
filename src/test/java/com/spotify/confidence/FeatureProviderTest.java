@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
-import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
 import com.spotify.confidence.shaded.flags.resolver.v1.FlagResolverServiceGrpc.FlagResolverServiceImplBase;
@@ -14,12 +13,6 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.BoolFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.DoubleFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.IntFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.ListFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StringFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StructFlagSchema;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ErrorCode;
 import dev.openfeature.sdk.EvaluationContext;
@@ -54,13 +47,6 @@ final class FeatureProviderTest {
   private static Client client;
   private static OpenFeatureAPI openFeatureAPI;
 
-  private static ResolveFlagsResponse generateSampleResponse(
-      List<ValueSchemaHolder> additionalProps) {
-    return ResolveFlagsResponse.newBuilder()
-        .addResolvedFlags(generateResolvedFlag(additionalProps))
-        .build();
-  }
-
   private static final EvaluationContext SAMPLE_CONTEXT_WITHOUT_TARGETING_KEY =
       new MutableContext(Map.of("my-key", new Value(true)));
 
@@ -89,9 +75,11 @@ final class FeatureProviderTest {
 
   @BeforeEach
   void beforeEach() {
+    final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine();
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
-
-    final FeatureProvider featureProvider = new ConfidenceFeatureProvider("fake-secret", channel);
+    final FlagResolverImpl flagResolver = new FlagResolverImpl("fake-secret", channel);
+    final Confidence confidence = new Confidence(null, fakeEventSender, flagResolver);
+    final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 
     openFeatureAPI = OpenFeatureAPI.getInstance();
     openFeatureAPI.setProvider(featureProvider);
@@ -216,7 +204,8 @@ final class FeatureProviderTest {
                   Structs.of(
                       "my-key", Values.of(true), "targeting_key", Values.of("my-targeting-key")));
 
-          streamObserver.onNext(generateSampleResponse(Collections.emptyList()));
+          streamObserver.onNext(
+              ResolverClientTestUtils.generateSampleResponse(Collections.emptyList()));
           streamObserver.onCompleted();
         });
 
@@ -259,7 +248,8 @@ final class FeatureProviderTest {
           assertThat(ResolveFlagsRequest.getEvaluationContext())
               .isEqualTo(Structs.of("my-key", Values.of(true)));
 
-          streamObserver.onNext(generateSampleResponse(Collections.emptyList()));
+          streamObserver.onNext(
+              ResolverClientTestUtils.generateSampleResponse(Collections.emptyList()));
           streamObserver.onCompleted();
         });
 
@@ -302,7 +292,8 @@ final class FeatureProviderTest {
           assertThat(ResolveFlagsRequest.getEvaluationContext())
               .isEqualTo(Structs.of("targeting_key", Values.of("my-targeting-key-1")));
 
-          streamObserver.onNext(generateSampleResponse(Collections.emptyList()));
+          streamObserver.onNext(
+              ResolverClientTestUtils.generateSampleResponse(Collections.emptyList()));
           streamObserver.onCompleted();
         });
 
@@ -482,7 +473,7 @@ final class FeatureProviderTest {
   public void longValueInIntegerSchemaResolveShouldFail() {
     mockSampleResponse(
         Collections.singletonList(
-            new ValueSchemaHolder(
+            new ResolverClientTestUtils.ValueSchemaHolder(
                 "prop-X",
                 Values.of(Integer.MAX_VALUE + 1L),
                 FlagSchema.SchemaTypeCase.INT_SCHEMA)));
@@ -548,144 +539,12 @@ final class FeatureProviderTest {
     mockSampleResponse(Collections.emptyList());
   }
 
-  private void mockSampleResponse(List<ValueSchemaHolder> additionalProps) {
+  private void mockSampleResponse(List<ResolverClientTestUtils.ValueSchemaHolder> additionalProps) {
     mockResolve(
         (resolveFlagRequest, streamObserver) -> {
           assertThat(resolveFlagRequest.getFlags(0)).isEqualTo("flags/flag");
-          streamObserver.onNext(generateSampleResponse(additionalProps));
+          streamObserver.onNext(ResolverClientTestUtils.generateSampleResponse(additionalProps));
           streamObserver.onCompleted();
         });
-  }
-
-  private static ResolvedFlag generateResolvedFlag(List<ValueSchemaHolder> additionalProps) {
-    final Struct.Builder valueBuilder =
-        Struct.newBuilder()
-            .putAllFields(
-                Map.of(
-                    "prop-A",
-                    Values.of(false),
-                    "prop-B",
-                    Values.of(
-                        Structs.of(
-                            "prop-C", Values.of("str-val"),
-                            "prop-D", Values.of(5.3))),
-                    "prop-E",
-                    Values.of(50),
-                    "prop-F",
-                    Values.of(List.of(Values.of("a"), Values.of("b"))),
-                    "prop-G",
-                    Values.of(
-                        Structs.of(
-                            "prop-H", Values.ofNull(),
-                            "prop-I", Values.ofNull()))));
-
-    final StructFlagSchema.Builder schemaBuilder =
-        StructFlagSchema.newBuilder()
-            .putAllSchema(
-                Map.of(
-                    "prop-A",
-                    FlagSchema.newBuilder()
-                        .setBoolSchema(BoolFlagSchema.getDefaultInstance())
-                        .build(),
-                    "prop-B",
-                    FlagSchema.newBuilder()
-                        .setStructSchema(
-                            StructFlagSchema.newBuilder()
-                                .putAllSchema(
-                                    Map.of(
-                                        "prop-C",
-                                        FlagSchema.newBuilder()
-                                            .setStringSchema(StringFlagSchema.getDefaultInstance())
-                                            .build(),
-                                        "prop-D",
-                                        FlagSchema.newBuilder()
-                                            .setDoubleSchema(DoubleFlagSchema.getDefaultInstance())
-                                            .build()))
-                                .build())
-                        .build(),
-                    "prop-E",
-                    FlagSchema.newBuilder()
-                        .setIntSchema(IntFlagSchema.getDefaultInstance())
-                        .build(),
-                    "prop-F",
-                    FlagSchema.newBuilder()
-                        .setListSchema(
-                            ListFlagSchema.newBuilder()
-                                .setElementSchema(
-                                    FlagSchema.newBuilder()
-                                        .setStringSchema(StringFlagSchema.getDefaultInstance())
-                                        .build())
-                                .build())
-                        .build(),
-                    "prop-G",
-                    FlagSchema.newBuilder()
-                        .setStructSchema(
-                            StructFlagSchema.newBuilder()
-                                .putAllSchema(
-                                    Map.of(
-                                        "prop-H",
-                                        FlagSchema.newBuilder()
-                                            .setStringSchema(StringFlagSchema.getDefaultInstance())
-                                            .build(),
-                                        "prop-I",
-                                        FlagSchema.newBuilder()
-                                            .setIntSchema(IntFlagSchema.getDefaultInstance())
-                                            .build()))
-                                .build())
-                        .build()));
-
-    additionalProps.forEach(
-        (valueSchemaHolder) -> {
-          valueBuilder.putFields(valueSchemaHolder.prop, valueSchemaHolder.value);
-          final FlagSchema.Builder builder = getSchemaBuilder(valueSchemaHolder);
-          schemaBuilder.putSchema(valueSchemaHolder.prop, builder.build());
-        });
-
-    return ResolvedFlag.newBuilder()
-        .setFlag("flags/flag")
-        .setVariant("flags/flag/variants/var-A")
-        .setValue(valueBuilder)
-        .setFlagSchema(schemaBuilder)
-        .build();
-  }
-
-  private static FlagSchema.Builder getSchemaBuilder(ValueSchemaHolder valueSchemaHolder) {
-    final FlagSchema.Builder builder = FlagSchema.newBuilder();
-    switch (valueSchemaHolder.schemaTypeCase) {
-      case STRUCT_SCHEMA:
-        builder.setStructSchema(StructFlagSchema.getDefaultInstance());
-        break;
-      case LIST_SCHEMA:
-        builder.setListSchema(ListFlagSchema.getDefaultInstance());
-        break;
-      case INT_SCHEMA:
-        builder.setIntSchema(IntFlagSchema.getDefaultInstance());
-        break;
-      case DOUBLE_SCHEMA:
-        builder.setDoubleSchema(DoubleFlagSchema.getDefaultInstance());
-        break;
-      case STRING_SCHEMA:
-        builder.setStringSchema(StringFlagSchema.getDefaultInstance());
-        break;
-      case BOOL_SCHEMA:
-        builder.setBoolSchema(BoolFlagSchema.getDefaultInstance());
-        break;
-      case SCHEMATYPE_NOT_SET:
-        break;
-    }
-    return builder;
-  }
-
-  private static class ValueSchemaHolder {
-    public ValueSchemaHolder(
-        String prop, com.google.protobuf.Value value, FlagSchema.SchemaTypeCase schemaTypeCase) {
-      this.prop = prop;
-      this.value = value;
-      this.schemaTypeCase = schemaTypeCase;
-    }
-
-    String prop;
-    com.google.protobuf.Value value;
-    FlagSchema.SchemaTypeCase schemaTypeCase;
   }
 }
