@@ -192,6 +192,7 @@ class ConfidenceValueTest {
     final ConfidenceValue value = ConfidenceValue.of("test value");
     assertThrows(IllegalStateException.class, value::asInteger);
     assertThrows(IllegalStateException.class, value::asDouble);
+    assertThrows(IllegalStateException.class, value::asInstant);
     assertThrows(IllegalStateException.class, value::asBoolean);
     assertThrows(IllegalStateException.class, value::asStruct);
   }
@@ -260,15 +261,20 @@ class ConfidenceValueTest {
 
   @Test
   public void testStructBuilderSetValues() {
+    final Instant instant = Instant.parse("2007-12-03T10:15:30.00Z");
     final ConfidenceValue.Struct struct =
         ConfidenceValue.Struct.builder()
             .set("key1", "value")
             .set("key2", 42)
             .set("key3", true)
+            .set("key4", 42.0)
+            .set("key5", instant)
             .build();
     assertEquals(ConfidenceValue.of("value"), struct.get("key1"));
     assertEquals(ConfidenceValue.of(42), struct.get("key2"));
     assertEquals(ConfidenceValue.of(true), struct.get("key3"));
+    assertEquals(ConfidenceValue.of(42.0), struct.get("key4"));
+    assertEquals(ConfidenceValue.of(instant), struct.get("key5"));
   }
 
   @Test

@@ -123,7 +123,7 @@ public abstract class ConfidenceValue {
       case NUMBER_VALUE:
         return ConfidenceValue.of(protoValue.getNumberValue());
       case STRING_VALUE:
-        String stringValue = protoValue.getStringValue();
+        final String stringValue = protoValue.getStringValue();
         try {
           return ConfidenceValue.of(Instant.parse(stringValue));
         } catch (Exception e) {
@@ -397,6 +397,14 @@ public abstract class ConfidenceValue {
       }
 
       public Builder set(String key, int value) {
+        return set(key, ConfidenceValue.of(value));
+      }
+
+      public Builder set(String key, double value) {
+        return set(key, ConfidenceValue.of(value));
+      }
+
+      public Builder set(String key, Instant value) {
         return set(key, ConfidenceValue.of(value));
       }
 
