@@ -42,6 +42,10 @@ public abstract class ConfidenceValue {
     return false;
   }
 
+  public boolean isDouble() {
+    return false;
+  }
+
   public boolean isNull() {
     return false;
   }
@@ -62,6 +66,10 @@ public abstract class ConfidenceValue {
     throw new IllegalStateException("Not a IntegerValue");
   }
 
+  public double asDouble() {
+    throw new IllegalStateException("Not a DoubleValue");
+  }
+
   public boolean asBoolean() {
     throw new IllegalStateException("Not a BooleanValue");
   }
@@ -72,6 +80,10 @@ public abstract class ConfidenceValue {
 
   public static ConfidenceValue of(int value) {
     return new Integer(value);
+  }
+
+  public static ConfidenceValue of(double value) {
+    return new Double(value);
   }
 
   public static ConfidenceValue of(String value) {
@@ -96,7 +108,7 @@ public abstract class ConfidenceValue {
       case BOOL_VALUE:
         return ConfidenceValue.of(protoValue.getBoolValue());
       case NUMBER_VALUE:
-        return Integer.fromProto(protoValue);
+        return ConfidenceValue.of(protoValue.getNumberValue());
       case STRING_VALUE:
         return ConfidenceValue.of(protoValue.getStringValue());
       case NULL_VALUE:
@@ -186,6 +198,35 @@ public abstract class ConfidenceValue {
 
     @Override
     public int asInteger() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @Override
+    public com.google.protobuf.Value toProto() {
+      return com.google.protobuf.Value.newBuilder().setNumberValue(value).build();
+    }
+  }
+
+  public static class Double extends ConfidenceValue {
+
+    private final double value;
+
+    private Double(double value) {
+      this.value = value;
+    }
+
+    @Override
+    public boolean isDouble() {
+      return true;
+    }
+
+    @Override
+    public double asDouble() {
       return value;
     }
 
