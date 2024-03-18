@@ -1,6 +1,6 @@
 package com.spotify.confidence.eventsender;
 
-import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -75,7 +75,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
 
   @Override
   public void send(String name, Value.Struct context) {
-    send(name, Value.of(ImmutableMap.of()), context);
+    send(name, Value.Struct.EMPTY, context);
   }
 
   @Override
@@ -88,6 +88,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   @Override
   public void close() {
     // stop accepting new events
+    isStopped = true;
     final ExecutorService thread = Executors.newSingleThreadExecutor();
     thread.submit(
         () -> {
@@ -103,11 +104,14 @@ class EventSenderEngineImpl implements EventSenderEngine {
             assert (uploadQueueShutdown.equals(SHUTDOWN_UPLOAD_COMPLETED));
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
+          } finally {
+            try {
+              closeNow();
+            } catch (IOException e) {
+              // ignore
+            }
           }
-          writeThread.shutdownNow();
-          uploadThread.shutdownNow();
         });
-    isStopped = true;
 
     thread.shutdown();
 
@@ -116,5 +120,11 @@ class EventSenderEngineImpl implements EventSenderEngine {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private void closeNow() throws IOException {
+    eventUploader.close();
+    writeThread.shutdownNow();
+    uploadThread.shutdownNow();
   }
 }

@@ -30,8 +30,11 @@ public class FakeUploader implements EventUploader {
 
   @Override
   public void close() throws IOException {
+    // no-op
+  }
+
+  public void reset() {
     uploadCount = 0;
     uploadCalls.clear();
-    // no-op
   }
 }
