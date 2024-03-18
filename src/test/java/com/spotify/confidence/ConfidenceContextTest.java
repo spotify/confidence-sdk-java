@@ -13,7 +13,24 @@ public class ConfidenceContextTest {
   private final FakeEngine fakeEngine = new FakeEngine();
 
   @Test
-  public void mergeContextTest() {
+  public void getContextContainsParentContextValues() {
+    final Confidence root = new Confidence(null, fakeEngine);
+    root.updateContext("page", ConfidenceValue.of("http://.."));
+    final EventSender confidence =
+        root.withContext(ImmutableMap.of("pants", ConfidenceValue.of("yellow")));
+
+    assertThat(confidence.getContext())
+        .isEqualTo(
+            ConfidenceValue.Struct.of(
+                ImmutableMap.of(
+                    "page",
+                    ConfidenceValue.of("http://.."),
+                    "pants",
+                    ConfidenceValue.of("yellow"))));
+  }
+
+  @Test
+  public void setContextOverwritesContext() {
     final Confidence root = new Confidence(null, fakeEngine);
     root.updateContext("page", ConfidenceValue.of("http://.."));
     final EventSender confidence =
@@ -34,10 +51,39 @@ public class ConfidenceContextTest {
             ConfidenceValue.Struct.of(
                 ImmutableMap.of(
                     "page", ConfidenceValue.of("http://.."), "shirt", ConfidenceValue.of("blue"))));
+  }
 
-    confidence.removeContext("page");
+  @Test
+  public void parentContextFieldCanBeOverridden() {
+    final Confidence root = new Confidence(null, fakeEngine);
+    root.updateContext("pants-color", ConfidenceValue.of("yellow"));
+    final EventSender confidence =
+        root.withContext(ImmutableMap.of("pants-color", ConfidenceValue.of("blue")));
+
+    // run assert on child
     assertThat(confidence.getContext())
-        .isEqualTo(ConfidenceValue.Struct.of(ImmutableMap.of("shirt", ConfidenceValue.of("blue"))));
+        .isEqualTo(
+            ConfidenceValue.Struct.of(ImmutableMap.of("pants-color", ConfidenceValue.of("blue"))));
+    // run assert on parent
+    assertThat(root.getContext())
+        .isEqualTo(
+            ConfidenceValue.Struct.of(
+                ImmutableMap.of("pants-color", ConfidenceValue.of("yellow"))));
+  }
+
+  @Test
+  public void parentContextFieldCanBeOverriddenOrRemoved() {
+    final Confidence root = new Confidence(null, fakeEngine);
+    root.updateContext("pants-color", ConfidenceValue.of("yellow"));
+    final EventSender confidence =
+        root.withContext(ImmutableMap.of("shirt-color", ConfidenceValue.of("blue")));
+
+    confidence.removeContext("pants-color");
+
+    assertThat(confidence.getContext().asMap().size()).isEqualTo(1);
+    assertThat(confidence.getContext())
+        .isEqualTo(
+            ConfidenceValue.Struct.of(ImmutableMap.of("shirt-color", ConfidenceValue.of("blue"))));
   }
 
   private static class FakeEngine implements EventSenderEngine {
