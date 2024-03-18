@@ -1,4 +1,4 @@
-package com.spotify.confidence.eventsender;
+package com.spotify.confidence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -143,12 +143,12 @@ class GrpcEventUploaderTest {
     assertThat(result).isFalse();
   }
 
-  private Value.Struct contextStruct(String s) {
-    return Value.of(ImmutableMap.of("contextKey", Value.of("value_" + s)));
+  private ConfidenceValue.Struct contextStruct(String s) {
+    return ConfidenceValue.of(ImmutableMap.of("contextKey", ConfidenceValue.of("value_" + s)));
   }
 
-  private Value.Struct messageStruct(String s) {
-    return Value.of(ImmutableMap.of("messageKey", Value.of("value_" + s)));
+  private ConfidenceValue.Struct messageStruct(String s) {
+    return ConfidenceValue.of(ImmutableMap.of("messageKey", ConfidenceValue.of("value_" + s)));
   }
 
   private static class FakedEventsService extends EventsServiceGrpc.EventsServiceImplBase {

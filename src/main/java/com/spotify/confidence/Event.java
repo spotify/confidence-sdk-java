@@ -1,12 +1,12 @@
-package com.spotify.confidence.eventsender;
+package com.spotify.confidence;
 
 public class Event {
   private final String name;
-  private final Value.Struct message;
-  private final Value.Struct context;
+  private final ConfidenceValue.Struct message;
+  private final ConfidenceValue.Struct context;
   private final long emitTimeSeconds;
 
-  public Event(String name, Value.Struct message, Value.Struct context) {
+  public Event(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
     this.name = name;
     this.message = message;
     this.context = context;
@@ -21,11 +21,11 @@ public class Event {
     return emitTimeSeconds;
   }
 
-  public Value.Struct message() {
+  public ConfidenceValue.Struct message() {
     return message;
   }
 
-  public Value.Struct context() {
+  public ConfidenceValue.Struct context() {
     return context;
   }
 }

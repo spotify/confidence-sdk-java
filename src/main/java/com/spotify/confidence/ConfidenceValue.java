@@ -1,4 +1,4 @@
-package com.spotify.confidence.eventsender;
+package com.spotify.confidence;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -8,10 +8,10 @@ import com.google.protobuf.NullValue;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-abstract class Value {
+public abstract class ConfidenceValue {
 
-  static final Value NULL_VALUE =
-      new Value() {
+  static final ConfidenceValue NULL_VALUE =
+      new ConfidenceValue() {
 
         @Override
         public boolean isNull() {
@@ -19,12 +19,12 @@ abstract class Value {
         }
 
         @Override
-        com.google.protobuf.Value toProto() {
+        public com.google.protobuf.Value toProto() {
           return com.google.protobuf.Value.newBuilder().setNullValue(NullValue.NULL_VALUE).build();
         }
       };
 
-  private Value() {}
+  private ConfidenceValue() {}
 
   public boolean isStruct() {
     return false;
@@ -66,56 +66,56 @@ abstract class Value {
     throw new IllegalStateException("Not a BooleanValue");
   }
 
-  public java.util.List<Value> asList() {
+  public java.util.List<ConfidenceValue> asList() {
     throw new IllegalStateException("Not a ListValue");
   }
 
-  public static Value of(double value) {
+  public static ConfidenceValue of(double value) {
     return new Number(value);
   }
 
-  public static Value of(String value) {
+  public static ConfidenceValue of(String value) {
     return new StringValue(value);
   }
 
-  public static Value of(boolean value) {
+  public static ConfidenceValue of(boolean value) {
     return new BooleanValue(value);
   }
 
-  public static List of(java.util.List<Value> values) {
+  public static List of(java.util.List<ConfidenceValue> values) {
     return new List(values);
   }
 
-  public static Struct of(Map<String, Value> values) {
+  public static Struct of(Map<String, ConfidenceValue> values) {
     return new Struct(values);
   }
 
-  static Value fromProto(com.google.protobuf.Value protoValue) {
+  static ConfidenceValue fromProto(com.google.protobuf.Value protoValue) {
     final com.google.protobuf.Value.KindCase kind = protoValue.getKindCase();
     switch (kind) {
       case BOOL_VALUE:
-        return Value.of(protoValue.getBoolValue());
+        return ConfidenceValue.of(protoValue.getBoolValue());
       case NUMBER_VALUE:
-        return Value.of(protoValue.getNumberValue());
+        return ConfidenceValue.of(protoValue.getNumberValue());
       case STRING_VALUE:
-        return Value.of(protoValue.getStringValue());
+        return ConfidenceValue.of(protoValue.getStringValue());
       case NULL_VALUE:
         return NULL_VALUE;
       case STRUCT_VALUE:
         return Struct.fromProto(protoValue.getStructValue());
       case LIST_VALUE:
-        final java.util.List<Value> list =
+        final java.util.List<ConfidenceValue> list =
             protoValue.getListValue().getValuesList().stream()
-                .map(Value::fromProto)
+                .map(ConfidenceValue::fromProto)
                 .collect(Collectors.toList());
         return new List(list);
     }
     throw new IllegalArgumentException("Unsupported value kind:" + kind);
   }
 
-  abstract com.google.protobuf.Value toProto();
+  public abstract com.google.protobuf.Value toProto();
 
-  public static class StringValue extends Value {
+  public static class StringValue extends ConfidenceValue {
     private final String value;
 
     private StringValue(String value) {
@@ -133,7 +133,7 @@ abstract class Value {
     }
 
     @Override
-    com.google.protobuf.Value toProto() {
+    public com.google.protobuf.Value toProto() {
       return com.google.protobuf.Value.newBuilder().setStringValue(value).build();
     }
 
@@ -143,7 +143,7 @@ abstract class Value {
     }
   }
 
-  public static class BooleanValue extends Value {
+  public static class BooleanValue extends ConfidenceValue {
     private final boolean value;
 
     private BooleanValue(boolean value) {
@@ -166,12 +166,12 @@ abstract class Value {
     }
 
     @Override
-    com.google.protobuf.Value toProto() {
+    public com.google.protobuf.Value toProto() {
       return com.google.protobuf.Value.newBuilder().setBoolValue(value).build();
     }
   }
 
-  public static class Number extends Value {
+  public static class Number extends ConfidenceValue {
 
     private final double value;
 
@@ -195,15 +195,15 @@ abstract class Value {
     }
 
     @Override
-    com.google.protobuf.Value toProto() {
+    public com.google.protobuf.Value toProto() {
       return com.google.protobuf.Value.newBuilder().setNumberValue(value).build();
     }
   }
 
-  public static class List extends Value {
-    private final ImmutableList<Value> values;
+  public static class List extends ConfidenceValue {
+    private final ImmutableList<ConfidenceValue> values;
 
-    public List(java.util.List<Value> values) {
+    public List(java.util.List<ConfidenceValue> values) {
       this.values = ImmutableList.copyOf(values);
     }
 
@@ -213,7 +213,7 @@ abstract class Value {
     }
 
     @Override
-    public java.util.List<Value> asList() {
+    public java.util.List<ConfidenceValue> asList() {
       return ImmutableList.copyOf(values);
     }
 
@@ -223,25 +223,28 @@ abstract class Value {
     }
 
     @Override
-    com.google.protobuf.Value toProto() {
+    public com.google.protobuf.Value toProto() {
       final ListValue value =
           ListValue.newBuilder()
-              .addAllValues(values.stream().map(Value::toProto).collect(Collectors.toList()))
+              .addAllValues(
+                  values.stream().map(ConfidenceValue::toProto).collect(Collectors.toList()))
               .build();
       return com.google.protobuf.Value.newBuilder().setListValue(value).build();
     }
 
     static List fromProto(ListValue list) {
       return new List(
-          list.getValuesList().stream().map(Value::fromProto).collect(Collectors.toList()));
+          list.getValuesList().stream()
+              .map(ConfidenceValue::fromProto)
+              .collect(Collectors.toList()));
     }
   }
 
-  public static class Struct extends Value {
-    static final Struct EMPTY = new Struct(ImmutableMap.of());
-    private final ImmutableMap<String, Value> values;
+  public static class Struct extends ConfidenceValue {
+    public static final Struct EMPTY = new Struct(ImmutableMap.of());
+    private final ImmutableMap<String, ConfidenceValue> values;
 
-    protected Struct(Map<String, Value> values) {
+    protected Struct(Map<String, ConfidenceValue> values) {
       this.values = ImmutableMap.copyOf(values);
     }
 
@@ -255,8 +258,8 @@ abstract class Value {
       return new Struct(values);
     }
 
-    public Value get(String... path) {
-      Value value = this;
+    public ConfidenceValue get(String... path) {
+      ConfidenceValue value = this;
       for (int i = 0; i < path.length; i++) {
         if (!value.isStruct()) {
           // todo better error
@@ -277,17 +280,17 @@ abstract class Value {
     }
 
     @Override
-    com.google.protobuf.Value toProto() {
+    public com.google.protobuf.Value toProto() {
       final com.google.protobuf.Struct.Builder builder = com.google.protobuf.Struct.newBuilder();
       values.forEach((key, value) -> builder.putFields(key, value.toProto()));
       return com.google.protobuf.Value.newBuilder().setStructValue(builder).build();
     }
 
     static Struct fromProto(com.google.protobuf.Struct struct) {
-      return new Struct(Maps.transformValues(struct.getFieldsMap(), Value::fromProto));
+      return new Struct(Maps.transformValues(struct.getFieldsMap(), ConfidenceValue::fromProto));
     }
 
-    public Map<String, Value> asMap() {
+    public Map<String, ConfidenceValue> asMap() {
       return values;
     }
 
@@ -298,23 +301,23 @@ abstract class Value {
 
     public static final class Builder {
 
-      private final ImmutableMap.Builder<String, Value> builder = ImmutableMap.builder();
+      private final ImmutableMap.Builder<String, ConfidenceValue> builder = ImmutableMap.builder();
 
-      public Builder set(String key, Value value) {
+      public Builder set(String key, ConfidenceValue value) {
         if (!value.isNull()) builder.put(key, value);
         return this;
       }
 
       public Builder set(String key, double value) {
-        return set(key, Value.of(value));
+        return set(key, ConfidenceValue.of(value));
       }
 
       public Builder set(String key, String value) {
-        return set(key, Value.of(value));
+        return set(key, ConfidenceValue.of(value));
       }
 
       public Builder set(String key, boolean value) {
-        return set(key, Value.of(value));
+        return set(key, ConfidenceValue.of(value));
       }
 
       public Builder set(String key, Builder value) {
@@ -340,6 +343,6 @@ abstract class Value {
     if (obj.getClass() != this.getClass()) {
       return false;
     }
-    return toProto().equals(((Value) obj).toProto());
+    return toProto().equals(((ConfidenceValue) obj).toProto());
   }
 }

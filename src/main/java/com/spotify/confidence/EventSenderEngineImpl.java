@@ -1,4 +1,4 @@
-package com.spotify.confidence.eventsender;
+package com.spotify.confidence;
 
 import java.io.IOException;
 import java.util.List;
@@ -74,12 +74,12 @@ class EventSenderEngineImpl implements EventSenderEngine {
   }
 
   @Override
-  public void send(String name, Value.Struct context) {
-    send(name, Value.Struct.EMPTY, context);
+  public void send(String name, ConfidenceValue.Struct context) {
+    send(name, ConfidenceValue.Struct.EMPTY, context);
   }
 
   @Override
-  public void send(String name, Value.Struct message, Value.Struct context) {
+  public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
     if (!isStopped) {
       writeQueue.add(new Event(name, message, context));
     }

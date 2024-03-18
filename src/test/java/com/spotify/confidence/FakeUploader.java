@@ -1,4 +1,4 @@
-package com.spotify.confidence.eventsender;
+package com.spotify.confidence;
 
 import java.io.IOException;
 import java.util.ArrayList;

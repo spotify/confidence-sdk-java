@@ -1,8 +1,7 @@
-package com.spotify.confidence.eventsender;
+package com.spotify.confidence;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public final class EventSenderTestUtils {
 
@@ -10,25 +9,7 @@ public final class EventSenderTestUtils {
 
   static List<FlushPolicy> getFlushPolicies(int minInterval, int minSize) {
     final List<FlushPolicy> flushPolicyList = new ArrayList<>();
-    final FlushPolicy sizeFlushPolicy =
-        new FlushPolicy() {
-          final AtomicInteger size = new AtomicInteger(0);
-
-          @Override
-          public void hit() {
-            size.getAndIncrement();
-          }
-
-          @Override
-          public boolean shouldFlush() {
-            return size.get() >= minSize;
-          }
-
-          @Override
-          public void reset() {
-            size.set(0);
-          }
-        };
+    final FlushPolicy sizeFlushPolicy = new BatchSizeFlushPolicy(minSize);
 
     final FlushPolicy intervalFlushPolicy =
         new FlushPolicy() {

@@ -1,4 +1,4 @@
-package com.spotify.confidence.eventsender;
+package com.spotify.confidence;
 
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;

@@ -1,4 +1,4 @@
-package com.spotify.confidence.eventsender;
+package com.spotify.confidence;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Struct;

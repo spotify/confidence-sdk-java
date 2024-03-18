@@ -1,4 +1,4 @@
-package com.spotify.confidence.eventsender;
+package com.spotify.confidence;
 
 public class FakeClock implements Clock {
   private long currentTimeSeconds;
