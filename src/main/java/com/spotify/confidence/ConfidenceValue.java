@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ListValue;
 import com.google.protobuf.NullValue;
+import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,10 @@ public abstract class ConfidenceValue {
     return false;
   }
 
+  public boolean isTimestamp() {
+    return false;
+  }
+
   public boolean isNull() {
     return false;
   }
@@ -70,6 +75,10 @@ public abstract class ConfidenceValue {
     throw new IllegalStateException("Not a DoubleValue");
   }
 
+  public Instant asInstant() {
+    throw new IllegalStateException("Not a InstantValue");
+  }
+
   public boolean asBoolean() {
     throw new IllegalStateException("Not a BooleanValue");
   }
@@ -84,6 +93,10 @@ public abstract class ConfidenceValue {
 
   public static ConfidenceValue of(double value) {
     return new Double(value);
+  }
+
+  public static ConfidenceValue of(Instant value) {
+    return new Timestamp(value);
   }
 
   public static ConfidenceValue of(String value) {
@@ -110,7 +123,12 @@ public abstract class ConfidenceValue {
       case NUMBER_VALUE:
         return ConfidenceValue.of(protoValue.getNumberValue());
       case STRING_VALUE:
-        return ConfidenceValue.of(protoValue.getStringValue());
+        String stringValue = protoValue.getStringValue();
+        try {
+          return ConfidenceValue.of(Instant.parse(stringValue));
+        } catch (Exception e) {
+          return ConfidenceValue.of(stringValue);
+        }
       case NULL_VALUE:
         return NULL_VALUE;
       case STRUCT_VALUE:
@@ -238,6 +256,35 @@ public abstract class ConfidenceValue {
     @Override
     public com.google.protobuf.Value toProto() {
       return com.google.protobuf.Value.newBuilder().setNumberValue(value).build();
+    }
+  }
+
+  public static class Timestamp extends ConfidenceValue {
+
+    private final Instant value;
+
+    private Timestamp(Instant value) {
+      this.value = value;
+    }
+
+    @Override
+    public boolean isTimestamp() {
+      return true;
+    }
+
+    @Override
+    public Instant asInstant() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @Override
+    public com.google.protobuf.Value toProto() {
+      return com.google.protobuf.Value.newBuilder().setStringValue(value.toString()).build();
     }
   }
 
