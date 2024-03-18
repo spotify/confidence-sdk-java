@@ -38,7 +38,7 @@ public abstract class ConfidenceValue {
     return false;
   }
 
-  public boolean isNumber() {
+  public boolean isInteger() {
     return false;
   }
 
@@ -58,8 +58,8 @@ public abstract class ConfidenceValue {
     throw new IllegalStateException("Not a StringValue");
   }
 
-  public double asNumber() {
-    throw new IllegalStateException("Not a NumberValue");
+  public int asInteger() {
+    throw new IllegalStateException("Not a IntegerValue");
   }
 
   public boolean asBoolean() {
@@ -70,8 +70,8 @@ public abstract class ConfidenceValue {
     throw new IllegalStateException("Not a ListValue");
   }
 
-  public static ConfidenceValue of(double value) {
-    return new Number(value);
+  public static ConfidenceValue of(int value) {
+    return new Integer(value);
   }
 
   public static ConfidenceValue of(String value) {
@@ -96,7 +96,7 @@ public abstract class ConfidenceValue {
       case BOOL_VALUE:
         return ConfidenceValue.of(protoValue.getBoolValue());
       case NUMBER_VALUE:
-        return ConfidenceValue.of(protoValue.getNumberValue());
+        return Integer.fromProto(protoValue);
       case STRING_VALUE:
         return ConfidenceValue.of(protoValue.getStringValue());
       case NULL_VALUE:
@@ -171,21 +171,21 @@ public abstract class ConfidenceValue {
     }
   }
 
-  public static class Number extends ConfidenceValue {
+  public static class Integer extends ConfidenceValue {
 
-    private final double value;
+    private final int value;
 
-    private Number(double value) {
+    private Integer(int value) {
       this.value = value;
     }
 
     @Override
-    public boolean isNumber() {
+    public boolean isInteger() {
       return true;
     }
 
     @Override
-    public double asNumber() {
+    public int asInteger() {
       return value;
     }
 
@@ -308,7 +308,7 @@ public abstract class ConfidenceValue {
         return this;
       }
 
-      public Builder set(String key, double value) {
+      public Builder set(String key, int value) {
         return set(key, ConfidenceValue.of(value));
       }
 

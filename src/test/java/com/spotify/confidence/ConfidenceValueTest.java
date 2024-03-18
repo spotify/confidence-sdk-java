@@ -20,10 +20,10 @@ class ConfidenceValueTest {
     assertThat(value.isStruct()).isFalse();
     assertThat(value.isBoolean()).isFalse();
     assertThat(value.isString()).isFalse();
-    assertThat(value.isNumber()).isFalse();
+    assertThat(value.isInteger()).isFalse();
     assertThrows(IllegalStateException.class, value::asStruct);
     assertThrows(IllegalStateException.class, value::asString);
-    assertThrows(IllegalStateException.class, value::asNumber);
+    assertThrows(IllegalStateException.class, value::asInteger);
   }
 
   @Test
@@ -50,19 +50,19 @@ class ConfidenceValueTest {
   }
 
   @Test
-  public void testNumberValue() {
-    final ConfidenceValue numberValue = ConfidenceValue.of(42.0);
-    assertTrue(numberValue.isNumber());
-    assertEquals(42.0, numberValue.asNumber());
+  public void testIntegerValue() {
+    final ConfidenceValue integerValue = ConfidenceValue.of(42);
+    assertTrue(integerValue.isInteger());
+    assertEquals(42, integerValue.asInteger());
   }
 
   @Test
-  public void testNumberFromProto() {
+  public void testIntegerFromProto() {
     final com.google.protobuf.Value protoValue =
-        com.google.protobuf.Value.newBuilder().setNumberValue(42.0).build();
-    final ConfidenceValue numberValue = ConfidenceValue.fromProto(protoValue);
-    assertTrue(numberValue.isNumber());
-    assertEquals(42.0, numberValue.asNumber());
+        com.google.protobuf.Value.newBuilder().setNumberValue(42).build();
+    final ConfidenceValue integerValue = ConfidenceValue.fromProto(protoValue);
+    assertTrue(integerValue.isInteger());
+    assertEquals(42, integerValue.asInteger());
   }
 
   @Test
@@ -153,7 +153,7 @@ class ConfidenceValueTest {
   @Test
   public void testExceptions() {
     final ConfidenceValue value = ConfidenceValue.of("test value");
-    assertThrows(IllegalStateException.class, value::asNumber);
+    assertThrows(IllegalStateException.class, value::asInteger);
     assertThrows(IllegalStateException.class, value::asBoolean);
     assertThrows(IllegalStateException.class, value::asStruct);
   }
@@ -162,7 +162,7 @@ class ConfidenceValueTest {
   public void testStructEmpty() {
     final ConfidenceValue value = ConfidenceValue.Struct.EMPTY;
     assertTrue(value.isStruct());
-    assertThrows(IllegalStateException.class, value::asNumber);
+    assertThrows(IllegalStateException.class, value::asInteger);
     assertThrows(IllegalStateException.class, value::asString);
     assertThrows(IllegalStateException.class, value::asBoolean);
   }
@@ -180,7 +180,7 @@ class ConfidenceValueTest {
   public void testStructToString() {
     final Map<String, ConfidenceValue> map = new HashMap<>();
     map.put("string", ConfidenceValue.of("value"));
-    map.put("number", ConfidenceValue.of(42));
+    map.put("integer", ConfidenceValue.of(42));
     map.put("boolean", ConfidenceValue.of(false));
     map.put(
         "list",
@@ -189,9 +189,8 @@ class ConfidenceValueTest {
     map.put("struct", ConfidenceValue.of(map));
     final ConfidenceValue.Struct struct = ConfidenceValue.of(map);
     assertEquals(
-        "{struct={number=42.0, boolean=false, string=value,"
-            + " list=[[item1, item2]]}, number=42.0, boolean=false, "
-            + "string=value, list=[[item1, item2]]}",
+        "{struct={boolean=false, string=value, integer=42, list=[[item1, item2]]}, "
+            + "boolean=false, string=value, integer=42, list=[[item1, item2]]}",
         struct.toString());
   }
 
@@ -219,11 +218,11 @@ class ConfidenceValueTest {
     final ConfidenceValue.Struct struct =
         ConfidenceValue.Struct.builder()
             .set("key1", "value")
-            .set("key2", 42.0)
+            .set("key2", 42)
             .set("key3", true)
             .build();
     assertEquals(ConfidenceValue.of("value"), struct.get("key1"));
-    assertEquals(ConfidenceValue.of(42.0), struct.get("key2"));
+    assertEquals(ConfidenceValue.of(42), struct.get("key2"));
     assertEquals(ConfidenceValue.of(true), struct.get("key3"));
   }
 
