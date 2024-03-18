@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
 
 /** OpenFeature Provider for feature flagging with the Confidence platform */
 public class ConfidenceFeatureProvider implements FeatureProvider {
@@ -37,6 +38,9 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
   public ConfidenceFeatureProvider(Confidence confidence) {
     this.confidence = confidence;
   }
+
+  private static final Logger log =
+      org.slf4j.LoggerFactory.getLogger(ConfidenceFeatureProvider.class);
 
   /**
    * ConfidenceFeatureProvider constructor
@@ -122,6 +126,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
 
     final T castedValue = cast.apply(objectEvaluation.getValue());
     if (castedValue == null) {
+      log.warn("Cannot cast value '{}' to expected type", objectEvaluation.getValue().toString());
       throw new TypeMismatchError(
           String.format("Cannot cast value '%s' to expected type", objectEvaluation.getValue()));
     }
@@ -157,12 +162,14 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
               .get();
 
       if (resolveFlagResponse.getResolvedFlagsList().isEmpty()) {
+        log.warn("No active flag '{}' was found", flagPath.getFlag());
         throw new FlagNotFoundError(
             String.format("No active flag '%s' was found", flagPath.getFlag()));
       }
 
       final String responseFlagName = resolveFlagResponse.getResolvedFlags(0).getFlag();
       if (!requestFlagName.equals(responseFlagName)) {
+        log.warn("Unexpected flag '{}' from remote", responseFlagName.replaceFirst("^flags/", ""));
         throw new FlagNotFoundError(
             String.format(
                 "Unexpected flag '%s' from remote", responseFlagName.replaceFirst("^flags/", "")));
@@ -171,6 +178,9 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
       final ResolvedFlag resolvedFlag = resolveFlagResponse.getResolvedFlags(0);
 
       if (resolvedFlag.getVariant().isEmpty()) {
+        log.info(
+            "The server returned no assignment for the flag. Typically, this happens "
+                + "if no configured rules matches the given evaluation context.");
         return ProviderEvaluation.<Value>builder()
             .value(defaultValue)
             .reason(
@@ -209,12 +219,18 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
 
   private static void handleStatusRuntimeException(StatusRuntimeException e) {
     if (e.getStatus().getCode() == Code.DEADLINE_EXCEEDED) {
+      log.error("Deadline exceeded when calling provider backend");
       throw new GeneralError("Deadline exceeded when calling provider backend");
     } else if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+      log.error("Provider backend is unavailable");
       throw new GeneralError("Provider backend is unavailable");
     } else if (e.getStatus().getCode() == Code.UNAUTHENTICATED) {
+      log.error("UNAUTHENTICATED");
       throw new GeneralError("UNAUTHENTICATED");
     } else {
+      log.error(
+          "Unknown error occurred when calling the provider backend. Grpc status code {}",
+          e.getStatus().getCode());
       throw new GeneralError(
           String.format(
               "Unknown error occurred when calling the provider backend. Exception: %s",
@@ -228,6 +244,8 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
       final Structure structure = value.asStructure();
       if (structure == null) {
         // value's inner object actually is no structure
+        log.warn(
+            "Illegal attempt to derive field '{}' on non-structure value '{}'", fieldName, value);
         throw new TypeMismatchError(
             String.format(
                 "Illegal attempt to derive field '%s' on non-structure value '%s'",
@@ -239,6 +257,10 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
       if (value == null) {
         // we know that null indicates absence of a proper value because intended nulls would be an
         // instance of type Value
+        log.warn(
+            "Illegal attempt to derive non-existing field '{}' on structure value '{}'",
+            fieldName,
+            structure);
         throw new TypeMismatchError(
             String.format(
                 "Illegal attempt to derive non-existing field '%s' on structure value '%s'",
@@ -255,6 +277,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
 
     if (parts.length == 0) {
       // this happens for malformed corner cases such as: str = "..."
+      log.warn("Illegal path string '{}'", str);
       throw new GeneralError(String.format("Illegal path string '%s'", str));
     } else if (parts.length == 1) {
       // str doesn't contain the delimiter
