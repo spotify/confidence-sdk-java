@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ListValue;
 import com.google.protobuf.NullValue;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -51,6 +52,10 @@ public abstract class ConfidenceValue {
     return false;
   }
 
+  public boolean isDate() {
+    return false;
+  }
+
   public boolean isNull() {
     return false;
   }
@@ -79,6 +84,10 @@ public abstract class ConfidenceValue {
     throw new IllegalStateException("Not a InstantValue");
   }
 
+  public LocalDate asLocalDate() {
+    throw new IllegalStateException("Not a DateValue");
+  }
+
   public boolean asBoolean() {
     throw new IllegalStateException("Not a BooleanValue");
   }
@@ -97,6 +106,10 @@ public abstract class ConfidenceValue {
 
   public static ConfidenceValue of(Instant value) {
     return new Timestamp(value);
+  }
+
+  public static ConfidenceValue of(LocalDate date) {
+    return new Date(date);
   }
 
   public static ConfidenceValue of(String value) {
@@ -126,8 +139,12 @@ public abstract class ConfidenceValue {
         final String stringValue = protoValue.getStringValue();
         try {
           return ConfidenceValue.of(Instant.parse(stringValue));
-        } catch (Exception e) {
-          return ConfidenceValue.of(stringValue);
+        } catch (Exception e1) {
+          try {
+            return ConfidenceValue.of(LocalDate.parse(stringValue));
+          } catch (Exception e2) {
+            return ConfidenceValue.of(stringValue);
+          }
         }
       case NULL_VALUE:
         return NULL_VALUE;
@@ -288,6 +305,35 @@ public abstract class ConfidenceValue {
     }
   }
 
+  public static class Date extends ConfidenceValue {
+
+    private final LocalDate value;
+
+    private Date(LocalDate value) {
+      this.value = value;
+    }
+
+    @Override
+    public boolean isDate() {
+      return true;
+    }
+
+    @Override
+    public LocalDate asLocalDate() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @Override
+    public com.google.protobuf.Value toProto() {
+      return com.google.protobuf.Value.newBuilder().setStringValue(value.toString()).build();
+    }
+  }
+
   public static class List extends ConfidenceValue {
     private final ImmutableList<ConfidenceValue> values;
 
@@ -405,6 +451,10 @@ public abstract class ConfidenceValue {
       }
 
       public Builder set(String key, Instant value) {
+        return set(key, ConfidenceValue.of(value));
+      }
+
+      public Builder set(String key, LocalDate value) {
         return set(key, ConfidenceValue.of(value));
       }
 

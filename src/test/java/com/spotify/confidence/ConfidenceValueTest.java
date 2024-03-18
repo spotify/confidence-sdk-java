@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.protobuf.ListValue;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,11 +25,13 @@ class ConfidenceValueTest {
     assertThat(value.isInteger()).isFalse();
     assertThat(value.isDouble()).isFalse();
     assertThat(value.isTimestamp()).isFalse();
+    assertThat(value.isDate()).isFalse();
     assertThrows(IllegalStateException.class, value::asStruct);
     assertThrows(IllegalStateException.class, value::asString);
     assertThrows(IllegalStateException.class, value::asInteger);
     assertThrows(IllegalStateException.class, value::asDouble);
     assertThrows(IllegalStateException.class, value::asInstant);
+    assertThrows(IllegalStateException.class, value::asLocalDate);
   }
 
   @Test
@@ -100,6 +103,25 @@ class ConfidenceValueTest {
     final ConfidenceValue timestampValue = ConfidenceValue.fromProto(timestampProtoValue);
     assertTrue(timestampValue.isTimestamp());
     assertEquals(Instant.parse(isoString), timestampValue.asInstant());
+  }
+
+  @Test
+  public void testDateValue() {
+    final LocalDate localDate = LocalDate.parse("2007-12-03");
+    final ConfidenceValue timestampValue = ConfidenceValue.of(localDate);
+    assertTrue(timestampValue.isDate());
+    assertEquals(localDate, timestampValue.asLocalDate());
+  }
+
+  @Test
+  public void testDateFromProto() {
+    final String isoString = "2007-12-03";
+    final com.google.protobuf.Value dateProtoValue =
+        com.google.protobuf.Value.newBuilder().setStringValue(isoString).build();
+
+    final ConfidenceValue dateValue = ConfidenceValue.fromProto(dateProtoValue);
+    assertTrue(dateValue.isDate());
+    assertEquals(LocalDate.parse(isoString), dateValue.asLocalDate());
   }
 
   @Test
@@ -193,6 +215,7 @@ class ConfidenceValueTest {
     assertThrows(IllegalStateException.class, value::asInteger);
     assertThrows(IllegalStateException.class, value::asDouble);
     assertThrows(IllegalStateException.class, value::asInstant);
+    assertThrows(IllegalStateException.class, value::asLocalDate);
     assertThrows(IllegalStateException.class, value::asBoolean);
     assertThrows(IllegalStateException.class, value::asStruct);
   }
@@ -203,7 +226,7 @@ class ConfidenceValueTest {
     assertTrue(value.isStruct());
     assertThrows(IllegalStateException.class, value::asInteger);
     assertThrows(IllegalStateException.class, value::asDouble);
-    assertThrows(IllegalStateException.class, value::asInstant);
+    assertThrows(IllegalStateException.class, value::asLocalDate);
     assertThrows(IllegalStateException.class, value::asString);
     assertThrows(IllegalStateException.class, value::asBoolean);
   }
@@ -220,11 +243,13 @@ class ConfidenceValueTest {
   @Test
   public void testStructToString() {
     final Instant instant = Instant.parse("2007-12-03T10:15:30.00Z");
+    final LocalDate localDate = LocalDate.parse("2007-12-03");
     final Map<String, ConfidenceValue> map = new HashMap<>();
     map.put("string", ConfidenceValue.of("value"));
     map.put("integer", ConfidenceValue.of(42));
     map.put("double", ConfidenceValue.of(42.0));
     map.put("timestamp", ConfidenceValue.of(instant));
+    map.put("date", ConfidenceValue.of(localDate));
     map.put("boolean", ConfidenceValue.of(false));
     map.put(
         "list",
@@ -233,9 +258,9 @@ class ConfidenceValueTest {
     map.put("struct", ConfidenceValue.of(map));
     final ConfidenceValue.Struct struct = ConfidenceValue.of(map);
     assertEquals(
-        "{struct={boolean=false, string=value, double=42.0, integer=42, "
-            + "list=[[item1, item2]], timestamp=2007-12-03T10:15:30Z}, boolean=false, "
-            + "string=value, double=42.0, integer=42, list=[[item1, item2]], "
+        "{date=2007-12-03, struct={date=2007-12-03, boolean=false, string=value, "
+            + "double=42.0, integer=42, list=[[item1, item2]], timestamp=2007-12-03T10:15:30Z}, "
+            + "boolean=false, string=value, double=42.0, integer=42, list=[[item1, item2]], "
             + "timestamp=2007-12-03T10:15:30Z}",
         struct.toString());
   }
@@ -262,6 +287,7 @@ class ConfidenceValueTest {
   @Test
   public void testStructBuilderSetValues() {
     final Instant instant = Instant.parse("2007-12-03T10:15:30.00Z");
+    final LocalDate date = LocalDate.parse("2007-12-03");
     final ConfidenceValue.Struct struct =
         ConfidenceValue.Struct.builder()
             .set("key1", "value")
@@ -269,12 +295,14 @@ class ConfidenceValueTest {
             .set("key3", true)
             .set("key4", 42.0)
             .set("key5", instant)
+            .set("key6", date)
             .build();
     assertEquals(ConfidenceValue.of("value"), struct.get("key1"));
     assertEquals(ConfidenceValue.of(42), struct.get("key2"));
     assertEquals(ConfidenceValue.of(true), struct.get("key3"));
     assertEquals(ConfidenceValue.of(42.0), struct.get("key4"));
     assertEquals(ConfidenceValue.of(instant), struct.get("key5"));
+    assertEquals(ConfidenceValue.of(date), struct.get("key6"));
   }
 
   @Test
