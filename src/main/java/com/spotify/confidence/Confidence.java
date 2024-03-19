@@ -91,8 +91,10 @@ public class Confidence implements EventSender, Contextual {
 
   public static class Builder {
     private final String clientSecret;
-    private ManagedChannel flagResolverManagedChannel =
+
+    private final ManagedChannel DEFAULT_CHANNEL =
         ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build();
+    private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
 
     public Builder(@Nonnull String clientSecret) {
       this.clientSecret = clientSecret;
@@ -113,10 +115,7 @@ public class Confidence implements EventSender, Contextual {
       final FlagResolver flagResolver =
           new FlagResolverImpl(clientSecret, flagResolverManagedChannel);
       final GrpcEventUploader uploader =
-          new GrpcEventUploader(
-              clientSecret,
-              new SystemClock(),
-              ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
+          new GrpcEventUploader(clientSecret, new SystemClock(), DEFAULT_CHANNEL);
       final List<FlushPolicy> flushPolicies = ImmutableList.of(new BatchSizeFlushPolicy(5));
       final EventSenderEngine engine = new EventSenderEngineImpl(flushPolicies, uploader);
       return new Confidence(null, engine, flagResolver);
