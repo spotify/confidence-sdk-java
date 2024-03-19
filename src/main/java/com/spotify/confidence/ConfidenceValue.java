@@ -7,6 +7,7 @@ import com.google.protobuf.ListValue;
 import com.google.protobuf.NullValue;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -493,7 +494,7 @@ public abstract class ConfidenceValue {
 
       private final ImmutableMap.Builder<String, ConfidenceValue> builder = ImmutableMap.builder();
 
-      public Builder set(String key, ConfidenceValue value) {
+      public Builder set(String key, ConfidenceValue.Struct value) {
         if (!value.isNull()) builder.put(key, value);
         return this;
       }
@@ -522,13 +523,43 @@ public abstract class ConfidenceValue {
         return set(key, ConfidenceValue.of(value));
       }
 
-      public Builder set(String key, List values) {
-        if (!values.isNull()) builder.put(key, values);
+      public Builder setIntegers(String key, java.util.List<java.lang.Integer> values) {
+        builder.put(key, ConfidenceValue.ofIntegers(values));
+        return this;
+      }
+
+      public Builder setDoubles(String key, java.util.List<java.lang.Double> values) {
+        builder.put(key, ConfidenceValue.ofDoubles(values));
+        return this;
+      }
+
+      public Builder setTimestamps(String key, java.util.List<Instant> values) {
+        builder.put(key, ConfidenceValue.ofTimestamps(values));
+        return this;
+      }
+
+      public Builder setDates(String key, java.util.List<LocalDate> values) {
+        builder.put(key, ConfidenceValue.ofDates(values));
+        return this;
+      }
+
+      public Builder setStrings(String key, java.util.List<String> values) {
+        builder.put(key, ConfidenceValue.ofStrings(values));
+        return this;
+      }
+
+      public Builder setBooleans(String key, java.util.List<java.lang.Boolean> values) {
+        builder.put(key, ConfidenceValue.ofBooleans(values));
         return this;
       }
 
       public Builder set(String key, Builder value) {
         return set(key, value.build());
+      }
+
+      private Builder set(String key, ConfidenceValue value) {
+        if (!value.isNull()) builder.put(key, value);
+        return this;
       }
 
       Struct build() {
