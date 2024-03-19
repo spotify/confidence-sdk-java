@@ -128,6 +128,22 @@ public abstract class ConfidenceValue {
     return new BooleanList(values);
   }
 
+  public static ConfidenceValue.List ofIntegers(java.util.List<java.lang.Integer> values) {
+    return new IntegerList(values);
+  }
+
+  public static ConfidenceValue.List ofDoubles(java.util.List<java.lang.Double> values) {
+    return new DoubleList(values);
+  }
+
+  public static ConfidenceValue.List ofTimestamps(java.util.List<Instant> values) {
+    return new TimestampList(values);
+  }
+
+  public static ConfidenceValue.List ofDates(java.util.List<LocalDate> values) {
+    return new DateList(values);
+  }
+
   public static Struct of(Map<String, ConfidenceValue> values) {
     return new Struct(values);
   }
@@ -346,6 +362,30 @@ public abstract class ConfidenceValue {
 
   public static class BooleanList extends List {
     public BooleanList(java.util.List<Boolean> values) {
+      super(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+  }
+
+  public static class IntegerList extends List {
+    public IntegerList(java.util.List<java.lang.Integer> values) {
+      super(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+  }
+
+  public static class DoubleList extends List {
+    public DoubleList(java.util.List<java.lang.Double> values) {
+      super(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+  }
+
+  public static class TimestampList extends List {
+    public TimestampList(java.util.List<Instant> values) {
+      super(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+  }
+
+  public static class DateList extends List {
+    public DateList(java.util.List<LocalDate> values) {
       super(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
     }
   }
