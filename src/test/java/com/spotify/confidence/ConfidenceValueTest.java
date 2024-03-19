@@ -375,6 +375,8 @@ class ConfidenceValueTest {
   public void testStructBuilderSetValues() {
     final Instant instant = Instant.parse("2007-12-03T10:15:30.00Z");
     final LocalDate date = LocalDate.parse("2007-12-03");
+    ConfidenceValue.List stringList =
+        ConfidenceValue.ofStrings(ImmutableList.of("string1", "strign2"));
     final ConfidenceValue.Struct struct =
         ConfidenceValue.Struct.builder()
             .set("key1", "value")
@@ -383,6 +385,7 @@ class ConfidenceValueTest {
             .set("key4", 42.0)
             .set("key5", instant)
             .set("key6", date)
+            .set("key7", stringList)
             .build();
     assertEquals(ConfidenceValue.of("value"), struct.get("key1"));
     assertEquals(ConfidenceValue.of(42), struct.get("key2"));
@@ -390,6 +393,7 @@ class ConfidenceValueTest {
     assertEquals(ConfidenceValue.of(42.0), struct.get("key4"));
     assertEquals(ConfidenceValue.of(instant), struct.get("key5"));
     assertEquals(ConfidenceValue.of(date), struct.get("key6"));
+    assertEquals(stringList, struct.get("key7"));
   }
 
   @Test

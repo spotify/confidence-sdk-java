@@ -522,6 +522,11 @@ public abstract class ConfidenceValue {
         return set(key, ConfidenceValue.of(value));
       }
 
+      public Builder set(String key, List values) {
+        if (!values.isNull()) builder.put(key, values);
+        return this;
+      }
+
       public Builder set(String key, Builder value) {
         return set(key, value.build());
       }
