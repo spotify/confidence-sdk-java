@@ -3,7 +3,7 @@ package com.spotify.confidence;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InMemoryStorage implements EventSenderStorage {
+class InMemoryStorage implements EventSenderStorage {
   private final List<Event> events = new ArrayList<>();
   private final List<EventBatch> batches = new ArrayList<>();
 

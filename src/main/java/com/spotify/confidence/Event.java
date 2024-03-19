@@ -1,6 +1,6 @@
 package com.spotify.confidence;
 
-public class Event {
+class Event {
   private final String name;
   private final ConfidenceValue.Struct message;
   private final ConfidenceValue.Struct context;
