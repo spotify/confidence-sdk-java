@@ -103,7 +103,9 @@ class TypeMapper {
   }
 
   public static com.google.protobuf.Value from(Value val) {
-    if (val.isBoolean()) {
+    if (val.isNumber()) {
+      return Values.of(val.asDouble());
+    } else if (val.isBoolean()) {
       return Values.of(val.asBoolean());
     } else if (val.isNull()) {
       return Values.ofNull();
