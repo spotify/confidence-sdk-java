@@ -91,29 +91,32 @@ public class Confidence implements EventSender, Contextual {
 
   public static class Builder {
     private final String clientSecret;
-    private ManagedChannel managedChannel;
+    private ManagedChannel flagResolverManagedChannel =
+        ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build();
 
     public Builder(@Nonnull String clientSecret) {
       this.clientSecret = clientSecret;
     }
 
-    public Builder managedChannel(String host, int port) {
-      this.managedChannel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+    public Builder flagResolverManagedChannel(String host, int port) {
+      this.flagResolverManagedChannel =
+          ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
       return this;
     }
 
-    public Builder managedChannel(ManagedChannel managedChannel) {
-      this.managedChannel = managedChannel;
+    public Builder flagResolverManagedChannel(ManagedChannel managedChannel) {
+      this.flagResolverManagedChannel = managedChannel;
       return this;
     }
 
     public Confidence build() {
-      if (managedChannel == null) {
-        throw new IllegalStateException("ManagedChannel is not set");
-      }
-      final FlagResolver flagResolver = new FlagResolverImpl(clientSecret, managedChannel);
+      final FlagResolver flagResolver =
+          new FlagResolverImpl(clientSecret, flagResolverManagedChannel);
       final GrpcEventUploader uploader =
-          new GrpcEventUploader(clientSecret, new SystemClock(), managedChannel);
+          new GrpcEventUploader(
+              clientSecret,
+              new SystemClock(),
+              ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
       final List<FlushPolicy> flushPolicies = ImmutableList.of(new BatchSizeFlushPolicy(5));
       final EventSenderEngine engine = new EventSenderEngineImpl(flushPolicies, uploader);
       return new Confidence(null, engine, flagResolver);
