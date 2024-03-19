@@ -375,7 +375,7 @@ class ConfidenceValueTest {
   public void testStructBuilderSetValues() {
     final Instant instant = Instant.parse("2007-12-03T10:15:30.00Z");
     final LocalDate date = LocalDate.parse("2007-12-03");
-    List<String> stringList = List.of("string1", "string2");
+    final List<String> stringList = List.of("string1", "string2");
     final ConfidenceValue.Struct struct =
         ConfidenceValue.Struct.builder()
             .set("key1", "value")
