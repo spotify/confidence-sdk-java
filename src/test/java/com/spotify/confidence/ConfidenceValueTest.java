@@ -3,6 +3,7 @@ package com.spotify.confidence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ListValue;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -140,9 +141,7 @@ class ConfidenceValueTest {
 
   @Test
   public void testListValue() {
-    final ConfidenceValue.List listValue =
-        new ConfidenceValue.List(
-            Arrays.asList(ConfidenceValue.of("item1"), ConfidenceValue.of("item2")));
+    final ConfidenceValue.List listValue = ConfidenceValue.of(ImmutableList.of("item1", "item2"));
     assertEquals(
         listValue.toProto(),
         com.google.protobuf.Value.newBuilder()
@@ -251,10 +250,7 @@ class ConfidenceValueTest {
     map.put("timestamp", ConfidenceValue.of(instant));
     map.put("date", ConfidenceValue.of(localDate));
     map.put("boolean", ConfidenceValue.of(false));
-    map.put(
-        "list",
-        ConfidenceValue.of(
-            java.util.List.of(ConfidenceValue.of("item1"), ConfidenceValue.of("item2"))));
+    map.put("list", ConfidenceValue.of(java.util.List.of("item1", "item2")));
     map.put("struct", ConfidenceValue.of(map));
     final ConfidenceValue.Struct struct = ConfidenceValue.of(map);
     assertEquals(

@@ -120,8 +120,8 @@ public abstract class ConfidenceValue {
     return new BooleanValue(value);
   }
 
-  public static List of(java.util.List<ConfidenceValue> values) {
-    return new List(values);
+  public static ConfidenceValue.List of(java.util.List<String> values) {
+    return new StringList(values);
   }
 
   public static Struct of(Map<String, ConfidenceValue> values) {
@@ -334,10 +334,16 @@ public abstract class ConfidenceValue {
     }
   }
 
+  public static class StringList extends List {
+    public StringList(java.util.List<String> values) {
+      super(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+  }
+
   public static class List extends ConfidenceValue {
     private final ImmutableList<ConfidenceValue> values;
 
-    public List(java.util.List<ConfidenceValue> values) {
+    private List(java.util.List<ConfidenceValue> values) {
       this.values = ImmutableList.copyOf(values);
     }
 
