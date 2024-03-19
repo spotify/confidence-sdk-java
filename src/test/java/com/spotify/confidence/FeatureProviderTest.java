@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.ResolverClientTestUtils.generateSampleResponse;
 import static dev.openfeature.sdk.ErrorCode.GENERAL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
+import com.spotify.confidence.ResolverClientTestUtils.ValueSchemaHolder;
 import com.spotify.confidence.shaded.flags.resolver.v1.FlagResolverServiceGrpc.FlagResolverServiceImplBase;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
@@ -204,8 +206,7 @@ final class FeatureProviderTest {
                   Structs.of(
                       "my-key", Values.of(true), "targeting_key", Values.of("my-targeting-key")));
 
-          streamObserver.onNext(
-              ResolverClientTestUtils.generateSampleResponse(Collections.emptyList()));
+          streamObserver.onNext(generateSampleResponse(Collections.emptyList()));
           streamObserver.onCompleted();
         });
 
@@ -248,8 +249,7 @@ final class FeatureProviderTest {
           assertThat(ResolveFlagsRequest.getEvaluationContext())
               .isEqualTo(Structs.of("my-key", Values.of(true)));
 
-          streamObserver.onNext(
-              ResolverClientTestUtils.generateSampleResponse(Collections.emptyList()));
+          streamObserver.onNext(generateSampleResponse(Collections.emptyList()));
           streamObserver.onCompleted();
         });
 
@@ -292,8 +292,7 @@ final class FeatureProviderTest {
           assertThat(ResolveFlagsRequest.getEvaluationContext())
               .isEqualTo(Structs.of("targeting_key", Values.of("my-targeting-key-1")));
 
-          streamObserver.onNext(
-              ResolverClientTestUtils.generateSampleResponse(Collections.emptyList()));
+          streamObserver.onNext(generateSampleResponse(Collections.emptyList()));
           streamObserver.onCompleted();
         });
 
@@ -473,7 +472,7 @@ final class FeatureProviderTest {
   public void longValueInIntegerSchemaResolveShouldFail() {
     mockSampleResponse(
         Collections.singletonList(
-            new ResolverClientTestUtils.ValueSchemaHolder(
+            new ValueSchemaHolder(
                 "prop-X",
                 Values.of(Integer.MAX_VALUE + 1L),
                 FlagSchema.SchemaTypeCase.INT_SCHEMA)));
@@ -539,11 +538,11 @@ final class FeatureProviderTest {
     mockSampleResponse(Collections.emptyList());
   }
 
-  private void mockSampleResponse(List<ResolverClientTestUtils.ValueSchemaHolder> additionalProps) {
+  private void mockSampleResponse(List<ValueSchemaHolder> additionalProps) {
     mockResolve(
         (resolveFlagRequest, streamObserver) -> {
           assertThat(resolveFlagRequest.getFlags(0)).isEqualTo("flags/flag");
-          streamObserver.onNext(ResolverClientTestUtils.generateSampleResponse(additionalProps));
+          streamObserver.onNext(generateSampleResponse(additionalProps));
           streamObserver.onCompleted();
         });
   }
