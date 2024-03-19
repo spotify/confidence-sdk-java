@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.0.10](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.9...v0.0.10) (2024-03-19)
+
+
+### 🐛 Bug Fixes
+
+* add support for mapping a OF Number to proto ([6efb1c8](https://github.com/spotify/confidence-openfeature-provider-java/commit/6efb1c82fa108965bca4e4e12eb389dd37195718))
+* support for mapping a OF Number to proto ([#93](https://github.com/spotify/confidence-openfeature-provider-java/issues/93)) ([6efb1c8](https://github.com/spotify/confidence-openfeature-provider-java/commit/6efb1c82fa108965bca4e4e12eb389dd37195718))
+
+
+### 🧹 Chore
+
+* adjust contributors ([#74](https://github.com/spotify/confidence-openfeature-provider-java/issues/74)) ([de42245](https://github.com/spotify/confidence-openfeature-provider-java/commit/de42245992a2d35125b62e460dc5336c89532c83))
+* **main:** release 0.0.10-SNAPSHOT ([#86](https://github.com/spotify/confidence-openfeature-provider-java/issues/86)) ([d53f953](https://github.com/spotify/confidence-openfeature-provider-java/commit/d53f9534b0aa86a00b10ce98c4d51f0f9ce6d0e2))
+
+
+### 📚 Documentation
+
+* add readme about depending on snapshots ([#84](https://github.com/spotify/confidence-openfeature-provider-java/issues/84)) ([ec2871f](https://github.com/spotify/confidence-openfeature-provider-java/commit/ec2871fb9f608d171898dad770e8aa8500e9b093))
+
 ## [0.0.9](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.8...v0.0.9) (2024-02-01)
 
 
