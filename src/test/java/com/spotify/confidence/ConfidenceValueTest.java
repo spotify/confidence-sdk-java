@@ -7,8 +7,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ListValue;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -140,16 +140,32 @@ class ConfidenceValueTest {
   }
 
   @Test
-  public void testListValue() {
-    final ConfidenceValue.List listValue = ConfidenceValue.of(ImmutableList.of("item1", "item2"));
+  public void testStringListValue() {
+    final ConfidenceValue.List listValue =
+        ConfidenceValue.ofStrings(ImmutableList.of("item1", "item2"));
     assertEquals(
         listValue.toProto(),
         com.google.protobuf.Value.newBuilder()
             .setListValue(
                 ListValue.newBuilder()
                     .addAllValues(
-                        Arrays.asList(ConfidenceValue.of("item1"), ConfidenceValue.of("item2"))
-                            .stream()
+                        Stream.of(ConfidenceValue.of("item1"), ConfidenceValue.of("item2"))
+                            .map(ConfidenceValue::toProto)
+                            .collect(Collectors.toList())))
+            .build());
+  }
+
+  @Test
+  public void testBooleanListValue() {
+    final ConfidenceValue.List listValue =
+        ConfidenceValue.ofBooleans(ImmutableList.of(true, false));
+    assertEquals(
+        listValue.toProto(),
+        com.google.protobuf.Value.newBuilder()
+            .setListValue(
+                ListValue.newBuilder()
+                    .addAllValues(
+                        Stream.of(ConfidenceValue.of(true), ConfidenceValue.of(false))
                             .map(ConfidenceValue::toProto)
                             .collect(Collectors.toList())))
             .build());
@@ -250,7 +266,7 @@ class ConfidenceValueTest {
     map.put("timestamp", ConfidenceValue.of(instant));
     map.put("date", ConfidenceValue.of(localDate));
     map.put("boolean", ConfidenceValue.of(false));
-    map.put("list", ConfidenceValue.of(java.util.List.of("item1", "item2")));
+    map.put("list", ConfidenceValue.ofStrings(List.of("item1", "item2")));
     map.put("struct", ConfidenceValue.of(map));
     final ConfidenceValue.Struct struct = ConfidenceValue.of(map);
     assertEquals(
