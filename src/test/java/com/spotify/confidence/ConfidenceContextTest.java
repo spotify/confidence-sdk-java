@@ -3,18 +3,17 @@ package com.spotify.confidence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class ConfidenceContextTest {
 
-  private final FakeEngine fakeEngine = new FakeEngine();
+  private final FakeEventSenderEngine fakeEngine = new FakeEventSenderEngine();
+  private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
+      new ResolverClientTestUtils.FakeFlagResolverClient();
 
   @Test
   public void getContextContainsParentContextValues() {
-    final Confidence root = new Confidence(null, fakeEngine);
+    final Confidence root = new Confidence(null, fakeEngine, fakeFlagResolverClient);
     root.updateContextEntry("page", ConfidenceValue.of("http://.."));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("pants", ConfidenceValue.of("yellow")));
@@ -31,7 +30,7 @@ public class ConfidenceContextTest {
 
   @Test
   public void setContextOverwritesContext() {
-    final Confidence root = new Confidence(null, fakeEngine);
+    final Confidence root = new Confidence(null, fakeEngine, fakeFlagResolverClient);
     root.updateContextEntry("page", ConfidenceValue.of("http://.."));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("pants", ConfidenceValue.of("yellow")));
@@ -55,7 +54,7 @@ public class ConfidenceContextTest {
 
   @Test
   public void parentContextFieldCanBeOverridden() {
-    final Confidence root = new Confidence(null, fakeEngine);
+    final Confidence root = new Confidence(null, fakeEngine, fakeFlagResolverClient);
     root.updateContextEntry("pants-color", ConfidenceValue.of("yellow"));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("pants-color", ConfidenceValue.of("blue")));
@@ -73,7 +72,7 @@ public class ConfidenceContextTest {
 
   @Test
   public void parentContextFieldCanBeOverriddenOrRemoved() {
-    final Confidence root = new Confidence(null, fakeEngine);
+    final Confidence root = new Confidence(null, fakeEngine, fakeFlagResolverClient);
     root.updateContextEntry("pants-color", ConfidenceValue.of("yellow"));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("shirt-color", ConfidenceValue.of("blue")));
@@ -84,26 +83,5 @@ public class ConfidenceContextTest {
     assertThat(confidence.getContext())
         .isEqualTo(
             ConfidenceValue.Struct.of(ImmutableMap.of("shirt-color", ConfidenceValue.of("blue"))));
-  }
-
-  private static class FakeEngine implements EventSenderEngine {
-
-    List<Event> events = new ArrayList<>();
-    boolean closed;
-
-    @Override
-    public void close() throws IOException {
-      this.closed = true;
-    }
-
-    @Override
-    public void send(String name, ConfidenceValue.Struct context) {
-      send(name, ConfidenceValue.Struct.EMPTY, context);
-    }
-
-    @Override
-    public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
-      events.add(new Event(name, message, context));
-    }
   }
 }

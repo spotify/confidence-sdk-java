@@ -1,6 +1,6 @@
 package com.spotify.confidence;
 
-public interface FlushPolicy {
+interface FlushPolicy {
   void hit();
 
   boolean shouldFlush();
