@@ -13,6 +13,8 @@ import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.FlagNotFoundError;
 import dev.openfeature.sdk.exceptions.GeneralError;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
@@ -34,6 +36,46 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    */
   public ConfidenceFeatureProvider(Confidence confidence) {
     this.confidence = confidence;
+  }
+
+  /**
+   * ConfidenceFeatureProvider constructor
+   *
+   * @param clientSecret generated from the Confidence portal
+   * @param managedChannel gRPC channel
+   * @deprecated This constructor is deprecated. Please use {@link
+   *     #ConfidenceFeatureProvider(Confidence)} instead.
+   */
+  @Deprecated()
+  public ConfidenceFeatureProvider(String clientSecret, ManagedChannel managedChannel) {
+    this(Confidence.builder(clientSecret).flagResolverManagedChannel(managedChannel).build());
+  }
+
+  /**
+   * ConfidenceFeatureProvider constructor
+   *
+   * @param clientSecret generated from the Confidence portal
+   * @deprecated This constructor is deprecated. Please use {@link
+   *     #ConfidenceFeatureProvider(Confidence)} instead.
+   */
+  @Deprecated()
+  public ConfidenceFeatureProvider(String clientSecret) {
+    this(clientSecret, ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
+  }
+
+  /**
+   * ConfidenceFeatureProvider constructor that allows you to override the default gRPC host and
+   * port, used for local resolver.
+   *
+   * @param clientSecret generated from the Confidence portal
+   * @param host gRPC host you want to connect to.
+   * @param port port of the gRPC host that you want to use.
+   * @deprecated This constructor is deprecated. Please use {@link
+   *     #ConfidenceFeatureProvider(Confidence)} instead.
+   */
+  @Deprecated()
+  public ConfidenceFeatureProvider(String clientSecret, String host, int port) {
+    this(clientSecret, ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
   }
 
   @Override
