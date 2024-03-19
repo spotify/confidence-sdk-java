@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ListValue;
 import com.google.protobuf.NullValue;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -38,7 +40,19 @@ public abstract class ConfidenceValue {
     return false;
   }
 
-  public boolean isNumber() {
+  public boolean isInteger() {
+    return false;
+  }
+
+  public boolean isDouble() {
+    return false;
+  }
+
+  public boolean isTimestamp() {
+    return false;
+  }
+
+  public boolean isDate() {
     return false;
   }
 
@@ -58,8 +72,20 @@ public abstract class ConfidenceValue {
     throw new IllegalStateException("Not a StringValue");
   }
 
-  public double asNumber() {
-    throw new IllegalStateException("Not a NumberValue");
+  public int asInteger() {
+    throw new IllegalStateException("Not a IntegerValue");
+  }
+
+  public double asDouble() {
+    throw new IllegalStateException("Not a DoubleValue");
+  }
+
+  public Instant asInstant() {
+    throw new IllegalStateException("Not a InstantValue");
+  }
+
+  public LocalDate asLocalDate() {
+    throw new IllegalStateException("Not a DateValue");
   }
 
   public boolean asBoolean() {
@@ -70,8 +96,20 @@ public abstract class ConfidenceValue {
     throw new IllegalStateException("Not a ListValue");
   }
 
+  public static ConfidenceValue of(int value) {
+    return new Integer(value);
+  }
+
   public static ConfidenceValue of(double value) {
-    return new Number(value);
+    return new Double(value);
+  }
+
+  public static ConfidenceValue of(Instant value) {
+    return new Timestamp(value);
+  }
+
+  public static ConfidenceValue of(LocalDate date) {
+    return new Date(date);
   }
 
   public static ConfidenceValue of(String value) {
@@ -98,7 +136,16 @@ public abstract class ConfidenceValue {
       case NUMBER_VALUE:
         return ConfidenceValue.of(protoValue.getNumberValue());
       case STRING_VALUE:
-        return ConfidenceValue.of(protoValue.getStringValue());
+        final String stringValue = protoValue.getStringValue();
+        try {
+          return ConfidenceValue.of(Instant.parse(stringValue));
+        } catch (Exception e1) {
+          try {
+            return ConfidenceValue.of(LocalDate.parse(stringValue));
+          } catch (Exception e2) {
+            return ConfidenceValue.of(stringValue);
+          }
+        }
       case NULL_VALUE:
         return NULL_VALUE;
       case STRUCT_VALUE:
@@ -171,21 +218,21 @@ public abstract class ConfidenceValue {
     }
   }
 
-  public static class Number extends ConfidenceValue {
+  public static class Integer extends ConfidenceValue {
 
-    private final double value;
+    private final int value;
 
-    private Number(double value) {
+    private Integer(int value) {
       this.value = value;
     }
 
     @Override
-    public boolean isNumber() {
+    public boolean isInteger() {
       return true;
     }
 
     @Override
-    public double asNumber() {
+    public int asInteger() {
       return value;
     }
 
@@ -197,6 +244,93 @@ public abstract class ConfidenceValue {
     @Override
     public com.google.protobuf.Value toProto() {
       return com.google.protobuf.Value.newBuilder().setNumberValue(value).build();
+    }
+  }
+
+  public static class Double extends ConfidenceValue {
+
+    private final double value;
+
+    private Double(double value) {
+      this.value = value;
+    }
+
+    @Override
+    public boolean isDouble() {
+      return true;
+    }
+
+    @Override
+    public double asDouble() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @Override
+    public com.google.protobuf.Value toProto() {
+      return com.google.protobuf.Value.newBuilder().setNumberValue(value).build();
+    }
+  }
+
+  public static class Timestamp extends ConfidenceValue {
+
+    private final Instant value;
+
+    private Timestamp(Instant value) {
+      this.value = value;
+    }
+
+    @Override
+    public boolean isTimestamp() {
+      return true;
+    }
+
+    @Override
+    public Instant asInstant() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @Override
+    public com.google.protobuf.Value toProto() {
+      return com.google.protobuf.Value.newBuilder().setStringValue(value.toString()).build();
+    }
+  }
+
+  public static class Date extends ConfidenceValue {
+
+    private final LocalDate value;
+
+    private Date(LocalDate value) {
+      this.value = value;
+    }
+
+    @Override
+    public boolean isDate() {
+      return true;
+    }
+
+    @Override
+    public LocalDate asLocalDate() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @Override
+    public com.google.protobuf.Value toProto() {
+      return com.google.protobuf.Value.newBuilder().setStringValue(value.toString()).build();
     }
   }
 
@@ -308,7 +442,19 @@ public abstract class ConfidenceValue {
         return this;
       }
 
+      public Builder set(String key, int value) {
+        return set(key, ConfidenceValue.of(value));
+      }
+
       public Builder set(String key, double value) {
+        return set(key, ConfidenceValue.of(value));
+      }
+
+      public Builder set(String key, Instant value) {
+        return set(key, ConfidenceValue.of(value));
+      }
+
+      public Builder set(String key, LocalDate value) {
         return set(key, ConfidenceValue.of(value));
       }
 
