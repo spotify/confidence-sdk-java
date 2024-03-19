@@ -7,14 +7,15 @@ import com.google.protobuf.ListValue;
 import com.google.protobuf.NullValue;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public abstract class ConfidenceValue {
+public abstract class ConfidenceValue<T> {
+
+  private T value;
 
   static final ConfidenceValue NULL_VALUE =
-      new ConfidenceValue() {
+      new ConfidenceValue<>() {
 
         @Override
         public boolean isNull() {
@@ -97,52 +98,70 @@ public abstract class ConfidenceValue {
     throw new IllegalStateException("Not a ListValue");
   }
 
-  public static ConfidenceValue of(int value) {
+  public static ConfidenceValue<java.lang.Integer> of(int value) {
     return new Integer(value);
   }
 
-  public static ConfidenceValue of(double value) {
+  public static ConfidenceValue<java.lang.Double> of(double value) {
     return new Double(value);
   }
 
-  public static ConfidenceValue of(Instant value) {
+  public static ConfidenceValue<Instant> of(Instant value) {
     return new Timestamp(value);
   }
 
-  public static ConfidenceValue of(LocalDate date) {
+  public static ConfidenceValue<LocalDate> of(LocalDate date) {
     return new Date(date);
   }
 
-  public static ConfidenceValue of(String value) {
+  public static ConfidenceValue<String> of(String value) {
     return new StringValue(value);
   }
 
-  public static ConfidenceValue of(boolean value) {
+  public static ConfidenceValue<Boolean> of(boolean value) {
     return new BooleanValue(value);
   }
 
-  public static ConfidenceValue.List ofStrings(java.util.List<String> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+  public static ConfidenceValue.List<String> ofStrings(
+      java.util.List<ConfidenceValue<String>> values) {
+    java.util.List<ConfidenceValue<String>> collect =
+        values.stream().map(v -> ConfidenceValue.of(v.asString())).collect(Collectors.toList());
+    return new List<>(collect);
   }
 
-  public static ConfidenceValue.List ofBooleans(java.util.List<Boolean> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+  public static ConfidenceValue.List<Boolean> ofBooleans(
+      java.util.List<ConfidenceValue<Boolean>> values) {
+    java.util.List<ConfidenceValue<Boolean>> collect =
+        values.stream().map(v -> ConfidenceValue.of(v.asBoolean())).collect(Collectors.toList());
+    return new List<>(collect);
   }
 
-  public static ConfidenceValue.List ofIntegers(java.util.List<java.lang.Integer> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+  public static ConfidenceValue.List<java.lang.Integer> ofIntegers(
+      java.util.List<ConfidenceValue<java.lang.Integer>> values) {
+    java.util.List<ConfidenceValue<java.lang.Integer>> collect =
+        values.stream().map(v -> ConfidenceValue.of(v.asInteger())).collect(Collectors.toList());
+    return new List<>(collect);
   }
 
-  public static ConfidenceValue.List ofDoubles(java.util.List<java.lang.Double> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+  public static ConfidenceValue.List<java.lang.Double> ofDoubles(
+      java.util.List<ConfidenceValue<java.lang.Double>> values) {
+    java.util.List<ConfidenceValue<java.lang.Double>> collect =
+        values.stream().map(v -> ConfidenceValue.of(v.asDouble())).collect(Collectors.toList());
+    return new List<>(collect);
   }
 
-  public static ConfidenceValue.List ofTimestamps(java.util.List<Instant> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+  public static ConfidenceValue.List<Instant> ofTimestamps(
+      java.util.List<ConfidenceValue<Instant>> values) {
+    java.util.List<ConfidenceValue<Instant>> collect =
+        values.stream().map(v -> ConfidenceValue.of(v.asInstant())).collect(Collectors.toList());
+    return new List<>(collect);
   }
 
-  public static ConfidenceValue.List ofDates(java.util.List<LocalDate> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+  public static ConfidenceValue.List<LocalDate> ofDates(
+      java.util.List<ConfidenceValue<LocalDate>> values) {
+    java.util.List<ConfidenceValue<LocalDate>> collect =
+        values.stream().map(v -> ConfidenceValue.of(v.asLocalDate())).collect(Collectors.toList());
+    return new List<>(collect);
   }
 
   public static Struct of(Map<String, ConfidenceValue> values) {
@@ -183,11 +202,10 @@ public abstract class ConfidenceValue {
 
   public abstract com.google.protobuf.Value toProto();
 
-  public static class StringValue extends ConfidenceValue {
-    private final String value;
+  public static class StringValue extends ConfidenceValue<String> {
 
     private StringValue(String value) {
-      this.value = value;
+      super.value = value;
     }
 
     @Override
@@ -197,25 +215,24 @@ public abstract class ConfidenceValue {
 
     @Override
     public String asString() {
-      return value;
+      return super.value;
     }
 
     @Override
     public com.google.protobuf.Value toProto() {
-      return com.google.protobuf.Value.newBuilder().setStringValue(value).build();
+      return com.google.protobuf.Value.newBuilder().setStringValue(super.value).build();
     }
 
     @Override
     public String toString() {
-      return value;
+      return super.value;
     }
   }
 
-  public static class BooleanValue extends ConfidenceValue {
-    private final boolean value;
+  public static class BooleanValue extends ConfidenceValue<Boolean> {
 
     private BooleanValue(boolean value) {
-      this.value = value;
+      super.value = value;
     }
 
     @Override
@@ -225,21 +242,21 @@ public abstract class ConfidenceValue {
 
     @Override
     public boolean asBoolean() {
-      return value;
+      return super.value;
     }
 
     @Override
     public String toString() {
-      return String.valueOf(value);
+      return String.valueOf(super.value);
     }
 
     @Override
     public com.google.protobuf.Value toProto() {
-      return com.google.protobuf.Value.newBuilder().setBoolValue(value).build();
+      return com.google.protobuf.Value.newBuilder().setBoolValue(super.value).build();
     }
   }
 
-  public static class Integer extends ConfidenceValue {
+  public static class Integer extends ConfidenceValue<java.lang.Integer> {
 
     private final int value;
 
@@ -268,12 +285,10 @@ public abstract class ConfidenceValue {
     }
   }
 
-  public static class Double extends ConfidenceValue {
-
-    private final double value;
+  public static class Double extends ConfidenceValue<java.lang.Double> {
 
     private Double(double value) {
-      this.value = value;
+      super.value = value;
     }
 
     @Override
@@ -283,26 +298,24 @@ public abstract class ConfidenceValue {
 
     @Override
     public double asDouble() {
-      return value;
+      return super.value;
     }
 
     @Override
     public String toString() {
-      return String.valueOf(value);
+      return String.valueOf(super.value);
     }
 
     @Override
     public com.google.protobuf.Value toProto() {
-      return com.google.protobuf.Value.newBuilder().setNumberValue(value).build();
+      return com.google.protobuf.Value.newBuilder().setNumberValue(super.value).build();
     }
   }
 
-  public static class Timestamp extends ConfidenceValue {
-
-    private final Instant value;
+  public static class Timestamp extends ConfidenceValue<Instant> {
 
     private Timestamp(Instant value) {
-      this.value = value;
+      super.value = value;
     }
 
     @Override
@@ -312,26 +325,24 @@ public abstract class ConfidenceValue {
 
     @Override
     public Instant asInstant() {
-      return value;
+      return super.value;
     }
 
     @Override
     public String toString() {
-      return String.valueOf(value);
+      return String.valueOf(super.value);
     }
 
     @Override
     public com.google.protobuf.Value toProto() {
-      return com.google.protobuf.Value.newBuilder().setStringValue(value.toString()).build();
+      return com.google.protobuf.Value.newBuilder().setStringValue(super.value.toString()).build();
     }
   }
 
-  public static class Date extends ConfidenceValue {
-
-    private final LocalDate value;
+  public static class Date extends ConfidenceValue<LocalDate> {
 
     private Date(LocalDate value) {
-      this.value = value;
+      super.value = value;
     }
 
     @Override
@@ -341,24 +352,24 @@ public abstract class ConfidenceValue {
 
     @Override
     public LocalDate asLocalDate() {
-      return value;
+      return super.value;
     }
 
     @Override
     public String toString() {
-      return String.valueOf(value);
+      return String.valueOf(super.value);
     }
 
     @Override
     public com.google.protobuf.Value toProto() {
-      return com.google.protobuf.Value.newBuilder().setStringValue(value.toString()).build();
+      return com.google.protobuf.Value.newBuilder().setStringValue(super.value.toString()).build();
     }
   }
 
-  public static class List extends ConfidenceValue {
-    private final ImmutableList<ConfidenceValue> values;
+  public static class List<T> extends ConfidenceValue {
+    private final ImmutableList<ConfidenceValue<T>> values;
 
-    private List(java.util.List<ConfidenceValue> values) {
+    private List(java.util.List<ConfidenceValue<T>> values) {
       this.values = ImmutableList.copyOf(values);
     }
 
@@ -369,7 +380,8 @@ public abstract class ConfidenceValue {
 
     @Override
     public java.util.List<ConfidenceValue> asList() {
-      return ImmutableList.copyOf(values);
+      ImmutableList<ConfidenceValue> confidenceValues = ImmutableList.copyOf(values);
+      return confidenceValues;
     }
 
     @Override
@@ -485,36 +497,6 @@ public abstract class ConfidenceValue {
 
       public Builder set(String key, boolean value) {
         return set(key, ConfidenceValue.of(value));
-      }
-
-      public Builder setIntegers(String key, java.util.List<java.lang.Integer> values) {
-        builder.put(key, ConfidenceValue.ofIntegers(values));
-        return this;
-      }
-
-      public Builder setDoubles(String key, java.util.List<java.lang.Double> values) {
-        builder.put(key, ConfidenceValue.ofDoubles(values));
-        return this;
-      }
-
-      public Builder setTimestamps(String key, java.util.List<Instant> values) {
-        builder.put(key, ConfidenceValue.ofTimestamps(values));
-        return this;
-      }
-
-      public Builder setDates(String key, java.util.List<LocalDate> values) {
-        builder.put(key, ConfidenceValue.ofDates(values));
-        return this;
-      }
-
-      public Builder setStrings(String key, java.util.List<String> values) {
-        builder.put(key, ConfidenceValue.ofStrings(values));
-        return this;
-      }
-
-      public Builder setBooleans(String key, java.util.List<java.lang.Boolean> values) {
-        builder.put(key, ConfidenceValue.ofBooleans(values));
-        return this;
       }
 
       public Builder set(String key, Builder value) {
