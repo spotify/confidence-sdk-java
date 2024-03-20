@@ -144,7 +144,7 @@ class ConfidenceValueTest {
   @Test
   public void testStringListValue() {
     final ConfidenceValue.List listValue =
-        ConfidenceValue.ofStrings(ImmutableList.of("item1", "item2"));
+        ConfidenceValue.List.ofStrings(ImmutableList.of("item1", "item2"));
     assertTrue(listValue.isList());
     assertEquals(
         ImmutableList.of(ConfidenceValue.of("item1"), ConfidenceValue.of("item2")),
@@ -163,7 +163,7 @@ class ConfidenceValueTest {
 
   @Test
   public void testIntegerListValue() {
-    final ConfidenceValue.List listValue = ConfidenceValue.ofIntegers(ImmutableList.of(3, 5));
+    final ConfidenceValue.List listValue = ConfidenceValue.List.ofIntegers(ImmutableList.of(3, 5));
     assertEquals(
         listValue.toProto(),
         com.google.protobuf.Value.newBuilder()
@@ -178,7 +178,8 @@ class ConfidenceValueTest {
 
   @Test
   public void testDoubleListValue() {
-    final ConfidenceValue.List listValue = ConfidenceValue.ofDoubles(ImmutableList.of(3.1, 4.2));
+    final ConfidenceValue.List listValue =
+        ConfidenceValue.List.ofDoubles(ImmutableList.of(3.1, 4.2));
     assertEquals(
         listValue.toProto(),
         com.google.protobuf.Value.newBuilder()
@@ -197,7 +198,7 @@ class ConfidenceValueTest {
     final Instant instant2 = Instant.parse("2007-12-03T10:15:31.00Z");
 
     final ConfidenceValue.List listValue =
-        ConfidenceValue.ofTimestamps(ImmutableList.of(instant1, instant2));
+        ConfidenceValue.List.ofTimestamps(ImmutableList.of(instant1, instant2));
     assertEquals(
         listValue.toProto(),
         com.google.protobuf.Value.newBuilder()
@@ -215,7 +216,8 @@ class ConfidenceValueTest {
     final LocalDate date1 = LocalDate.parse("2007-12-03");
     final LocalDate date2 = LocalDate.parse("2007-12-04");
 
-    final ConfidenceValue.List listValue = ConfidenceValue.ofDates(ImmutableList.of(date1, date2));
+    final ConfidenceValue.List listValue =
+        ConfidenceValue.List.ofDates(ImmutableList.of(date1, date2));
     assertEquals(
         listValue.toProto(),
         com.google.protobuf.Value.newBuilder()
@@ -231,7 +233,7 @@ class ConfidenceValueTest {
   @Test
   public void testBooleanListValue() {
     final ConfidenceValue.List listValue =
-        ConfidenceValue.ofBooleans(ImmutableList.of(true, false));
+        ConfidenceValue.List.ofBooleans(ImmutableList.of(true, false));
     assertEquals(
         listValue.toProto(),
         com.google.protobuf.Value.newBuilder()
@@ -339,8 +341,8 @@ class ConfidenceValueTest {
     map.put("timestamp", ConfidenceValue.of(instant));
     map.put("date", ConfidenceValue.of(localDate));
     map.put("boolean", ConfidenceValue.of(false));
-    map.put("list", ConfidenceValue.ofStrings(List.of("item1", "item2")));
-    map.put("timestamp_list", ConfidenceValue.ofTimestamps(List.of(instant, instant)));
+    map.put("list", ConfidenceValue.List.ofStrings(List.of("item1", "item2")));
+    map.put("timestamp_list", ConfidenceValue.List.ofTimestamps(List.of(instant, instant)));
     map.put("struct", ConfidenceValue.of(map));
     final ConfidenceValue.Struct struct = ConfidenceValue.of(map);
     assertEquals(
@@ -392,7 +394,7 @@ class ConfidenceValueTest {
     assertEquals(ConfidenceValue.of(42.0), struct.get("key4"));
     assertEquals(ConfidenceValue.of(instant), struct.get("key5"));
     assertEquals(ConfidenceValue.of(date), struct.get("key6"));
-    assertEquals(ConfidenceValue.ofStrings(stringList), struct.get("key7"));
+    assertEquals(ConfidenceValue.List.ofStrings(stringList), struct.get("key7"));
   }
 
   @Test

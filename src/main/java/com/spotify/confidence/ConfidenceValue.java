@@ -121,30 +121,6 @@ public abstract class ConfidenceValue {
     return new BooleanValue(value);
   }
 
-  public static ConfidenceValue.List ofStrings(java.util.List<String> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
-  }
-
-  public static ConfidenceValue.List ofBooleans(java.util.List<Boolean> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
-  }
-
-  public static ConfidenceValue.List ofIntegers(java.util.List<java.lang.Integer> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
-  }
-
-  public static ConfidenceValue.List ofDoubles(java.util.List<java.lang.Double> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
-  }
-
-  public static ConfidenceValue.List ofTimestamps(java.util.List<Instant> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
-  }
-
-  public static ConfidenceValue.List ofDates(java.util.List<LocalDate> values) {
-    return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
-  }
-
   public static Struct of(Map<String, ConfidenceValue> values) {
     return new Struct(values);
   }
@@ -362,6 +338,30 @@ public abstract class ConfidenceValue {
       this.values = ImmutableList.copyOf(values);
     }
 
+    public static ConfidenceValue.List ofStrings(java.util.List<String> values) {
+      return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+
+    public static ConfidenceValue.List ofBooleans(java.util.List<Boolean> values) {
+      return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+
+    public static ConfidenceValue.List ofIntegers(java.util.List<java.lang.Integer> values) {
+      return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+
+    public static ConfidenceValue.List ofDoubles(java.util.List<java.lang.Double> values) {
+      return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+
+    public static ConfidenceValue.List ofTimestamps(java.util.List<Instant> values) {
+      return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+
+    public static ConfidenceValue.List ofDates(java.util.List<LocalDate> values) {
+      return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
+    }
+
     @Override
     public boolean isList() {
       return true;
@@ -488,32 +488,32 @@ public abstract class ConfidenceValue {
       }
 
       public Builder setIntegers(String key, java.util.List<java.lang.Integer> values) {
-        builder.put(key, ConfidenceValue.ofIntegers(values));
+        builder.put(key, ConfidenceValue.List.ofIntegers(values));
         return this;
       }
 
       public Builder setDoubles(String key, java.util.List<java.lang.Double> values) {
-        builder.put(key, ConfidenceValue.ofDoubles(values));
+        builder.put(key, ConfidenceValue.List.ofDoubles(values));
         return this;
       }
 
       public Builder setTimestamps(String key, java.util.List<Instant> values) {
-        builder.put(key, ConfidenceValue.ofTimestamps(values));
+        builder.put(key, ConfidenceValue.List.ofTimestamps(values));
         return this;
       }
 
       public Builder setDates(String key, java.util.List<LocalDate> values) {
-        builder.put(key, ConfidenceValue.ofDates(values));
+        builder.put(key, ConfidenceValue.List.ofDates(values));
         return this;
       }
 
       public Builder setStrings(String key, java.util.List<String> values) {
-        builder.put(key, ConfidenceValue.ofStrings(values));
+        builder.put(key, ConfidenceValue.List.ofStrings(values));
         return this;
       }
 
       public Builder setBooleans(String key, java.util.List<java.lang.Boolean> values) {
-        builder.put(key, ConfidenceValue.ofBooleans(values));
+        builder.put(key, ConfidenceValue.List.ofBooleans(values));
         return this;
       }
 
