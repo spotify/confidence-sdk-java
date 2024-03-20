@@ -1,7 +1,9 @@
 package com.spotify.confidence;
 
+import com.google.common.annotations.Beta;
 import java.util.Map;
 
+@Beta
 public interface EventSender extends Contextual {
   public void send(String name, ConfidenceValue.Struct message);
 

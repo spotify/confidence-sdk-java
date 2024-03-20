@@ -1,10 +1,12 @@
 package com.spotify.confidence;
 
+import com.google.common.annotations.Beta;
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Values;
 import dev.openfeature.sdk.EvaluationContext;
 import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
 
+@Beta
 public class OpenFeatureUtils {
 
   static final String TARGETING_KEY = "targeting_key";

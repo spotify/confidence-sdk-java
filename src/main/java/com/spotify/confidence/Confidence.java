@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -14,6 +15,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+@Beta
 public class Confidence implements EventSender, Contextual {
 
   private Map<String, ConfidenceValue> context = Maps.newHashMap();

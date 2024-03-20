@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Beta
 public abstract class ConfidenceValue {
 
   static final ConfidenceValue NULL_VALUE =

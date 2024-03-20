@@ -1,7 +1,9 @@
 package com.spotify.confidence;
 
+import com.google.common.annotations.Beta;
 import java.util.Map;
 
+@Beta
 public interface Contextual {
   ConfidenceValue.Struct getContext();
 
