@@ -1,5 +1,5 @@
 package com.spotify.confidence;
 
-public interface Clock {
+interface Clock {
   long currentTimeSeconds();
 }
