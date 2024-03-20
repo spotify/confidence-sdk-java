@@ -124,42 +124,42 @@ public abstract class ConfidenceValue<T> {
 
   public static ConfidenceValue.List<String> ofStrings(
       java.util.List<ConfidenceValue<String>> values) {
-    java.util.List<ConfidenceValue<String>> collect =
+    final java.util.List<ConfidenceValue<String>> collect =
         values.stream().map(v -> ConfidenceValue.of(v.asString())).collect(Collectors.toList());
     return new List<>(collect);
   }
 
   public static ConfidenceValue.List<Boolean> ofBooleans(
       java.util.List<ConfidenceValue<Boolean>> values) {
-    java.util.List<ConfidenceValue<Boolean>> collect =
+    final java.util.List<ConfidenceValue<Boolean>> collect =
         values.stream().map(v -> ConfidenceValue.of(v.asBoolean())).collect(Collectors.toList());
     return new List<>(collect);
   }
 
   public static ConfidenceValue.List<java.lang.Integer> ofIntegers(
       java.util.List<ConfidenceValue<java.lang.Integer>> values) {
-    java.util.List<ConfidenceValue<java.lang.Integer>> collect =
+    final java.util.List<ConfidenceValue<java.lang.Integer>> collect =
         values.stream().map(v -> ConfidenceValue.of(v.asInteger())).collect(Collectors.toList());
     return new List<>(collect);
   }
 
   public static ConfidenceValue.List<java.lang.Double> ofDoubles(
       java.util.List<ConfidenceValue<java.lang.Double>> values) {
-    java.util.List<ConfidenceValue<java.lang.Double>> collect =
+    final java.util.List<ConfidenceValue<java.lang.Double>> collect =
         values.stream().map(v -> ConfidenceValue.of(v.asDouble())).collect(Collectors.toList());
     return new List<>(collect);
   }
 
   public static ConfidenceValue.List<Instant> ofTimestamps(
       java.util.List<ConfidenceValue<Instant>> values) {
-    java.util.List<ConfidenceValue<Instant>> collect =
+    final java.util.List<ConfidenceValue<Instant>> collect =
         values.stream().map(v -> ConfidenceValue.of(v.asInstant())).collect(Collectors.toList());
     return new List<>(collect);
   }
 
   public static ConfidenceValue.List<LocalDate> ofDates(
       java.util.List<ConfidenceValue<LocalDate>> values) {
-    java.util.List<ConfidenceValue<LocalDate>> collect =
+    final java.util.List<ConfidenceValue<LocalDate>> collect =
         values.stream().map(v -> ConfidenceValue.of(v.asLocalDate())).collect(Collectors.toList());
     return new List<>(collect);
   }
@@ -258,10 +258,8 @@ public abstract class ConfidenceValue<T> {
 
   public static class Integer extends ConfidenceValue<java.lang.Integer> {
 
-    private final int value;
-
     private Integer(int value) {
-      this.value = value;
+      super.value = value;
     }
 
     @Override
@@ -271,17 +269,17 @@ public abstract class ConfidenceValue<T> {
 
     @Override
     public int asInteger() {
-      return value;
+      return super.value;
     }
 
     @Override
     public String toString() {
-      return String.valueOf(value);
+      return String.valueOf(super.value);
     }
 
     @Override
     public com.google.protobuf.Value toProto() {
-      return com.google.protobuf.Value.newBuilder().setNumberValue(value).build();
+      return com.google.protobuf.Value.newBuilder().setNumberValue(super.value).build();
     }
   }
 
@@ -366,11 +364,10 @@ public abstract class ConfidenceValue<T> {
     }
   }
 
-  public static class List<T> extends ConfidenceValue {
-    private final ImmutableList<ConfidenceValue<T>> values;
+  public static class List<T> extends ConfidenceValue<ImmutableList<ConfidenceValue<T>>> {
 
     private List(java.util.List<ConfidenceValue<T>> values) {
-      this.values = ImmutableList.copyOf(values);
+      super.value = ImmutableList.copyOf(values);
     }
 
     @Override
@@ -380,13 +377,13 @@ public abstract class ConfidenceValue<T> {
 
     @Override
     public java.util.List<ConfidenceValue> asList() {
-      ImmutableList<ConfidenceValue> confidenceValues = ImmutableList.copyOf(values);
+      final ImmutableList<ConfidenceValue> confidenceValues = ImmutableList.copyOf(super.value);
       return confidenceValues;
     }
 
     @Override
     public String toString() {
-      return "[" + values + "]";
+      return "[" + super.value + "]";
     }
 
     @Override
@@ -394,7 +391,7 @@ public abstract class ConfidenceValue<T> {
       final ListValue value =
           ListValue.newBuilder()
               .addAllValues(
-                  values.stream().map(ConfidenceValue::toProto).collect(Collectors.toList()))
+                  super.value.stream().map(ConfidenceValue::toProto).collect(Collectors.toList()))
               .build();
       return com.google.protobuf.Value.newBuilder().setListValue(value).build();
     }
@@ -407,12 +404,11 @@ public abstract class ConfidenceValue<T> {
     }
   }
 
-  public static class Struct extends ConfidenceValue {
+  public static class Struct extends ConfidenceValue<ImmutableMap<String, ConfidenceValue>> {
     public static final Struct EMPTY = new Struct(ImmutableMap.of());
-    private final ImmutableMap<String, ConfidenceValue> values;
 
     protected Struct(Map<String, ConfidenceValue> values) {
-      this.values = ImmutableMap.copyOf(values);
+      super.value = ImmutableMap.copyOf(values);
     }
 
     @Override
@@ -422,7 +418,7 @@ public abstract class ConfidenceValue<T> {
 
     @Override
     public Struct asStruct() {
-      return new Struct(values);
+      return new Struct(super.value);
     }
 
     public ConfidenceValue get(String... path) {
@@ -432,14 +428,14 @@ public abstract class ConfidenceValue<T> {
           // todo better error
           throw new IllegalStateException();
         }
-        value = values.getOrDefault(path[i], NULL_VALUE);
+        value = super.value.getOrDefault(path[i], NULL_VALUE);
       }
       return value;
     }
 
     @Override
     public String toString() {
-      return values.toString();
+      return super.value.toString();
     }
 
     public static Builder builder() {
@@ -449,7 +445,7 @@ public abstract class ConfidenceValue<T> {
     @Override
     public com.google.protobuf.Value toProto() {
       final com.google.protobuf.Struct.Builder builder = com.google.protobuf.Struct.newBuilder();
-      values.forEach((key, value) -> builder.putFields(key, value.toProto()));
+      super.value.forEach((key, value) -> builder.putFields(key, value.toProto()));
       return com.google.protobuf.Value.newBuilder().setStructValue(builder).build();
     }
 
@@ -458,11 +454,11 @@ public abstract class ConfidenceValue<T> {
     }
 
     public Map<String, ConfidenceValue> asMap() {
-      return values;
+      return super.value;
     }
 
     public Map<String, com.google.protobuf.Value> asProtoMap() {
-      return values.entrySet().stream()
+      return super.value.entrySet().stream()
           .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toProto()));
     }
 
