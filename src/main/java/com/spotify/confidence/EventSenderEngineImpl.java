@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 class EventSenderEngineImpl implements EventSenderEngine {
- static final String EVENT_NAME_PREFIX = "eventDefinitions/";
+  static final String EVENT_NAME_PREFIX = "eventDefinitions/";
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
   private final ExecutorService uploadThread = Executors.newSingleThreadExecutor();
   private final ConcurrentLinkedQueue<Event> writeQueue = new ConcurrentLinkedQueue<>();
