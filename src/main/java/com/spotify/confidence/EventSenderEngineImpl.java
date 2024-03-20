@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 class EventSenderEngineImpl implements EventSenderEngine {
+ static final String EVENT_NAME_PREFIX = "eventDefinitions/";
   private final ExecutorService writeThread = Executors.newSingleThreadExecutor();
   private final ExecutorService uploadThread = Executors.newSingleThreadExecutor();
   private final ConcurrentLinkedQueue<Event> writeQueue = new ConcurrentLinkedQueue<>();
@@ -81,7 +82,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   @Override
   public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
     if (!isStopped) {
-      writeQueue.add(new Event(name, message, context));
+      writeQueue.add(new Event(EVENT_NAME_PREFIX + name, message, context));
     }
   }
 

@@ -29,8 +29,7 @@ public class ConfidenceEventSenderIntegrationTest {
     int size = 0;
     while (size++ < numEvents) {
       confidence.send(
-          "eventDefinitions/navigate",
-          ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
+          "navigate", ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
     }
 
     confidence.close(); // Should trigger the upload of an additional incomplete batch
@@ -74,7 +73,7 @@ public class ConfidenceEventSenderIntegrationTest {
     int size = 0;
     while (size++ < numEvents) {
       confidence.send(
-          "eventDefinitions/navigate",
+          "navigate",
           ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size=" + size))));
     }
 
@@ -109,7 +108,7 @@ public class ConfidenceEventSenderIntegrationTest {
               () -> {
                 for (int j = 0; j < eventsPerThread; j++) {
                   confidence.send(
-                      "eventDefinitions/navigate",
+                      "navigate",
                       ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
                 }
               },
