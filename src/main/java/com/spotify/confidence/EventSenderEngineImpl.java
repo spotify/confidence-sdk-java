@@ -42,9 +42,9 @@ class EventSenderEngineImpl implements EventSenderEngine {
         flushPolicies.forEach(FlushPolicy::hit);
 
         if (flushPolicies.stream().anyMatch(FlushPolicy::shouldFlush)) {
-          flushPolicies.forEach(FlushPolicy::reset);
           eventStorage.createBatch();
           uploadQueue.add(UPLOAD_SIG);
+          flushPolicies.forEach(FlushPolicy::reset);
         }
       }
     }
