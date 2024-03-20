@@ -67,9 +67,9 @@ public class Confidence implements EventSender, Contextual {
 
   @Override
   public Confidence withContext(ConfidenceValue.Struct context) {
-    final Confidence confidence = new Confidence(this, eventSenderEngine, flagResolverClient);
-    confidence.setContext(context);
-    return confidence;
+    final Confidence child = new Confidence(this, eventSenderEngine, flagResolverClient);
+    child.setContext(context);
+    return child;
   }
 
   @Override

@@ -1,7 +1,6 @@
 package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
-import com.google.protobuf.util.Values;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import dev.openfeature.sdk.EvaluationContext;
@@ -17,7 +16,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
-import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -27,7 +25,6 @@ import java.util.regex.Pattern;
 /** OpenFeature Provider for feature flagging with the Confidence platform */
 public class ConfidenceFeatureProvider implements FeatureProvider {
 
-  static final String TARGETING_KEY = "targeting_key";
   private final Confidence confidence;
 
   /**
@@ -142,18 +139,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
 
     final FlagPath flagPath = getPath(key);
 
-    final Struct.Builder evaluationContext = Struct.newBuilder();
-    ctx.asMap()
-        .forEach(
-            (mapKey, mapValue) -> {
-              evaluationContext.putFields(mapKey, TypeMapper.from(mapValue));
-            });
-
-    // add targeting key as a regular value to proto struct
-    if (!StringUtil.isNullOrEmpty(ctx.getTargetingKey())) {
-      evaluationContext.putFields(TARGETING_KEY, Values.of(ctx.getTargetingKey()));
-    }
-
+    final Struct evaluationContext = OpenFeatureUtils.convertToProto(ctx);
     // resolve the flag by calling the resolver API
     final ResolveFlagsResponse resolveFlagResponse;
     try {
@@ -161,7 +147,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
 
       resolveFlagResponse =
           confidence
-              .withContext(ConfidenceValue.Struct.fromProto(evaluationContext.build()))
+              .withContext(ConfidenceValue.Struct.fromProto(evaluationContext))
               .resolveFlags(requestFlagName)
               .get();
 

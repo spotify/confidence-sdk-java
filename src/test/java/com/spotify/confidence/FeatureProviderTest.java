@@ -55,9 +55,7 @@ final class FeatureProviderTest {
   private static final EvaluationContext SAMPLE_CONTEXT_2_TARGETING_KEYS =
       new MutableContext(
           "my-targeting-key-1",
-          Map.of(
-              com.spotify.confidence.ConfidenceFeatureProvider.TARGETING_KEY,
-              new Value("my-targeting-key-2")));
+          Map.of(OpenFeatureUtils.TARGETING_KEY, new Value("my-targeting-key-2")));
 
   private static final EvaluationContext SAMPLE_CONTEXT =
       new MutableContext("my-targeting-key", Map.of("my-key", new Value(true)));
