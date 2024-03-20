@@ -3,11 +3,12 @@ package com.spotify.confidence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ListValue;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,12 +27,14 @@ class ConfidenceValueTest {
     assertThat(value.isDouble()).isFalse();
     assertThat(value.isTimestamp()).isFalse();
     assertThat(value.isDate()).isFalse();
+    assertThat(value.isList()).isFalse();
     assertThrows(IllegalStateException.class, value::asStruct);
     assertThrows(IllegalStateException.class, value::asString);
     assertThrows(IllegalStateException.class, value::asInteger);
     assertThrows(IllegalStateException.class, value::asDouble);
     assertThrows(IllegalStateException.class, value::asInstant);
     assertThrows(IllegalStateException.class, value::asLocalDate);
+    assertThrows(IllegalStateException.class, value::asList);
   }
 
   @Test
@@ -139,18 +142,103 @@ class ConfidenceValueTest {
   }
 
   @Test
-  public void testListValue() {
+  public void testStringListValue() {
     final ConfidenceValue.List listValue =
-        new ConfidenceValue.List(
-            Arrays.asList(ConfidenceValue.of("item1"), ConfidenceValue.of("item2")));
+        ConfidenceValue.ofStrings(ImmutableList.of("item1", "item2"));
+    assertTrue(listValue.isList());
+    assertEquals(
+        ImmutableList.of(ConfidenceValue.of("item1"), ConfidenceValue.of("item2")),
+        listValue.asList());
     assertEquals(
         listValue.toProto(),
         com.google.protobuf.Value.newBuilder()
             .setListValue(
                 ListValue.newBuilder()
                     .addAllValues(
-                        Arrays.asList(ConfidenceValue.of("item1"), ConfidenceValue.of("item2"))
-                            .stream()
+                        Stream.of(ConfidenceValue.of("item1"), ConfidenceValue.of("item2"))
+                            .map(ConfidenceValue::toProto)
+                            .collect(Collectors.toList())))
+            .build());
+  }
+
+  @Test
+  public void testIntegerListValue() {
+    final ConfidenceValue.List listValue = ConfidenceValue.ofIntegers(ImmutableList.of(3, 5));
+    assertEquals(
+        listValue.toProto(),
+        com.google.protobuf.Value.newBuilder()
+            .setListValue(
+                ListValue.newBuilder()
+                    .addAllValues(
+                        Stream.of(ConfidenceValue.of(3), ConfidenceValue.of(5))
+                            .map(ConfidenceValue::toProto)
+                            .collect(Collectors.toList())))
+            .build());
+  }
+
+  @Test
+  public void testDoubleListValue() {
+    final ConfidenceValue.List listValue = ConfidenceValue.ofDoubles(ImmutableList.of(3.1, 4.2));
+    assertEquals(
+        listValue.toProto(),
+        com.google.protobuf.Value.newBuilder()
+            .setListValue(
+                ListValue.newBuilder()
+                    .addAllValues(
+                        Stream.of(ConfidenceValue.of(3.1), ConfidenceValue.of(4.2))
+                            .map(ConfidenceValue::toProto)
+                            .collect(Collectors.toList())))
+            .build());
+  }
+
+  @Test
+  public void testTimestampListValue() {
+    final Instant instant1 = Instant.parse("2007-12-03T10:15:30.00Z");
+    final Instant instant2 = Instant.parse("2007-12-03T10:15:31.00Z");
+
+    final ConfidenceValue.List listValue =
+        ConfidenceValue.ofTimestamps(ImmutableList.of(instant1, instant2));
+    assertEquals(
+        listValue.toProto(),
+        com.google.protobuf.Value.newBuilder()
+            .setListValue(
+                ListValue.newBuilder()
+                    .addAllValues(
+                        Stream.of(ConfidenceValue.of(instant1), ConfidenceValue.of(instant2))
+                            .map(ConfidenceValue::toProto)
+                            .collect(Collectors.toList())))
+            .build());
+  }
+
+  @Test
+  public void testDateListValue() {
+    final LocalDate date1 = LocalDate.parse("2007-12-03");
+    final LocalDate date2 = LocalDate.parse("2007-12-04");
+
+    final ConfidenceValue.List listValue = ConfidenceValue.ofDates(ImmutableList.of(date1, date2));
+    assertEquals(
+        listValue.toProto(),
+        com.google.protobuf.Value.newBuilder()
+            .setListValue(
+                ListValue.newBuilder()
+                    .addAllValues(
+                        Stream.of(ConfidenceValue.of(date1), ConfidenceValue.of(date2))
+                            .map(ConfidenceValue::toProto)
+                            .collect(Collectors.toList())))
+            .build());
+  }
+
+  @Test
+  public void testBooleanListValue() {
+    final ConfidenceValue.List listValue =
+        ConfidenceValue.ofBooleans(ImmutableList.of(true, false));
+    assertEquals(
+        listValue.toProto(),
+        com.google.protobuf.Value.newBuilder()
+            .setListValue(
+                ListValue.newBuilder()
+                    .addAllValues(
+                        Stream.of(ConfidenceValue.of(true), ConfidenceValue.of(false))
                             .map(ConfidenceValue::toProto)
                             .collect(Collectors.toList())))
             .build());
@@ -251,17 +339,16 @@ class ConfidenceValueTest {
     map.put("timestamp", ConfidenceValue.of(instant));
     map.put("date", ConfidenceValue.of(localDate));
     map.put("boolean", ConfidenceValue.of(false));
-    map.put(
-        "list",
-        ConfidenceValue.of(
-            java.util.List.of(ConfidenceValue.of("item1"), ConfidenceValue.of("item2"))));
+    map.put("list", ConfidenceValue.ofStrings(List.of("item1", "item2")));
+    map.put("timestamp_list", ConfidenceValue.ofTimestamps(List.of(instant, instant)));
     map.put("struct", ConfidenceValue.of(map));
     final ConfidenceValue.Struct struct = ConfidenceValue.of(map);
     assertEquals(
         "{date=2007-12-03, struct={date=2007-12-03, boolean=false, string=value, "
-            + "double=42.0, integer=42, list=[[item1, item2]], timestamp=2007-12-03T10:15:30Z}, "
-            + "boolean=false, string=value, double=42.0, integer=42, list=[[item1, item2]], "
-            + "timestamp=2007-12-03T10:15:30Z}",
+            + "double=42.0, timestamp_list=[[2007-12-03T10:15:30Z, 2007-12-03T10:15:30Z]], "
+            + "integer=42, list=[[item1, item2]], timestamp=2007-12-03T10:15:30Z}, boolean=false, "
+            + "string=value, double=42.0, timestamp_list=[[2007-12-03T10:15:30Z, 2007-12-03T10:15:30Z]], "
+            + "integer=42, list=[[item1, item2]], timestamp=2007-12-03T10:15:30Z}",
         struct.toString());
   }
 
@@ -288,6 +375,7 @@ class ConfidenceValueTest {
   public void testStructBuilderSetValues() {
     final Instant instant = Instant.parse("2007-12-03T10:15:30.00Z");
     final LocalDate date = LocalDate.parse("2007-12-03");
+    final List<String> stringList = List.of("string1", "string2");
     final ConfidenceValue.Struct struct =
         ConfidenceValue.Struct.builder()
             .set("key1", "value")
@@ -296,6 +384,7 @@ class ConfidenceValueTest {
             .set("key4", 42.0)
             .set("key5", instant)
             .set("key6", date)
+            .setStrings("key7", ImmutableList.of("string1", "string2"))
             .build();
     assertEquals(ConfidenceValue.of("value"), struct.get("key1"));
     assertEquals(ConfidenceValue.of(42), struct.get("key2"));
@@ -303,6 +392,7 @@ class ConfidenceValueTest {
     assertEquals(ConfidenceValue.of(42.0), struct.get("key4"));
     assertEquals(ConfidenceValue.of(instant), struct.get("key5"));
     assertEquals(ConfidenceValue.of(date), struct.get("key6"));
+    assertEquals(ConfidenceValue.ofStrings(stringList), struct.get("key7"));
   }
 
   @Test
