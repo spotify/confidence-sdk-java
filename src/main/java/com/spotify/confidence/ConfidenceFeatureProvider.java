@@ -20,6 +20,7 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -161,7 +162,8 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
       resolveFlagResponse =
           confidence
               .withContext(ConfidenceValue.Struct.fromProto(evaluationContext.build()))
-              .resolveFlags(requestFlagName);
+              .resolveFlags(requestFlagName)
+              .get();
 
       if (resolveFlagResponse.getResolvedFlagsList().isEmpty()) {
         throw new FlagNotFoundError(
@@ -201,23 +203,31 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
             .variant(resolvedFlag.getVariant())
             .build();
       }
-    } catch (StatusRuntimeException e) {
+    } catch (StatusRuntimeException | InterruptedException | ExecutionException e) {
       // If the remote API is unreachable, for now we fall back to the default value. However, we
       // should consider maintaining a local resolve-history to avoid flickering experience in case
       // of a temporarily unavailable backend
-
-      if (e.getStatus().getCode() == Code.DEADLINE_EXCEEDED) {
-        throw new GeneralError("Deadline exceeded when calling provider backend");
-      } else if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-        throw new GeneralError("Provider backend is unavailable");
-      } else if (e.getStatus().getCode() == Code.UNAUTHENTICATED) {
-        throw new GeneralError("UNAUTHENTICATED");
-      } else {
-        throw new GeneralError(
-            String.format(
-                "Unknown error occurred when calling the provider backend. Grpc status code %s",
-                e.getStatus().getCode()));
+      if (e instanceof StatusRuntimeException) {
+        handleStatusRuntimeException((StatusRuntimeException) e);
+      } else if (e.getCause() instanceof StatusRuntimeException) {
+        handleStatusRuntimeException((StatusRuntimeException) e.getCause());
       }
+      throw new GeneralError("Unknown error occurred when calling the provider backend");
+    }
+  }
+
+  private static void handleStatusRuntimeException(StatusRuntimeException e) {
+    if (e.getStatus().getCode() == Code.DEADLINE_EXCEEDED) {
+      throw new GeneralError("Deadline exceeded when calling provider backend");
+    } else if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+      throw new GeneralError("Provider backend is unavailable");
+    } else if (e.getStatus().getCode() == Code.UNAUTHENTICATED) {
+      throw new GeneralError("UNAUTHENTICATED");
+    } else {
+      throw new GeneralError(
+          String.format(
+              "Unknown error occurred when calling the provider backend. Exception: %s",
+              e.getMessage()));
     }
   }
 

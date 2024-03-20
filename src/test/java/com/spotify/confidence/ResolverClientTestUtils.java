@@ -1,12 +1,13 @@
 package com.spotify.confidence;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -22,13 +23,16 @@ public class ResolverClientTestUtils {
     public ResolveFlagsResponse response = generateSampleResponse(Collections.emptyList());
 
     @Override
-    public ResolveFlagsResponse resolveFlags(String flag, ConfidenceValue.Struct context) {
+    public ListenableFuture<ResolveFlagsResponse> resolveFlags(
+        String flag, ConfidenceValue.Struct context) {
       resolves.put(flag, context);
-      return response;
+      final SettableFuture<ResolveFlagsResponse> future = SettableFuture.create();
+      future.set(response);
+      return future;
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
       closed = true;
     }
   }

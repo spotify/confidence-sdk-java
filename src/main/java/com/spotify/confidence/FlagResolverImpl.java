@@ -1,6 +1,7 @@
 package com.spotify.confidence;
 
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Struct;
 import com.spotify.confidence.shaded.flags.resolver.v1.*;
 import io.grpc.ManagedChannel;
@@ -21,12 +22,12 @@ class FlagResolverImpl implements FlagResolver, Closeable {
   private final String SDK_VERSION;
   private static final SdkId SDK_ID = SdkId.SDK_ID_JAVA_PROVIDER;
 
-  private final FlagResolverServiceGrpc.FlagResolverServiceBlockingStub stub;
+  private final FlagResolverServiceGrpc.FlagResolverServiceFutureStub stub;
 
   public FlagResolverImpl(String clientSecret, ManagedChannel managedChannel) {
     this.clientSecret = clientSecret;
     this.managedChannel = managedChannel;
-    this.stub = FlagResolverServiceGrpc.newBlockingStub(managedChannel);
+    this.stub = FlagResolverServiceGrpc.newFutureStub(managedChannel);
 
     if (Strings.isNullOrEmpty(clientSecret)) {
       throw new IllegalArgumentException("clientSecret must be a non-empty string.");
@@ -41,7 +42,8 @@ class FlagResolverImpl implements FlagResolver, Closeable {
     }
   }
 
-  public ResolveFlagsResponse resolveFlags(String flagName, ConfidenceValue.Struct context) {
+  public ListenableFuture<ResolveFlagsResponse> resolveFlags(
+      String flagName, ConfidenceValue.Struct context) {
     final Struct evaluationContext = context.toProto().getStructValue();
 
     return stub.withDeadlineAfter(DEADLINE_AFTER_SECONDS, TimeUnit.SECONDS)
