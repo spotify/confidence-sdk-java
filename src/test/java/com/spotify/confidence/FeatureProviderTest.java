@@ -77,7 +77,7 @@ final class FeatureProviderTest {
   void beforeEach() {
     final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine();
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
-    final FlagResolverImpl flagResolver = new FlagResolverImpl("fake-secret", channel);
+    final FlagResolverClientImpl flagResolver = new FlagResolverClientImpl("fake-secret", channel);
     final Confidence confidence = new Confidence(null, fakeEventSender, flagResolver);
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 

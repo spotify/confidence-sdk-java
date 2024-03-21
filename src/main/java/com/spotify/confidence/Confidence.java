@@ -22,12 +22,12 @@ public class Confidence implements EventSender, Contextual {
   private final Contextual parent;
 
   private final EventSenderEngine eventSenderEngine;
-  private final FlagResolver flagResolverClient;
+  private final FlagResolverClient flagResolverClient;
 
   Confidence(
       @Nullable Contextual parent,
       EventSenderEngine eventSenderEngine,
-      FlagResolver flagResolverClient) {
+      FlagResolverClient flagResolverClient) {
     this.parent = parent;
     this.eventSenderEngine = eventSenderEngine;
     this.flagResolverClient = flagResolverClient;
@@ -124,13 +124,13 @@ public class Confidence implements EventSender, Contextual {
     }
 
     public Confidence build() {
-      final FlagResolver flagResolver =
-          new FlagResolverImpl(clientSecret, flagResolverManagedChannel);
+      final FlagResolverClient flagResolverClient =
+          new FlagResolverClientImpl(clientSecret, flagResolverManagedChannel);
       final GrpcEventUploader uploader =
           new GrpcEventUploader(clientSecret, new SystemClock(), DEFAULT_CHANNEL);
       final List<FlushPolicy> flushPolicies = ImmutableList.of(new BatchSizeFlushPolicy(5));
       final EventSenderEngine engine = new EventSenderEngineImpl(flushPolicies, uploader);
-      return new Confidence(null, engine, flagResolver);
+      return new Confidence(null, engine, flagResolverClient);
     }
   }
 }

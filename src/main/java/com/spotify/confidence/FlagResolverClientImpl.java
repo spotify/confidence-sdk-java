@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-class FlagResolverImpl implements FlagResolver, Closeable {
+class FlagResolverClientImpl implements FlagResolverClient, Closeable {
 
   // Deadline in seconds
   public static final int DEADLINE_AFTER_SECONDS = 10;
@@ -24,7 +24,7 @@ class FlagResolverImpl implements FlagResolver, Closeable {
 
   private final FlagResolverServiceGrpc.FlagResolverServiceFutureStub stub;
 
-  public FlagResolverImpl(String clientSecret, ManagedChannel managedChannel) {
+  public FlagResolverClientImpl(String clientSecret, ManagedChannel managedChannel) {
     this.clientSecret = clientSecret;
     this.managedChannel = managedChannel;
     this.stub = FlagResolverServiceGrpc.newFutureStub(managedChannel);

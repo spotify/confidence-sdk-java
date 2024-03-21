@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class ResolverClientTestUtils {
 
-  public static class FakeFlagResolverClient implements FlagResolver {
+  public static class FakeFlagResolverClient implements FlagResolverClient {
 
     public boolean closed = false;
     private Map<String, ConfidenceValue.Struct> resolves = new HashMap<>();
