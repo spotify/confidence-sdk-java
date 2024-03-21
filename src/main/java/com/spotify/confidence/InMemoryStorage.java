@@ -9,6 +9,7 @@ class InMemoryStorage implements EventSenderStorage {
 
   @Override
   public synchronized void write(Event event) {
+    System.out.println(">> [Memory] New Events: " + events.size() + " - In Batches: " + batches.stream().mapToInt(b -> b.events().size()).sum());
     this.events.add(event);
   }
 
@@ -17,6 +18,7 @@ class InMemoryStorage implements EventSenderStorage {
       final EventBatch batch = new EventBatch(List.copyOf(events));
       events.clear();
       batches.add(batch);
+      System.out.println(">> [Memory] New Events: " + events.size() + " - In Batches: " + batches.stream().mapToInt(b -> b.events().size()).sum());
     }
   }
 
@@ -27,5 +29,6 @@ class InMemoryStorage implements EventSenderStorage {
   @Override
   public synchronized void deleteBatch(String batchId) {
     batches.removeIf(eventBatch -> eventBatch.id().equals(batchId));
+    System.out.println(">> [Memory] New Events: " + events.size() + " - In Batches: " + batches.stream().mapToInt(b -> b.events().size()).sum());
   }
 }

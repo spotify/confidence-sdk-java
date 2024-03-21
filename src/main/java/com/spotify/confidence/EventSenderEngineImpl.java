@@ -51,6 +51,30 @@ class EventSenderEngineImpl implements EventSenderEngine {
     }
   }
 
+//  class UploadPoller implements Runnable {
+//    @Override
+//    public void run() {
+//      while (true) {
+//        try {
+//          final String signal = uploadQueue.take();
+//          final List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
+//          for (EventBatch batch : batches) {
+//            final boolean uploadSuccessful = eventUploader.upload(batch).get();
+//            if (uploadSuccessful) {
+//              eventStorage.deleteBatch(batch.id());
+//              System.out.println("Completed " + batch.id());
+//            }
+//          }
+//          if (signal.equals(SHUTDOWN_UPLOAD)) {
+//            shutdownQueue.add(SHUTDOWN_UPLOAD_COMPLETED);
+//          }
+//        } catch (InterruptedException | ExecutionException e) {
+//          throw new RuntimeException(e);
+//        }
+//      }
+//    }
+//  }
+
   class UploadPoller implements Runnable {
     @Override
     public void run() {
@@ -58,16 +82,22 @@ class EventSenderEngineImpl implements EventSenderEngine {
         try {
           final String signal = uploadQueue.take();
           final List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
-          for (EventBatch batch : batches) {
-            final boolean uploadSuccessful = eventUploader.upload(batch).get();
+          batches.parallelStream().forEach(batch -> {
+            final boolean uploadSuccessful;
+            try {
+              uploadSuccessful = eventUploader.upload(batch).get();
+            } catch (InterruptedException | ExecutionException e) {
+              throw new RuntimeException(e);
+            }
+            System.out.println("Completed " + batch.id());
             if (uploadSuccessful) {
               eventStorage.deleteBatch(batch.id());
             }
-          }
+          });
           if (signal.equals(SHUTDOWN_UPLOAD)) {
             shutdownQueue.add(SHUTDOWN_UPLOAD_COMPLETED);
           }
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
       }

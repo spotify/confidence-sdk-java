@@ -14,9 +14,38 @@ import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 
 public class ConfidenceEventSenderIntegrationTest {
-
+  final EventSenderEngine engine =
+      new EventSenderEngineImpl(getFlushPolicies(10000000, 20), new FakeUploader());
   private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
       new ResolverClientTestUtils.FakeFlagResolverClient();
+  final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
+
+  @Test
+  public void testStress() throws IOException, InterruptedException {
+    int numberOfThreads = 15; // Adjust as needed
+
+    for (int i = 0; i < numberOfThreads; i++) {
+      Thread thread = new Thread(new MyTask());
+      thread.start();
+    }
+    Thread.sleep(60000);
+    confidence.close(); // Should trigger the upload of an additional incomplete batch
+  }
+
+  class MyTask implements Runnable {
+    @Override
+    public void run() {
+      // The code you want to execute on each thread goes here
+      while (true) {
+        try {
+          Thread.sleep(10);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+        confidence.send("");
+      }
+    }
+  }
 
   @Test
   public void testEngineUploads() throws IOException {
