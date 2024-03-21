@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -19,7 +20,6 @@ import javax.annotation.Nullable;
 public class Confidence implements EventSender, Contextual {
 
   private Map<String, ConfidenceValue> context = Maps.newHashMap();
-  private final Set<String> removedKeys = new HashSet<>();
 
   private final Contextual parent;
 
@@ -39,10 +39,17 @@ public class Confidence implements EventSender, Contextual {
   public ConfidenceValue.Struct getContext() {
     final ConfidenceValue.Struct parentContext =
         parent != null ? parent.getContext() : ConfidenceValue.Struct.EMPTY;
-    // merge the parentContext with context with precendence to context
-    final Map<String, ConfidenceValue> mergedContext = Maps.newHashMap(parentContext.asMap());
-    mergedContext.putAll(context);
-    removedKeys.forEach(mergedContext::remove);
+
+    final Map<String, ConfidenceValue> mergedContext = Maps.newHashMap();
+
+    for (Map.Entry<String, ConfidenceValue> entry : parentContext.asMap().entrySet()) {
+      if (!context.containsKey(entry.getKey())) {
+        mergedContext.put(entry.getKey(), entry.getValue());
+      }
+    }
+    context.entrySet().stream()
+        .filter((entry) -> !entry.getValue().isNull())
+        .forEach((entry) -> mergedContext.put(entry.getKey(), entry.getValue()));
     return ConfidenceValue.of(mergedContext);
   }
 
@@ -58,8 +65,7 @@ public class Confidence implements EventSender, Contextual {
 
   @Override
   public void removeContextEntry(String key) {
-    this.context.remove(key);
-    this.removedKeys.add(key);
+    this.context.put(key, ConfidenceValue.NULL_VALUE);
   }
 
   @Override
