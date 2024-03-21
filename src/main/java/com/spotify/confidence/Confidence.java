@@ -10,6 +10,7 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -78,8 +79,13 @@ public class Confidence implements EventSender, Contextual {
   }
 
   @Override
+  public void send(String name) {
+    eventSenderEngine.send(name, getContext(), Optional.empty());
+  }
+
+  @Override
   public void send(String name, ConfidenceValue.Struct message) {
-    eventSenderEngine.send(name, message, getContext());
+    eventSenderEngine.send(name, getContext(), Optional.of(message));
   }
 
   ListenableFuture<ResolveFlagsResponse> resolveFlags(String flagName) {

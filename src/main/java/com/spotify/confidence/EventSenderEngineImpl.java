@@ -2,6 +2,7 @@ package com.spotify.confidence;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 class EventSenderEngineImpl implements EventSenderEngine {
@@ -20,7 +21,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private static final String SHUTDOWN_WRITE_COMPLETED = "SHUTDOWN_WRITE_COMPLETED";
   private volatile boolean isStopped = false;
 
-  public EventSenderEngineImpl(List<FlushPolicy> flushPolicyList, EventUploader eventUploader) {
+  EventSenderEngineImpl(List<FlushPolicy> flushPolicyList, EventUploader eventUploader) {
     this.flushPolicies = flushPolicyList;
     this.eventUploader = eventUploader;
     writeThread.submit(new WritePoller());
@@ -75,14 +76,12 @@ class EventSenderEngineImpl implements EventSenderEngine {
   }
 
   @Override
-  public void send(String name, ConfidenceValue.Struct context) {
-    send(name, ConfidenceValue.Struct.EMPTY, context);
-  }
-
-  @Override
-  public void send(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
+  public void send(
+      String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
     if (!isStopped) {
-      writeQueue.add(new Event(EVENT_NAME_PREFIX + name, message, context));
+      writeQueue.add(
+          new Event(
+              EVENT_NAME_PREFIX + name, message.orElse(ConfidenceValue.Struct.EMPTY), context));
     }
   }
 
