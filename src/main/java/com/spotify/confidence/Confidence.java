@@ -8,11 +8,8 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collector;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
