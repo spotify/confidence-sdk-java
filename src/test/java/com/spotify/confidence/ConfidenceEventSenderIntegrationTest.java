@@ -18,13 +18,15 @@ public class ConfidenceEventSenderIntegrationTest {
   private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
       new ResolverClientTestUtils.FakeFlagResolverClient();
 
+  private final FakeClock clock = new FakeClock();
+
   @Test
   public void testEngineUploads() throws IOException {
     final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
     final int batchSize = 6;
     final int numEvents = 14;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader);
+        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader, clock);
     final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
@@ -53,7 +55,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
     final int batchSize = 6;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader);
+        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader, clock);
     final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
 
     confidence.close(); // Should trigger the upload of an additional incomplete batch
@@ -68,7 +70,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final List<Integer> failAtUploadWithIndex = List.of(2, 5);
     final FakeUploader fakeUploader = new FakeUploader(failAtUploadWithIndex);
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), fakeUploader);
+        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), fakeUploader, clock);
     final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
@@ -97,7 +99,7 @@ public class ConfidenceEventSenderIntegrationTest {
 
     final FakeUploader alwaysSucceedUploader = new FakeUploader();
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader);
+        new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader, clock);
     final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
     final List<Future<Boolean>> futures = new ArrayList<>();
     final ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);

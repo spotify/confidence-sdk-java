@@ -6,11 +6,15 @@ class Event {
   private final ConfidenceValue.Struct context;
   private final long emitTimeSeconds;
 
-  public Event(String name, ConfidenceValue.Struct message, ConfidenceValue.Struct context) {
+  public Event(
+      String name,
+      ConfidenceValue.Struct message,
+      ConfidenceValue.Struct context,
+      long emitTimeSeconds) {
     this.name = name;
     this.message = message;
     this.context = context;
-    this.emitTimeSeconds = System.currentTimeMillis() / 1000;
+    this.emitTimeSeconds = emitTimeSeconds;
   }
 
   public String name() {

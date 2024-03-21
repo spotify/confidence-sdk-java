@@ -15,15 +15,18 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private final EventSenderStorage eventStorage = new InMemoryStorage();
   private final EventUploader eventUploader;
   private final List<FlushPolicy> flushPolicies;
+  private final Clock clock;
   private static final String UPLOAD_SIG = "UPLOAD";
   private static final String SHUTDOWN_UPLOAD = "SHUTDOWN_UPLOAD";
   private static final String SHUTDOWN_UPLOAD_COMPLETED = "SHUTDOWN_UPLOAD_COMPLETED";
   private static final String SHUTDOWN_WRITE_COMPLETED = "SHUTDOWN_WRITE_COMPLETED";
   private volatile boolean isStopped = false;
 
-  EventSenderEngineImpl(List<FlushPolicy> flushPolicyList, EventUploader eventUploader) {
+  EventSenderEngineImpl(
+      List<FlushPolicy> flushPolicyList, EventUploader eventUploader, Clock clock) {
     this.flushPolicies = flushPolicyList;
     this.eventUploader = eventUploader;
+    this.clock = clock;
     writeThread.submit(new WritePoller());
     uploadThread.submit(new UploadPoller());
   }
@@ -81,7 +84,10 @@ class EventSenderEngineImpl implements EventSenderEngine {
     if (!isStopped) {
       writeQueue.add(
           new Event(
-              EVENT_NAME_PREFIX + name, message.orElse(ConfidenceValue.Struct.EMPTY), context));
+              EVENT_NAME_PREFIX + name,
+              message.orElse(ConfidenceValue.Struct.EMPTY),
+              context,
+              clock.currentTimeSeconds()));
     }
   }
 

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 public class ConfidenceContextTest {
 
-  private final FakeEventSenderEngine fakeEngine = new FakeEventSenderEngine();
+  private final FakeEventSenderEngine fakeEngine = new FakeEventSenderEngine(new FakeClock());
   private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
       new ResolverClientTestUtils.FakeFlagResolverClient();
 

@@ -63,7 +63,7 @@ class GrpcEventUploaderTest {
   @Test
   public void testSendTime() {
     final EventBatch batch =
-        new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
+        new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"), 1337)));
     uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
 
@@ -74,7 +74,7 @@ class GrpcEventUploaderTest {
   @Test
   public void testMapsSingleEventBatchToProtobuf() throws ExecutionException, InterruptedException {
     final EventBatch batch =
-        new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
+        new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"), 1337)));
     final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
     final Boolean result = completableFuture.get();
     assertThat(result).isTrue();
@@ -104,10 +104,10 @@ class GrpcEventUploaderTest {
     final EventBatch batch =
         new EventBatch(
             List.of(
-                new Event("event1", messageStruct("m1"), contextStruct("c1")),
-                new Event("event2", messageStruct("m2"), contextStruct("c2")),
-                new Event("event3", messageStruct("m3"), contextStruct("c3")),
-                new Event("event4", messageStruct("m4"), contextStruct("c4"))));
+                new Event("event1", messageStruct("m1"), contextStruct("c1"), 1337),
+                new Event("event2", messageStruct("m2"), contextStruct("c2"), 1338),
+                new Event("event3", messageStruct("m3"), contextStruct("c3"), 1339),
+                new Event("event4", messageStruct("m4"), contextStruct("c4"), 1340)));
     uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
 
@@ -136,7 +136,7 @@ class GrpcEventUploaderTest {
   public void testServiceThrows() throws ExecutionException, InterruptedException {
     fakedEventsService.shouldError = true;
     final EventBatch batch =
-        new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"))));
+        new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"), 1337)));
     final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
     final Boolean result = completableFuture.get();

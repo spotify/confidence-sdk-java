@@ -126,10 +126,11 @@ public class Confidence implements EventSender, Contextual {
     public Confidence build() {
       final FlagResolverClient flagResolverClient =
           new FlagResolverClientImpl(clientSecret, flagResolverManagedChannel);
+      final SystemClock clock = new SystemClock();
       final GrpcEventUploader uploader =
-          new GrpcEventUploader(clientSecret, new SystemClock(), DEFAULT_CHANNEL);
+          new GrpcEventUploader(clientSecret, clock, DEFAULT_CHANNEL);
       final List<FlushPolicy> flushPolicies = ImmutableList.of(new BatchSizeFlushPolicy(5));
-      final EventSenderEngine engine = new EventSenderEngineImpl(flushPolicies, uploader);
+      final EventSenderEngine engine = new EventSenderEngineImpl(flushPolicies, uploader, clock);
       return new Confidence(null, engine, flagResolverClient);
     }
   }
