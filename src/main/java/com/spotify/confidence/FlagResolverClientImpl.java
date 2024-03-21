@@ -1,7 +1,6 @@
 package com.spotify.confidence;
 
 import com.google.common.base.Strings;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Struct;
 import com.spotify.confidence.shaded.flags.resolver.v1.*;
 import io.grpc.ManagedChannel;
@@ -9,6 +8,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 class FlagResolverClientImpl implements FlagResolverClient, Closeable {
@@ -42,19 +42,20 @@ class FlagResolverClientImpl implements FlagResolverClient, Closeable {
     }
   }
 
-  public ListenableFuture<ResolveFlagsResponse> resolveFlags(
+  public CompletableFuture<ResolveFlagsResponse> resolveFlags(
       String flagName, ConfidenceValue.Struct context) {
     final Struct evaluationContext = context.toProto().getStructValue();
 
-    return stub.withDeadlineAfter(DEADLINE_AFTER_SECONDS, TimeUnit.SECONDS)
-        .resolveFlags(
-            ResolveFlagsRequest.newBuilder()
-                .setClientSecret(clientSecret)
-                .addAllFlags(List.of(flagName))
-                .setEvaluationContext(evaluationContext)
-                .setSdk(Sdk.newBuilder().setId(SDK_ID).setVersion(SDK_VERSION).build())
-                .setApply(true)
-                .build());
+    return GrpcUtil.toCompletableFuture(
+        stub.withDeadlineAfter(DEADLINE_AFTER_SECONDS, TimeUnit.SECONDS)
+            .resolveFlags(
+                ResolveFlagsRequest.newBuilder()
+                    .setClientSecret(clientSecret)
+                    .addAllFlags(List.of(flagName))
+                    .setEvaluationContext(evaluationContext)
+                    .setSdk(Sdk.newBuilder().setId(SDK_ID).setVersion(SDK_VERSION).build())
+                    .setApply(true)
+                    .build()));
   }
 
   @Override

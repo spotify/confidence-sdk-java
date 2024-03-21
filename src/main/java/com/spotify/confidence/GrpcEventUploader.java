@@ -1,15 +1,12 @@
 package com.spotify.confidence;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Timestamp;
 import com.spotify.confidence.events.v1.Event;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
 import com.spotify.confidence.events.v1.PublishEventsRequest;
-import com.spotify.confidence.events.v1.PublishEventsResponse;
 import io.grpc.ManagedChannel;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -48,19 +45,16 @@ class GrpcEventUploader implements EventUploader {
                                 .build())
                     .collect(Collectors.toList()))
             .build();
-    final ListenableFuture<PublishEventsResponse> response =
-        stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request);
 
-    try {
-      final PublishEventsResponse publishEventsResponse = response.get();
-      if (publishEventsResponse.getErrorsCount() > 0) {
-        return CompletableFuture.completedFuture(false);
-      }
-      return CompletableFuture.completedFuture(true);
-    } catch (ExecutionException | InterruptedException e) {
-      e.printStackTrace();
-      return CompletableFuture.completedFuture(false);
-    }
+    return GrpcUtil.toCompletableFuture(
+            stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request))
+        .thenApply(publishEventsResponse -> publishEventsResponse.getErrorsCount() == 0)
+        .exceptionally(
+            (throwable -> {
+              // TODO update to use some user-configurable logging
+              throwable.printStackTrace();
+              return false;
+            }));
   }
 
   @Override

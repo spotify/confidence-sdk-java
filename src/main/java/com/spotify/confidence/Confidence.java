@@ -3,7 +3,6 @@ package com.spotify.confidence;
 import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -11,6 +10,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -88,7 +88,7 @@ public class Confidence implements EventSender, Contextual {
     eventSenderEngine.send(name, getContext(), Optional.of(message));
   }
 
-  ListenableFuture<ResolveFlagsResponse> resolveFlags(String flagName) {
+  CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName) {
     return flagResolverClient.resolveFlags(flagName, getContext());
   }
 
