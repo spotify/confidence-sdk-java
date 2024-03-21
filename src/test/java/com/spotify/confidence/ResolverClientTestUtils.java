@@ -1,6 +1,5 @@
 package com.spotify.confidence;
 
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
@@ -26,9 +25,7 @@ public class ResolverClientTestUtils {
     public CompletableFuture<ResolveFlagsResponse> resolveFlags(
         String flag, ConfidenceValue.Struct context) {
       resolves.put(flag, context);
-      final SettableFuture<ResolveFlagsResponse> future = SettableFuture.create();
-      future.set(response);
-      return future;
+      return CompletableFuture.completedFuture(response);
     }
 
     @Override
