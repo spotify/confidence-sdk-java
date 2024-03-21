@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -33,22 +35,23 @@ public class Confidence implements EventSender, Contextual {
     this.flagResolverClient = flagResolverClient;
   }
 
+  private Stream<Map.Entry<String, ConfidenceValue>> contextEntries() {
+    final Stream.Builder<Map.Entry<String, ConfidenceValue>> streamBuilder = Stream.builder();
+    if (parent != null) {
+      parent.getContext().asMap().entrySet().stream()
+          .filter((entry) -> !context.containsKey(entry.getKey()))
+          .forEach(streamBuilder::add);
+    }
+    context.entrySet().forEach(streamBuilder::add);
+    return streamBuilder.build();
+  }
+
   @Override
   public ConfidenceValue.Struct getContext() {
-    final ConfidenceValue.Struct parentContext =
-        parent != null ? parent.getContext() : ConfidenceValue.Struct.EMPTY;
-
-    final Map<String, ConfidenceValue> mergedContext = Maps.newHashMap();
-
-    for (Map.Entry<String, ConfidenceValue> entry : parentContext.asMap().entrySet()) {
-      if (!context.containsKey(entry.getKey())) {
-        mergedContext.put(entry.getKey(), entry.getValue());
-      }
-    }
-    context.entrySet().stream()
-        .filter((entry) -> !entry.getValue().isNull())
-        .forEach((entry) -> mergedContext.put(entry.getKey(), entry.getValue()));
-    return ConfidenceValue.of(mergedContext);
+    return ConfidenceValue.of(
+        contextEntries()
+            .filter((entry) -> !entry.getValue().isNull())
+            .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue)));
   }
 
   @Override
