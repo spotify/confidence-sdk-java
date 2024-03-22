@@ -21,13 +21,13 @@ public class Confidence implements EventSender, Contextual {
 
   private Map<String, ConfidenceValue> context = Maps.newHashMap();
 
-  private final Contextual parent;
+  private final Confidence parent;
 
   private final EventSenderEngine eventSenderEngine;
   private final FlagResolverClient flagResolverClient;
 
   Confidence(
-      @Nullable Contextual parent,
+      @Nullable Confidence parent,
       EventSenderEngine eventSenderEngine,
       FlagResolverClient flagResolverClient) {
     this.parent = parent;
@@ -35,21 +35,22 @@ public class Confidence implements EventSender, Contextual {
     this.flagResolverClient = flagResolverClient;
   }
 
-  private Stream<Map.Entry<String, ConfidenceValue>> contextEntries() {
+  private Stream<Map.Entry<String, ConfidenceValue>> contextEntries(Confidence confidence) {
+    // We shouldn't need to create this stream every time.
     final Stream.Builder<Map.Entry<String, ConfidenceValue>> streamBuilder = Stream.builder();
-    if (parent != null) {
-      parent.getContext().asMap().entrySet().stream()
+    if (confidence.parent != null) {
+      contextEntries(confidence.parent)
           .filter((entry) -> !context.containsKey(entry.getKey()))
           .forEach(streamBuilder::add);
     }
-    context.entrySet().forEach(streamBuilder::add);
+    confidence.context.entrySet().forEach(streamBuilder::add);
     return streamBuilder.build();
   }
 
   @Override
   public ConfidenceValue.Struct getContext() {
     return ConfidenceValue.of(
-        contextEntries()
+        contextEntries(this)
             .filter((entry) -> !entry.getValue().isNull())
             .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue)));
   }
@@ -72,6 +73,11 @@ public class Confidence implements EventSender, Contextual {
   @Override
   public void clearContext() {
     this.context.clear();
+  }
+
+  @Override
+  public Confidence withContext(Map<String, ConfidenceValue> context) {
+    return withContext(ConfidenceValue.Struct.of(context));
   }
 
   @Override

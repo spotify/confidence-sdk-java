@@ -3,6 +3,8 @@ package com.spotify.confidence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class ConfidenceContextTest {
@@ -26,6 +28,36 @@ public class ConfidenceContextTest {
                     ConfidenceValue.of("http://.."),
                     "pants",
                     ConfidenceValue.of("yellow"))));
+  }
+
+  @Test
+  public void multiLevelContexts() {
+    final Confidence root = new Confidence(null, fakeEngine, fakeFlagResolverClient);
+    final int numberOfLevels = 9;
+    final List<Confidence> instances = new ArrayList<>();
+    Confidence last = root;
+    for (int i = 0; i < numberOfLevels; i++) {
+      last =
+          last.withContext(
+              ImmutableMap.of(
+                  "level", ConfidenceValue.of(i), "level_" + i, ConfidenceValue.of("i=" + i)));
+      instances.add(last);
+    }
+
+    assertThat(last.getContext().asMap().size()).isEqualTo(numberOfLevels + 1);
+    assertThat(last.getContext().asMap())
+        .isEqualTo(
+            ImmutableMap.of(
+                "level", ConfidenceValue.of(numberOfLevels - 1),
+                "level_0", ConfidenceValue.of("i=0"),
+                "level_1", ConfidenceValue.of("i=1"),
+                "level_2", ConfidenceValue.of("i=2"),
+                "level_3", ConfidenceValue.of("i=3"),
+                "level_4", ConfidenceValue.of("i=4"),
+                "level_5", ConfidenceValue.of("i=5"),
+                "level_6", ConfidenceValue.of("i=6"),
+                "level_7", ConfidenceValue.of("i=7"),
+                "level_8", ConfidenceValue.of("i=8")));
   }
 
   @Test
