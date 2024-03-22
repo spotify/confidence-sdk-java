@@ -14,7 +14,7 @@ public class GrpcFlagResolver implements FlagResolver {
   private final ManagedChannel managedChannel;
   private final String clientSecret;
   private final String SDK_VERSION;
-  private static final SdkId SDK_ID = SdkId.SDK_ID_JAVA_PROVIDER;
+  private static final SdkId SDK_ID = SdkId.SDK_ID_JAVA_CONFIDENCE;
 
   private final FlagResolverServiceGrpc.FlagResolverServiceFutureStub stub;
 

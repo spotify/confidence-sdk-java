@@ -60,4 +60,20 @@ enum SdkId {
   SDK_ID_PYTHON_PROVIDER = 6;
   // Confidence OpenFeature GO Provider.
   SDK_ID_GO_PROVIDER = 7;
+  // Confidence OpenFeature Ruby Provider.
+  SDK_ID_RUBY_PROVIDER = 8;
+  // Confidence OpenFeature Rust Provider.
+  SDK_ID_RUST_PROVIDER = 9;
+  // Confidence Java SDK.
+  SDK_ID_JAVA_CONFIDENCE = 10;
+  // Confidence Kotlin SDK.
+  SDK_ID_KOTLIN_CONFIDENCE = 11;
+  // Confidence Swift SDK.
+  SDK_ID_SWIFT_CONFIDENCE = 12;
+  // Confidence JavaScript SDK.
+  SDK_ID_JS_CONFIDENCE = 13;
+  // Confidence Python SDK.
+  SDK_ID_PYTHON_CONFIDENCE = 14;
+  // Confidence GO SDK.
+  SDK_ID_GO_CONFIDENCE = 15;
 }
