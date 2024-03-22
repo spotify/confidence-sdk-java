@@ -18,7 +18,7 @@ class GrpcEventUploader implements EventUploader {
   private final EventsServiceGrpc.EventsServiceFutureStub stub;
   private final Clock clock;
 
-  public GrpcEventUploader(String clientSecret, Clock clock, ManagedChannel managedChannel) {
+  GrpcEventUploader(String clientSecret, Clock clock, ManagedChannel managedChannel) {
     this.clientSecret = clientSecret;
     this.managedChannel = managedChannel;
     this.stub = EventsServiceGrpc.newFutureStub(managedChannel);

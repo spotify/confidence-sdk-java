@@ -27,7 +27,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final int numEvents = 14;
     final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader, clock);
-    final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
+    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
       confidence.send(
@@ -56,7 +56,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final int batchSize = 6;
     final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader, clock);
-    final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
+    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
 
     confidence.close(); // Should trigger the upload of an additional incomplete batch
     assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(0);
@@ -71,7 +71,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader fakeUploader = new FakeUploader(failAtUploadWithIndex);
     final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), fakeUploader, clock);
-    final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
+    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
       confidence.send(
@@ -100,7 +100,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader alwaysSucceedUploader = new FakeUploader();
     final EventSenderEngine engine =
         new EventSenderEngineImpl(getFlushPolicies(10000, batchSize), alwaysSucceedUploader, clock);
-    final Confidence confidence = new Confidence(null, engine, fakeFlagResolverClient);
+    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     final List<Future<Boolean>> futures = new ArrayList<>();
     final ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
 
