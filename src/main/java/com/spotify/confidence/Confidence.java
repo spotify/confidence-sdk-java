@@ -79,6 +79,11 @@ public class Confidence implements EventSender, Contextual {
   }
 
   @Override
+  public Confidence withContext(Map<String, ConfidenceValue> context) {
+    return withContext(ConfidenceValue.Struct.of(context));
+  }
+
+  @Override
   public void send(String name) {
     eventSenderEngine.send(name, getContext(), Optional.empty());
   }

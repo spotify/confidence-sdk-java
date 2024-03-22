@@ -18,6 +18,7 @@ import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -25,6 +26,7 @@ import java.util.regex.Pattern;
 /** OpenFeature Provider for feature flagging with the Confidence platform */
 public class ConfidenceFeatureProvider implements FeatureProvider {
 
+  public static final String OPEN_FEATURE_RESOLVE_CONTEXT_KEY = "open-feature";
   private final Confidence confidence;
 
   /**
@@ -147,7 +149,10 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
 
       resolveFlagResponse =
           confidence
-              .withContext(ConfidenceValue.Struct.fromProto(evaluationContext))
+              .withContext(
+                  Map.of(
+                      OPEN_FEATURE_RESOLVE_CONTEXT_KEY,
+                      ConfidenceValue.Struct.fromProto(evaluationContext)))
               .resolveFlags(requestFlagName)
               .get();
 
