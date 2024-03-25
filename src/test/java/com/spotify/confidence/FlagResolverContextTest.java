@@ -23,7 +23,7 @@ public class FlagResolverContextTest {
     this.confidence = Confidence.create(fakeEventSender, flagResolver);
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 
-    OpenFeatureAPI openFeatureAPI = OpenFeatureAPI.getInstance();
+    final OpenFeatureAPI openFeatureAPI = OpenFeatureAPI.getInstance();
     openFeatureAPI.setProvider(featureProvider);
 
     client = openFeatureAPI.getClient();
