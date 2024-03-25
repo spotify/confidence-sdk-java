@@ -22,7 +22,7 @@ public class GrpcFlagResolver implements FlagResolver {
     this.clientSecret = clientSecret;
     this.sdk =
         Sdk.newBuilder()
-            .setId(SdkId.SDK_ID_JAVA_CONFIDENCE)
+            .setId(SdkId.SDK_ID_JAVA_PROVIDER)
             .setVersion(SdkUtils.getSdkVersion())
             .build();
     this.managedChannel = managedChannel;
