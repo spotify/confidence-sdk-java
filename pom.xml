@@ -85,9 +85,9 @@
           <name>Mattias Frånberg</name>
       </developer>
       <developer>
-          <id>andreas-karlsson</id>
-          <email>andreask@spotify.com</email>
-          <name>Andreas Karlsson</name>
+        <id>andreas-karlsson</id>
+        <email>andreask@spotify.com</email>
+        <name>Andreas Karlsson</name>
       </developer>
   </developers>
 

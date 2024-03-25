@@ -1,35 +1,21 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.ResolverClientTestUtils.generateSampleResponse;
 import static dev.openfeature.sdk.ErrorCode.GENERAL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
-import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
+import com.spotify.confidence.ResolverClientTestUtils.ValueSchemaHolder;
 import com.spotify.confidence.shaded.flags.resolver.v1.FlagResolverServiceGrpc.FlagResolverServiceImplBase;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.BoolFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.DoubleFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.IntFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.ListFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StringFlagSchema;
-import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StructFlagSchema;
-import dev.openfeature.sdk.Client;
-import dev.openfeature.sdk.ErrorCode;
-import dev.openfeature.sdk.EvaluationContext;
-import dev.openfeature.sdk.FeatureProvider;
-import dev.openfeature.sdk.FlagEvaluationDetails;
-import dev.openfeature.sdk.MutableContext;
-import dev.openfeature.sdk.MutableStructure;
-import dev.openfeature.sdk.OpenFeatureAPI;
-import dev.openfeature.sdk.ProviderState;
-import dev.openfeature.sdk.Value;
+import dev.openfeature.sdk.*;
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import io.grpc.Status;
@@ -37,7 +23,9 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -54,22 +42,13 @@ final class FeatureProviderTest {
   private static Client client;
   private static OpenFeatureAPI openFeatureAPI;
 
-  private static ResolveFlagsResponse generateSampleResponse(
-      List<ValueSchemaHolder> additionalProps) {
-    return ResolveFlagsResponse.newBuilder()
-        .addResolvedFlags(generateResolvedFlag(additionalProps))
-        .build();
-  }
-
   private static final EvaluationContext SAMPLE_CONTEXT_WITHOUT_TARGETING_KEY =
       new MutableContext(Map.of("my-key", new Value(true)));
 
   private static final EvaluationContext SAMPLE_CONTEXT_2_TARGETING_KEYS =
       new MutableContext(
           "my-targeting-key-1",
-          Map.of(
-              com.spotify.confidence.ConfidenceFeatureProvider.TARGETING_KEY,
-              new Value("my-targeting-key-2")));
+          Map.of(OpenFeatureUtils.TARGETING_KEY, new Value("my-targeting-key-2")));
 
   private static final EvaluationContext SAMPLE_CONTEXT =
       new MutableContext("my-targeting-key", Map.of("my-key", new Value(true)));
@@ -89,9 +68,12 @@ final class FeatureProviderTest {
 
   @BeforeEach
   void beforeEach() {
+    final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
-
-    final FeatureProvider featureProvider = new ConfidenceFeatureProvider("fake-secret", channel);
+    final FlagResolverClientImpl flagResolver =
+        new FlagResolverClientImpl(new GrpcFlagResolver("fake-secret", channel));
+    final Confidence confidence = Confidence.create(fakeEventSender, flagResolver);
+    final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 
     openFeatureAPI = OpenFeatureAPI.getInstance();
     openFeatureAPI.setProvider(featureProvider);
@@ -555,137 +537,5 @@ final class FeatureProviderTest {
           streamObserver.onNext(generateSampleResponse(additionalProps));
           streamObserver.onCompleted();
         });
-  }
-
-  private static ResolvedFlag generateResolvedFlag(List<ValueSchemaHolder> additionalProps) {
-    final Struct.Builder valueBuilder =
-        Struct.newBuilder()
-            .putAllFields(
-                Map.of(
-                    "prop-A",
-                    Values.of(false),
-                    "prop-B",
-                    Values.of(
-                        Structs.of(
-                            "prop-C", Values.of("str-val"),
-                            "prop-D", Values.of(5.3))),
-                    "prop-E",
-                    Values.of(50),
-                    "prop-F",
-                    Values.of(List.of(Values.of("a"), Values.of("b"))),
-                    "prop-G",
-                    Values.of(
-                        Structs.of(
-                            "prop-H", Values.ofNull(),
-                            "prop-I", Values.ofNull()))));
-
-    final StructFlagSchema.Builder schemaBuilder =
-        StructFlagSchema.newBuilder()
-            .putAllSchema(
-                Map.of(
-                    "prop-A",
-                    FlagSchema.newBuilder()
-                        .setBoolSchema(BoolFlagSchema.getDefaultInstance())
-                        .build(),
-                    "prop-B",
-                    FlagSchema.newBuilder()
-                        .setStructSchema(
-                            StructFlagSchema.newBuilder()
-                                .putAllSchema(
-                                    Map.of(
-                                        "prop-C",
-                                        FlagSchema.newBuilder()
-                                            .setStringSchema(StringFlagSchema.getDefaultInstance())
-                                            .build(),
-                                        "prop-D",
-                                        FlagSchema.newBuilder()
-                                            .setDoubleSchema(DoubleFlagSchema.getDefaultInstance())
-                                            .build()))
-                                .build())
-                        .build(),
-                    "prop-E",
-                    FlagSchema.newBuilder()
-                        .setIntSchema(IntFlagSchema.getDefaultInstance())
-                        .build(),
-                    "prop-F",
-                    FlagSchema.newBuilder()
-                        .setListSchema(
-                            ListFlagSchema.newBuilder()
-                                .setElementSchema(
-                                    FlagSchema.newBuilder()
-                                        .setStringSchema(StringFlagSchema.getDefaultInstance())
-                                        .build())
-                                .build())
-                        .build(),
-                    "prop-G",
-                    FlagSchema.newBuilder()
-                        .setStructSchema(
-                            StructFlagSchema.newBuilder()
-                                .putAllSchema(
-                                    Map.of(
-                                        "prop-H",
-                                        FlagSchema.newBuilder()
-                                            .setStringSchema(StringFlagSchema.getDefaultInstance())
-                                            .build(),
-                                        "prop-I",
-                                        FlagSchema.newBuilder()
-                                            .setIntSchema(IntFlagSchema.getDefaultInstance())
-                                            .build()))
-                                .build())
-                        .build()));
-
-    additionalProps.forEach(
-        (valueSchemaHolder) -> {
-          valueBuilder.putFields(valueSchemaHolder.prop, valueSchemaHolder.value);
-          final FlagSchema.Builder builder = getSchemaBuilder(valueSchemaHolder);
-          schemaBuilder.putSchema(valueSchemaHolder.prop, builder.build());
-        });
-
-    return ResolvedFlag.newBuilder()
-        .setFlag("flags/flag")
-        .setVariant("flags/flag/variants/var-A")
-        .setValue(valueBuilder)
-        .setFlagSchema(schemaBuilder)
-        .build();
-  }
-
-  private static FlagSchema.Builder getSchemaBuilder(ValueSchemaHolder valueSchemaHolder) {
-    final FlagSchema.Builder builder = FlagSchema.newBuilder();
-    switch (valueSchemaHolder.schemaTypeCase) {
-      case STRUCT_SCHEMA:
-        builder.setStructSchema(StructFlagSchema.getDefaultInstance());
-        break;
-      case LIST_SCHEMA:
-        builder.setListSchema(ListFlagSchema.getDefaultInstance());
-        break;
-      case INT_SCHEMA:
-        builder.setIntSchema(IntFlagSchema.getDefaultInstance());
-        break;
-      case DOUBLE_SCHEMA:
-        builder.setDoubleSchema(DoubleFlagSchema.getDefaultInstance());
-        break;
-      case STRING_SCHEMA:
-        builder.setStringSchema(StringFlagSchema.getDefaultInstance());
-        break;
-      case BOOL_SCHEMA:
-        builder.setBoolSchema(BoolFlagSchema.getDefaultInstance());
-        break;
-      case SCHEMATYPE_NOT_SET:
-        break;
-    }
-    return builder;
-  }
-
-  private static class ValueSchemaHolder {
-    public ValueSchemaHolder(
-        String prop, com.google.protobuf.Value value, FlagSchema.SchemaTypeCase schemaTypeCase) {
-      this.prop = prop;
-      this.value = value;
-      this.schemaTypeCase = schemaTypeCase;
-    }
-
-    String prop;
-    com.google.protobuf.Value value;
-    FlagSchema.SchemaTypeCase schemaTypeCase;
   }
 }
