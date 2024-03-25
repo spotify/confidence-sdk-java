@@ -33,7 +33,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 final class FeatureProviderTest {
-
   private static Server server;
   private static ManagedChannel channel;
   private static final Value DEFAULT_VALUE = new Value("string-default");
