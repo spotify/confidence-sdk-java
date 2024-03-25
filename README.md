@@ -94,7 +94,7 @@ public final class ResolveFlags {
 - Setting a custom event's payload with all the Confidence-supported types via the `ConfidenceValue` interfaces
 - Automatically including the OpenFeature's `Evaluation Context` detected at the time `send()` is called
   - _Note: this only considers the global Evaluation Context set at the OpenFeatureAPI level_
-- Setting a shared `Event Context` that is going to be appended to each event:
+### Setting a shared `Event Context` that is going to be appended to each event
 
 ```java
     final Confidence confidenceWithContext = Confidence.withContext(ConfidenceValue.of("context-value"));
