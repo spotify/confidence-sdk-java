@@ -42,6 +42,10 @@ The provider is instantiated using a client token that is configured in the Conf
 management API. After that all interaction with the feature flags happens using the OpenFeature client APIs. 
 
 ```java
+import com.spotify.confidence.ConfidenceFeatureProvider;
+import dev.openfeature.sdk.*;
+import java.util.Map;
+
 public final class ResolveFlags {
 
   public static final String CLIENT_TOKEN = "<>";
@@ -90,14 +94,16 @@ public final class ResolveFlags {
   }
 }
 ```
-### The `send()` API currently supports
+
+The `send()` API supports:
 - Setting a custom event's payload with all the Confidence-supported types via the `ConfidenceValue` interfaces
 - Automatically including the OpenFeature's `Evaluation Context` detected at the time `send()` is called
   - _Note: this only considers the global Evaluation Context set at the OpenFeatureAPI level_
-### Setting a shared `Event Context` that is going to be appended to each event
 
+### Event Context
+It's possible to set custom `Event Context` data, that will be appended to each event. Usage:
 ```java
     final Confidence confidenceWithContext = confidence.withContext(ConfidenceValue.of("context-value"));
     confidenceWithContext.send("my-event", ConfidenceValue.of("event-value"));
 ```
-The "my-event" event in the example above will contain fields for "event-value", "context-value" and the Evaluation Context data set via `OpenFeatureAPI.getInstance().setEvaluationContext(...)`.
+The "my-event" event in the example above will contain fields for "event-value", "context-value" and the Evaluation Context data previously set via `OpenFeatureAPI.getInstance().setEvaluationContext(...)`.
