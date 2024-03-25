@@ -4,9 +4,7 @@ import com.google.common.base.Strings;
 import com.google.protobuf.Struct;
 import com.spotify.confidence.shaded.flags.resolver.v1.*;
 import io.grpc.ManagedChannel;
-import java.io.IOException;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -21,21 +19,12 @@ public class GrpcFlagResolver implements FlagResolver {
     if (Strings.isNullOrEmpty(clientSecret)) {
       throw new IllegalArgumentException("clientSecret must be a non-empty string.");
     }
-
     this.clientSecret = clientSecret;
-
-    try {
-      final Properties prop = new Properties();
-      prop.load(this.getClass().getResourceAsStream("/version.properties"));
-      this.sdk =
-          Sdk.newBuilder()
-              .setId(SdkId.SDK_ID_JAVA_PROVIDER)
-              .setVersion(prop.getProperty("version"))
-              .build();
-    } catch (IOException e) {
-      throw new RuntimeException("Can't determine version of the SDK", e);
-    }
-
+    this.sdk =
+        Sdk.newBuilder()
+            .setId(SdkId.SDK_ID_JAVA_CONFIDENCE)
+            .setVersion(SdkUtils.getSdkVersion())
+            .build();
     this.managedChannel = managedChannel;
     this.stub = FlagResolverServiceGrpc.newFutureStub(managedChannel);
   }

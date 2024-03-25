@@ -8,8 +8,6 @@ import com.spotify.confidence.events.v1.PublishEventsRequest;
 import com.spotify.confidence.events.v1.Sdk;
 import com.spotify.confidence.events.v1.SdkId;
 import io.grpc.ManagedChannel;
-import java.io.IOException;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -28,17 +26,11 @@ class GrpcEventUploader implements EventUploader {
     this.managedChannel = managedChannel;
     this.stub = EventsServiceGrpc.newFutureStub(managedChannel);
     this.clock = clock;
-    try {
-      final Properties prop = new Properties();
-      prop.load(this.getClass().getResourceAsStream("/version.properties"));
-      this.sdk =
-          Sdk.newBuilder()
-              .setId(SdkId.SDK_ID_JAVA_CONFIDENCE)
-              .setVersion(prop.getProperty("version"))
-              .build();
-    } catch (IOException e) {
-      throw new RuntimeException("Can't determine version of the SDK", e);
-    }
+    this.sdk =
+        Sdk.newBuilder()
+            .setId(SdkId.SDK_ID_JAVA_CONFIDENCE)
+            .setVersion(SdkUtils.getSdkVersion())
+            .build();
   }
 
   @Override
