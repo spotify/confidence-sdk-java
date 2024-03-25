@@ -90,7 +90,7 @@ public final class ResolveFlags {
   }
 }
 ```
-The `send()` API currently supports:
+### The `send()` API currently supports
 - Setting a custom event's payload with all the Confidence-supported types via the `ConfidenceValue` interfaces
 - Automatically including the OpenFeature's `Evaluation Context` detected at the time `send()` is called
   - _Note: this only considers the global Evaluation Context set at the OpenFeatureAPI level_
