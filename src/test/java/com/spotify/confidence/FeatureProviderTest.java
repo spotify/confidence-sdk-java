@@ -15,16 +15,7 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
-import dev.openfeature.sdk.Client;
-import dev.openfeature.sdk.ErrorCode;
-import dev.openfeature.sdk.EvaluationContext;
-import dev.openfeature.sdk.FeatureProvider;
-import dev.openfeature.sdk.FlagEvaluationDetails;
-import dev.openfeature.sdk.MutableContext;
-import dev.openfeature.sdk.MutableStructure;
-import dev.openfeature.sdk.OpenFeatureAPI;
-import dev.openfeature.sdk.ProviderState;
-import dev.openfeature.sdk.Value;
+import dev.openfeature.sdk.*;
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import io.grpc.Status;
@@ -32,7 +23,9 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -77,7 +70,8 @@ final class FeatureProviderTest {
   void beforeEach() {
     final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
-    final FlagResolverClientImpl flagResolver = new FlagResolverClientImpl("fake-secret", channel);
+    final FlagResolverClientImpl flagResolver =
+        new FlagResolverClientImpl(new GrpcFlagResolver("fake-secret", channel));
     final Confidence confidence = Confidence.create(fakeEventSender, flagResolver);
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 

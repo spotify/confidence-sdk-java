@@ -213,7 +213,8 @@ public abstract class Confidence implements EventSender, Closeable {
 
     public Confidence build() {
       final FlagResolverClient flagResolverClient =
-          new FlagResolverClientImpl(clientSecret, flagResolverManagedChannel);
+          new FlagResolverClientImpl(
+              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel));
       final SystemClock clock = new SystemClock();
       final GrpcEventUploader uploader =
           new GrpcEventUploader(clientSecret, clock, DEFAULT_CHANNEL);
