@@ -13,8 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class GrpcFlagResolver implements FlagResolver {
   private final ManagedChannel managedChannel;
   private final String clientSecret;
-  private final String SDK_VERSION;
-  private static final SdkId SDK_ID = SdkId.SDK_ID_JAVA_PROVIDER;
+  private final Sdk sdk;
 
   private final FlagResolverServiceGrpc.FlagResolverServiceFutureStub stub;
 
@@ -28,7 +27,11 @@ public class GrpcFlagResolver implements FlagResolver {
     try {
       final Properties prop = new Properties();
       prop.load(this.getClass().getResourceAsStream("/version.properties"));
-      this.SDK_VERSION = prop.getProperty("version");
+      this.sdk =
+          Sdk.newBuilder()
+              .setId(SdkId.SDK_ID_JAVA_PROVIDER)
+              .setVersion(prop.getProperty("version"))
+              .build();
     } catch (IOException e) {
       throw new RuntimeException("Can't determine version of the SDK", e);
     }
@@ -45,7 +48,7 @@ public class GrpcFlagResolver implements FlagResolver {
                     .setClientSecret(this.clientSecret)
                     .addAllFlags(List.of(flag))
                     .setEvaluationContext(context)
-                    .setSdk(Sdk.newBuilder().setId(SDK_ID).setVersion(SDK_VERSION).build())
+                    .setSdk(sdk)
                     .setApply(true)
                     .build()));
   }
