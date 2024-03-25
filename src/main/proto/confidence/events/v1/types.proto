@@ -38,8 +38,63 @@ message EventError {
   string message = 3;
 
   enum Reason {
-    REASON_UNSPECIFIED = 0; // unknown error
-    EVENT_DEFINITION_NOT_FOUND = 1; // not transient: the event definition was not found
-    EVENT_SCHEMA_VALIDATION_FAILED = 2; // not transient: the schema validation failed
+    // unknown error
+    REASON_UNSPECIFIED = 0;
+    // not transient: the event definition was not found
+    EVENT_DEFINITION_NOT_FOUND = 1;
+    // not transient: the schema validation failed
+    EVENT_SCHEMA_VALIDATION_FAILED = 2;
   }
+}
+
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: SDKs are not internal Confidence resources. --)
+message Sdk {
+  // Identifier of the SDK used to interact with the API.
+  oneof sdk {
+    // Name of a Confidence SDKs.
+    SdkId id = 1;
+    // Custom name for non-Confidence SDKs.
+    string custom_id = 2;
+  }
+
+  // Version of the SDK.
+  string version = 3 [
+    (google.api.field_behavior) = OPTIONAL // TODO: Make REQUIRED again when we're not SDK if default
+  ];
+}
+
+enum SdkId {
+  // Unspecified enum.
+  SDK_ID_UNSPECIFIED = 0;
+  // Confidence OpenFeature Java Provider.
+  SDK_ID_JAVA_PROVIDER = 1;
+  // Confidence OpenFeature Kotlin Provider.
+  SDK_ID_KOTLIN_PROVIDER = 2;
+  // Confidence OpenFeature Swift Provider.
+  SDK_ID_SWIFT_PROVIDER = 3;
+  // Confidence OpenFeature JavaScript Provider for Web (client).
+  SDK_ID_JS_WEB_PROVIDER = 4;
+  // Confidence OpenFeature JavaScript Provider for server.
+  SDK_ID_JS_SERVER_PROVIDER = 5;
+  // Confidence OpenFeature Python Provider.
+  SDK_ID_PYTHON_PROVIDER = 6;
+  // Confidence OpenFeature GO Provider.
+  SDK_ID_GO_PROVIDER = 7;
+  // Confidence OpenFeature Ruby Provider.
+  SDK_ID_RUBY_PROVIDER = 8;
+  // Confidence OpenFeature Rust Provider.
+  SDK_ID_RUST_PROVIDER = 9;
+  // Confidence Java SDK.
+  SDK_ID_JAVA_CONFIDENCE = 10;
+  // Confidence Kotlin SDK.
+  SDK_ID_KOTLIN_CONFIDENCE = 11;
+  // Confidence Swift SDK.
+  SDK_ID_SWIFT_CONFIDENCE = 12;
+  // Confidence JavaScript SDK.
+  SDK_ID_JS_CONFIDENCE = 13;
+  // Confidence Python SDK.
+  SDK_ID_PYTHON_CONFIDENCE = 14;
+  // Confidence GO SDK.
+  SDK_ID_GO_CONFIDENCE = 15;
 }
