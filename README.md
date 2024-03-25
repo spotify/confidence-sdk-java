@@ -97,7 +97,7 @@ public final class ResolveFlags {
 ### Setting a shared `Event Context` that is going to be appended to each event
 
 ```java
-    final Confidence confidenceWithContext = Confidence.withContext(ConfidenceValue.of("context-value"));
+    final Confidence confidenceWithContext = confidence.withContext(ConfidenceValue.of("context-value"));
     confidenceWithContext.send("my-event", ConfidenceValue.of("event-value"));
 ```
 The "my-event" event in the example above will contain fields for "event-value", "context-value" and the Evaluation Context data set via `OpenFeatureAPI.getInstance().setEvaluationContext(...)`.
