@@ -37,8 +37,12 @@ message PublishEventsRequest {
   google.protobuf.Timestamp send_time = 3 [
     (google.api.field_behavior) = REQUIRED
   ];
-}
 
+  // Information about the SDK used to initiate the request.
+  Sdk sdk = 4 [
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
 
 message PublishEventsResponse {
   repeated EventError errors = 1;

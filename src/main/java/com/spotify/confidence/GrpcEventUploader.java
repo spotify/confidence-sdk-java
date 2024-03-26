@@ -5,6 +5,8 @@ import com.google.protobuf.Timestamp;
 import com.spotify.confidence.events.v1.Event;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
 import com.spotify.confidence.events.v1.PublishEventsRequest;
+import com.spotify.confidence.events.v1.Sdk;
+import com.spotify.confidence.events.v1.SdkId;
 import io.grpc.ManagedChannel;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +16,7 @@ class GrpcEventUploader implements EventUploader {
 
   private static final String CONTEXT = "context";
   private final String clientSecret;
+  private final Sdk sdk;
   private final ManagedChannel managedChannel;
   private final EventsServiceGrpc.EventsServiceFutureStub stub;
   private final Clock clock;
@@ -23,6 +26,11 @@ class GrpcEventUploader implements EventUploader {
     this.managedChannel = managedChannel;
     this.stub = EventsServiceGrpc.newFutureStub(managedChannel);
     this.clock = clock;
+    this.sdk =
+        Sdk.newBuilder()
+            .setId(SdkId.SDK_ID_JAVA_CONFIDENCE)
+            .setVersion(SdkUtils.getSdkVersion())
+            .build();
   }
 
   @Override
@@ -31,6 +39,7 @@ class GrpcEventUploader implements EventUploader {
         PublishEventsRequest.newBuilder()
             .setClientSecret(clientSecret)
             .setSendTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()))
+            .setSdk(sdk)
             .addAllEvents(
                 batch.events().stream()
                     .map(
