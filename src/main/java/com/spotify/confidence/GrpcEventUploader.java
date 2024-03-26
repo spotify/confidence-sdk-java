@@ -48,7 +48,7 @@ class GrpcEventUploader implements EventUploader {
 
     return GrpcUtil.toCompletableFuture(
             stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request))
-        .thenApply(publishEventsResponse -> publishEventsResponse.getErrorsCount() == 0)
+        .thenApply(publishEventsResponse -> true)
         .exceptionally(
             (throwable -> {
               // TODO update to use some user-configurable logging
