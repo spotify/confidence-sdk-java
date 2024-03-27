@@ -73,7 +73,8 @@ class GrpcEventUploader implements EventUploader {
         .exceptionally(
             (throwable -> {
               log.error(
-                  String.format("Publishing batch failed with reason: %s", throwable.getMessage()));
+                  String.format("Publishing batch failed with reason: %s", throwable.getMessage()),
+                  throwable);
               return false;
             }));
   }

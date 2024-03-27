@@ -219,18 +219,19 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
 
   private static void handleStatusRuntimeException(StatusRuntimeException e) {
     if (e.getStatus().getCode() == Code.DEADLINE_EXCEEDED) {
-      log.error("Deadline exceeded when calling provider backend");
+      log.error("Deadline exceeded when calling provider backend", e);
       throw new GeneralError("Deadline exceeded when calling provider backend");
     } else if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-      log.error("Provider backend is unavailable");
+      log.error("Provider backend is unavailable", e);
       throw new GeneralError("Provider backend is unavailable");
     } else if (e.getStatus().getCode() == Code.UNAUTHENTICATED) {
-      log.error("UNAUTHENTICATED");
+      log.error("UNAUTHENTICATED", e);
       throw new GeneralError("UNAUTHENTICATED");
     } else {
       log.error(
           "Unknown error occurred when calling the provider backend. Grpc status code {}",
-          e.getStatus().getCode());
+          e.getStatus().getCode(),
+          e);
       throw new GeneralError(
           String.format(
               "Unknown error occurred when calling the provider backend. Exception: %s",
