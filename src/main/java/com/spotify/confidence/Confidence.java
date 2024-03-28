@@ -218,7 +218,7 @@ public abstract class Confidence implements EventSender, Closeable {
       final SystemClock clock = new SystemClock();
       final GrpcEventUploader uploader =
           new GrpcEventUploader(clientSecret, clock, DEFAULT_CHANNEL);
-      final List<FlushPolicy> flushPolicies = ImmutableList.of(new BatchSizeFlushPolicy(5));
+      final List<FlushPolicy> flushPolicies = ImmutableList.of(new BatchSizeFlushPolicy(50));
       final EventSenderEngine engine = new EventSenderEngineImpl(flushPolicies, uploader, clock);
       return Confidence.create(engine, flagResolverClient);
     }
