@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
+import org.slf4j.Logger;
 
 class EventSenderEngineImpl implements EventSenderEngine {
   static final String EVENT_NAME_PREFIX = "eventDefinitions/";
@@ -20,12 +21,19 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private static final String SHUTDOWN_UPLOAD = "SHUTDOWN_UPLOAD";
   private static final String SHUTDOWN_UPLOAD_COMPLETED = "SHUTDOWN_UPLOAD_COMPLETED";
   private static final String SHUTDOWN_WRITE_COMPLETED = "SHUTDOWN_WRITE_COMPLETED";
+  private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+  private final int flushTimeoutMilliseconds;
+  private ScheduledFuture<?> pendingFlush;
   private volatile boolean isStopped = false;
 
-  EventSenderEngineImpl(int maxBatchSize, EventUploader eventUploader, Clock clock) {
+  private static final Logger log = org.slf4j.LoggerFactory.getLogger(EventSenderEngineImpl.class);
+
+  EventSenderEngineImpl(
+      int maxBatchSize, EventUploader eventUploader, Clock clock, int flushTimeoutMilliseconds) {
     this.maxBatchSize = maxBatchSize;
     this.eventUploader = eventUploader;
     this.clock = clock;
+    this.flushTimeoutMilliseconds = flushTimeoutMilliseconds;
     writeThread.submit(new WritePoller());
     uploadThread.submit(new UploadPoller());
   }
@@ -44,11 +52,32 @@ class EventSenderEngineImpl implements EventSenderEngine {
         }
         final var numberOfPendingEvents = eventStorage.write(event);
         if (numberOfPendingEvents >= maxBatchSize) {
-          eventStorage.createBatch();
-          uploadQueue.add(UPLOAD_SIG);
+          flush();
+        } else {
+          scheduleFlush();
         }
       }
     }
+  }
+
+  private void scheduleFlush() {
+    // Cancel the existing scheduled task if it exists
+    if (pendingFlush != null && !pendingFlush.isDone()) {
+      pendingFlush.cancel(false);
+    }
+    if (flushTimeoutMilliseconds > 0) {
+      pendingFlush =
+          executorService.schedule(this::flush, flushTimeoutMilliseconds, TimeUnit.MILLISECONDS);
+    }
+  }
+
+  private void flush() {
+    // Cancel the existing scheduled task if it exists
+    if (pendingFlush != null && !pendingFlush.isDone()) {
+      pendingFlush.cancel(false);
+    }
+    eventStorage.createBatch();
+    uploadQueue.add(UPLOAD_SIG);
   }
 
   class UploadPoller implements Runnable {
@@ -78,6 +107,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   public void send(
       String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
     if (!isStopped) {
+      log.trace("Sending event: {}", name);
       writeQueue.add(
           new Event(
               EVENT_NAME_PREFIX + name,

@@ -25,7 +25,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final int maxBatchSize = 6;
     final int numEvents = 14;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock);
+        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 500);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
@@ -54,11 +54,33 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
     final int maxBatchSize = 6;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock);
+        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 500);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
 
     confidence.close(); // Should trigger the upload of an additional incomplete batch
     assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(0);
+  }
+
+  @Test
+  public void testEngineUploadsTriggeredByFlushTimeout() throws IOException, InterruptedException {
+    final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
+    final int maxBatchSize = 6;
+    final EventSenderEngine engine =
+        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 100);
+    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
+
+    // send only one event
+    confidence.send(
+        "navigate", ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
+
+    // wait for the flush timeout to trigger the upload
+    Thread.sleep(200);
+    // assert
+    assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(1);
+    assertThat(alwaysSucceedUploader.uploadCalls.get(0).events().size()).isEqualTo(1);
+
+    // close
+    confidence.close();
   }
 
   @Test
@@ -68,7 +90,8 @@ public class ConfidenceEventSenderIntegrationTest {
     // This will fail at the 2nd and 5th upload
     final List<Integer> failAtUploadWithIndex = List.of(2, 5);
     final FakeUploader fakeUploader = new FakeUploader(failAtUploadWithIndex);
-    final EventSenderEngine engine = new EventSenderEngineImpl(maxBatchSize, fakeUploader, clock);
+    final EventSenderEngine engine =
+        new EventSenderEngineImpl(maxBatchSize, fakeUploader, clock, 500);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
@@ -97,7 +120,7 @@ public class ConfidenceEventSenderIntegrationTest {
 
     final FakeUploader alwaysSucceedUploader = new FakeUploader();
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock);
+        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 500);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     final List<Future<Boolean>> futures = new ArrayList<>();
     final ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
