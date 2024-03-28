@@ -8,9 +8,11 @@ import com.spotify.confidence.events.v1.PublishEventsRequest;
 import com.spotify.confidence.events.v1.Sdk;
 import com.spotify.confidence.events.v1.SdkId;
 import io.grpc.ManagedChannel;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
 
 class GrpcEventUploader implements EventUploader {
 
@@ -20,6 +22,8 @@ class GrpcEventUploader implements EventUploader {
   private final ManagedChannel managedChannel;
   private final EventsServiceGrpc.EventsServiceFutureStub stub;
   private final Clock clock;
+
+  private static final Logger log = org.slf4j.LoggerFactory.getLogger(GrpcEventUploader.class);
 
   GrpcEventUploader(String clientSecret, Clock clock, ManagedChannel managedChannel) {
     this.clientSecret = clientSecret;
@@ -57,11 +61,29 @@ class GrpcEventUploader implements EventUploader {
 
     return GrpcUtil.toCompletableFuture(
             stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request))
-        .thenApply(publishEventsResponse -> true)
+        .thenApply(
+            publishEventsResponse -> {
+              final List<Event> eventsInRequest = request.getEventsList();
+              if (publishEventsResponse.getErrorsCount() == 0) {
+                log.debug(
+                    String.format("Successfully published %d events", eventsInRequest.size()));
+              } else {
+                log.error(
+                    String.format(
+                        "Published batch with %d events, of which %d failed. Failed events are of type: %s",
+                        eventsInRequest.size(),
+                        publishEventsResponse.getErrorsCount(),
+                        publishEventsResponse.getErrorsList().stream()
+                            .map(e -> eventsInRequest.get(e.getIndex()).getEventDefinition())
+                            .collect(Collectors.toSet())));
+              }
+              return true;
+            })
         .exceptionally(
             (throwable -> {
-              // TODO update to use some user-configurable logging
-              throwable.printStackTrace();
+              log.error(
+                  String.format("Publishing batch failed with reason: %s", throwable.getMessage()),
+                  throwable);
               return false;
             }));
   }
