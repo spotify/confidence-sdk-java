@@ -14,7 +14,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private final BlockingQueue<String> shutdownQueue = new LinkedBlockingQueue<>(1);
   private final EventSenderStorage eventStorage = new InMemoryStorage();
   private final EventUploader eventUploader;
-  private final List<FlushPolicy> flushPolicies;
+  private final int maxBatchSize;
   private final Clock clock;
   private static final String UPLOAD_SIG = "UPLOAD";
   private static final String SHUTDOWN_UPLOAD = "SHUTDOWN_UPLOAD";
@@ -22,9 +22,8 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private static final String SHUTDOWN_WRITE_COMPLETED = "SHUTDOWN_WRITE_COMPLETED";
   private volatile boolean isStopped = false;
 
-  EventSenderEngineImpl(
-      List<FlushPolicy> flushPolicyList, EventUploader eventUploader, Clock clock) {
-    this.flushPolicies = flushPolicyList;
+  EventSenderEngineImpl(int maxBatchSize, EventUploader eventUploader, Clock clock) {
+    this.maxBatchSize = maxBatchSize;
     this.eventUploader = eventUploader;
     this.clock = clock;
     writeThread.submit(new WritePoller());
@@ -44,12 +43,9 @@ class EventSenderEngineImpl implements EventSenderEngine {
           continue;
         }
         eventStorage.write(event);
-        flushPolicies.forEach(FlushPolicy::hit);
-
-        if (flushPolicies.stream().anyMatch(FlushPolicy::shouldFlush)) {
+        if (eventStorage.pendingEvents() >= maxBatchSize) {
           eventStorage.createBatch();
           uploadQueue.add(UPLOAD_SIG);
-          flushPolicies.forEach(FlushPolicy::reset);
         }
       }
     }
