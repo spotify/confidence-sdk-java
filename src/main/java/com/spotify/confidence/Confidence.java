@@ -1,7 +1,6 @@
 package com.spotify.confidence;
 
 import com.google.common.annotations.Beta;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
@@ -10,7 +9,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -218,8 +216,8 @@ public abstract class Confidence implements EventSender, Closeable {
       final SystemClock clock = new SystemClock();
       final GrpcEventUploader uploader =
           new GrpcEventUploader(clientSecret, clock, DEFAULT_CHANNEL);
-      final List<FlushPolicy> flushPolicies = ImmutableList.of(new BatchSizeFlushPolicy(5));
-      final EventSenderEngine engine = new EventSenderEngineImpl(flushPolicies, uploader, clock);
+      final var maxBatchSize = 5;
+      final EventSenderEngine engine = new EventSenderEngineImpl(maxBatchSize, uploader, clock);
       return Confidence.create(engine, flagResolverClient);
     }
   }

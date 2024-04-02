@@ -3,7 +3,7 @@ package com.spotify.confidence;
 import java.util.List;
 
 interface EventSenderStorage {
-  void write(Event event);
+  int write(Event event);
 
   void createBatch();
 
