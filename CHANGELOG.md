@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.0.11](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.10...v0.0.11) (2024-04-02)
+
+
+### 🐛 Bug Fixes
+
+* drop the flushpolicies interface to keep it simple ([#113](https://github.com/spotify/confidence-openfeature-provider-java/issues/113)) ([ba04c2d](https://github.com/spotify/confidence-openfeature-provider-java/commit/ba04c2d9f8c87864206192caa90a8ac148584cae))
+* Event errors dont trigger retries ([81cfcfd](https://github.com/spotify/confidence-openfeature-provider-java/commit/81cfcfd1b1b92de3c732e6aa18e50fd18ded36d0))
+* remove some protos that can cause collisions ([#110](https://github.com/spotify/confidence-openfeature-provider-java/issues/110)) ([08878af](https://github.com/spotify/confidence-openfeature-provider-java/commit/08878af001813e36e24966d5e2e5bceb513eaba6))
+* Response Errors don't trigger retries ([#108](https://github.com/spotify/confidence-openfeature-provider-java/issues/108)) ([81cfcfd](https://github.com/spotify/confidence-openfeature-provider-java/commit/81cfcfd1b1b92de3c732e6aa18e50fd18ded36d0))
+
+
+### ✨ New Features
+
+* add logging with slf4j ([#90](https://github.com/spotify/confidence-openfeature-provider-java/issues/90)) ([9d10bfd](https://github.com/spotify/confidence-openfeature-provider-java/commit/9d10bfd5fd077f7af518b80f86bfe0d4d2728c00))
+* Telemetry for Events (SDK metadata) ([#109](https://github.com/spotify/confidence-openfeature-provider-java/issues/109)) ([3447e47](https://github.com/spotify/confidence-openfeature-provider-java/commit/3447e47f12cf10e31740d6a934c4e6579c7c274b))
+* Total Confidence - functionality to send tracking events ([#88](https://github.com/spotify/confidence-openfeature-provider-java/issues/88)) ([4106c9f](https://github.com/spotify/confidence-openfeature-provider-java/commit/4106c9f57e161f6e575f053b1c64814b7020092c))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.11-SNAPSHOT ([#98](https://github.com/spotify/confidence-openfeature-provider-java/issues/98)) ([173c72e](https://github.com/spotify/confidence-openfeature-provider-java/commit/173c72e212b0df56edf17f540ca474f4618707c3))
+
 ## [0.0.10](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.9...v0.0.10) (2024-03-19)
 
 
