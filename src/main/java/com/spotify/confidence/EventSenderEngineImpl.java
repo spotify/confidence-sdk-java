@@ -42,8 +42,8 @@ class EventSenderEngineImpl implements EventSenderEngine {
           Thread.yield();
           continue;
         }
-        eventStorage.write(event);
-        if (eventStorage.pendingEvents() >= maxBatchSize) {
+        final var numberOfPendingEvents = eventStorage.write(event);
+        if (numberOfPendingEvents >= maxBatchSize) {
           eventStorage.createBatch();
           uploadQueue.add(UPLOAD_SIG);
         }

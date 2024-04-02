@@ -8,12 +8,8 @@ class InMemoryStorage implements EventSenderStorage {
   private final List<EventBatch> batches = new ArrayList<>();
 
   @Override
-  public synchronized void write(Event event) {
+  public synchronized int write(Event event) {
     this.events.add(event);
-  }
-
-  @Override
-  public synchronized int pendingEvents() {
     return this.events.size();
   }
 
