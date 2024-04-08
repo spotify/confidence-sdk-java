@@ -17,7 +17,6 @@ jobs:
         with:
           command: manifest
           release-type: maven
-          token: ${{secrets.GITHUB_TOKEN}}
           default-branch: main
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
