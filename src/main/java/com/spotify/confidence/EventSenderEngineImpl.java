@@ -23,7 +23,6 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private static final String SHUTDOWN_WRITE_COMPLETED = "SHUTDOWN_WRITE_COMPLETED";
   private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
   private final int flushTimeoutMilliseconds;
-  private ScheduledFuture<?> pendingFlush;
   private volatile boolean isStopped = false;
 
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(EventSenderEngineImpl.class);
@@ -39,6 +38,8 @@ class EventSenderEngineImpl implements EventSenderEngine {
   }
 
   class WritePoller implements Runnable {
+    private ScheduledFuture<?> pendingFlush;
+
     @Override
     public void run() {
       while (true) {
@@ -58,26 +59,26 @@ class EventSenderEngineImpl implements EventSenderEngine {
         }
       }
     }
-  }
 
-  private void scheduleFlush() {
-    // Cancel the existing scheduled task if it exists
-    if (pendingFlush != null && !pendingFlush.isDone()) {
-      pendingFlush.cancel(false);
+    private void scheduleFlush() {
+      // Cancel the existing scheduled task if it exists
+      if (pendingFlush != null && !pendingFlush.isDone()) {
+        pendingFlush.cancel(false);
+      }
+      if (flushTimeoutMilliseconds > 0) {
+        pendingFlush =
+            executorService.schedule(this::flush, flushTimeoutMilliseconds, TimeUnit.MILLISECONDS);
+      }
     }
-    if (flushTimeoutMilliseconds > 0) {
-      pendingFlush =
-          executorService.schedule(this::flush, flushTimeoutMilliseconds, TimeUnit.MILLISECONDS);
-    }
-  }
 
-  private void flush() {
-    // Cancel the existing scheduled task if it exists
-    if (pendingFlush != null && !pendingFlush.isDone()) {
-      pendingFlush.cancel(false);
+    private void flush() {
+      // Cancel the existing scheduled task if it exists
+      if (pendingFlush != null && !pendingFlush.isDone()) {
+        pendingFlush.cancel(false);
+      }
+      eventStorage.createBatch();
+      uploadQueue.add(UPLOAD_SIG);
     }
-    eventStorage.createBatch();
-    uploadQueue.add(UPLOAD_SIG);
   }
 
   class UploadPoller implements Runnable {
@@ -98,7 +99,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
           }
         } catch (InterruptedException e) {
           // InterruptedException should exit the thread
-            return;
+          return;
         } catch (ExecutionException e) {
           // Execution exceptions are swallowed since batches are retried
         }
