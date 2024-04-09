@@ -21,8 +21,8 @@ class InMemoryStorage implements EventSenderStorage {
     }
   }
 
-  public List<EventBatch> getBatches() {
-    return batches;
+  public synchronized List<EventBatch> getBatches() {
+    return List.copyOf(batches);
   }
 
   @Override

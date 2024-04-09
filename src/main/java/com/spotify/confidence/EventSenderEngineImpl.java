@@ -86,7 +86,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
       while (true) {
         try {
           final String signal = uploadQueue.take();
-          final List<EventBatch> batches = List.copyOf(eventStorage.getBatches());
+          final List<EventBatch> batches = eventStorage.getBatches();
           for (EventBatch batch : batches) {
             final boolean uploadSuccessful = eventUploader.upload(batch).get();
             if (uploadSuccessful) {
@@ -97,6 +97,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
             shutdownQueue.add(SHUTDOWN_UPLOAD_COMPLETED);
           }
         } catch (InterruptedException | ExecutionException e) {
+          // TODO handle exception so the thread can survive
           throw new RuntimeException(e);
         }
       }
