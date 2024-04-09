@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class InMemoryStorage implements EventSenderStorage {
-  private final List<Event> events = new ArrayList<>();
+  private List<Event> events = new ArrayList<>();
   private final List<EventBatch> batches = new ArrayList<>();
 
   @Override
@@ -15,9 +15,9 @@ class InMemoryStorage implements EventSenderStorage {
 
   public synchronized void createBatch() {
     if (!events.isEmpty()) {
-      final EventBatch batch = new EventBatch(List.copyOf(events));
-      events.clear();
+      final EventBatch batch = new EventBatch(events);
       batches.add(batch);
+      events = new ArrayList<>();
     }
   }
 
