@@ -96,9 +96,11 @@ class EventSenderEngineImpl implements EventSenderEngine {
           if (signal.equals(SHUTDOWN_UPLOAD)) {
             shutdownQueue.add(SHUTDOWN_UPLOAD_COMPLETED);
           }
-        } catch (InterruptedException | ExecutionException e) {
-          // TODO handle exception so the thread can survive
-          throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+          // InterruptedException should exit the thread
+            return;
+        } catch (ExecutionException e) {
+          // Execution exceptions are swallowed since batches are retried
         }
       }
     }
