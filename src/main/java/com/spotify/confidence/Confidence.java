@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 @Beta
 public abstract class Confidence implements EventSender, Closeable {
 
+  private static final int FLUSH_TIMEOUT_MILLISECONDS = 500;
   protected Map<String, ConfidenceValue> context = Maps.newHashMap();
 
   private Confidence() {}
@@ -217,7 +218,8 @@ public abstract class Confidence implements EventSender, Closeable {
       final GrpcEventUploader uploader =
           new GrpcEventUploader(clientSecret, clock, DEFAULT_CHANNEL);
       final var maxBatchSize = 5;
-      final EventSenderEngine engine = new EventSenderEngineImpl(maxBatchSize, uploader, clock);
+      final EventSenderEngine engine =
+          new EventSenderEngineImpl(maxBatchSize, uploader, clock, FLUSH_TIMEOUT_MILLISECONDS);
       return Confidence.create(engine, flagResolverClient);
     }
   }
