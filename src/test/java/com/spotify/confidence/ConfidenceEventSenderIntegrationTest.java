@@ -25,7 +25,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final int maxBatchSize = 6;
     final int numEvents = 14;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 500);
+        new EventSenderEngineImpl2(maxBatchSize, alwaysSucceedUploader, clock, 500);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
@@ -54,7 +54,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
     final int maxBatchSize = 6;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 500);
+        new EventSenderEngineImpl2(maxBatchSize, alwaysSucceedUploader, clock, 500);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
 
     confidence.close(); // Should trigger the upload of an additional incomplete batch
@@ -66,7 +66,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
     final int maxBatchSize = 6;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 100);
+        new EventSenderEngineImpl2(maxBatchSize, alwaysSucceedUploader, clock, 100);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
 
     // send only one event
@@ -91,7 +91,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final List<Integer> failAtUploadWithIndex = List.of(2, 5);
     final FakeUploader fakeUploader = new FakeUploader(failAtUploadWithIndex);
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, fakeUploader, clock, 500);
+        new EventSenderEngineImpl2(maxBatchSize, fakeUploader, clock, 500);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
@@ -120,7 +120,7 @@ public class ConfidenceEventSenderIntegrationTest {
 
     final FakeUploader alwaysSucceedUploader = new FakeUploader();
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 500);
+        new EventSenderEngineImpl2(maxBatchSize, alwaysSucceedUploader, clock, 500);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     final List<Future<Boolean>> futures = new ArrayList<>();
     final ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
