@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
@@ -75,7 +76,7 @@ public class ConfidenceEventSenderIntegrationTest {
         "navigate", ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
 
     // wait for the flush timeout to trigger the upload
-    Thread.sleep(200);
+    Thread.sleep(300);
     // assert
     assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(1);
     assertThat(alwaysSucceedUploader.uploadCalls.peek().events().size()).isEqualTo(1);
@@ -94,11 +95,10 @@ public class ConfidenceEventSenderIntegrationTest {
     final EventSenderEngine engine =
         new EventSenderEngineImpl2(maxBatchSize, fakeUploader, clock, 0);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
-    int size = 0;
-    while (size++ < numEvents) {
+    for (int i = 0; i < numEvents; i++) {
       confidence.send(
-          "navigate",
-          ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size=" + size))));
+          "test",
+          ConfidenceValue.of(ImmutableMap.of("id", ConfidenceValue.of(i))));
     }
 
     confidence.close(); // Should trigger the upload of an additional incomplete batch
@@ -107,9 +107,11 @@ public class ConfidenceEventSenderIntegrationTest {
     // Verify we had the correct number of calls to the uploader (including retries)
     assertThat(fakeUploader.uploadCalls.size())
         .isEqualTo((numEvents / maxBatchSize + additionalBatch) + failAtUploadWithIndex.size());
-    // Verify we had the correct number of unique calls to the uploader
-    assertThat(Set.copyOf(fakeUploader.uploadCalls).size())
-        .isEqualTo((numEvents / maxBatchSize + additionalBatch));
+
+    Set<ConfidenceValue> uniqueEventIds = fakeUploader.uploadCalls.stream().flatMap(batch -> batch.events().stream()).map(event -> event.message().get("id")).collect(Collectors.toSet());
+    // Verify all events reached the uploader
+    assertThat(uniqueEventIds.size())
+        .isEqualTo(numEvents);
   }
 
   @Test

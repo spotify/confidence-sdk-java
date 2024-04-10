@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import com.google.common.base.Stopwatch;
 import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeExecutor;
 import dev.failsafe.RetryPolicy;
@@ -7,29 +8,25 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
 public class EventSenderEngineImpl2 implements EventSenderEngine {
 
   static final String EVENT_NAME_PREFIX = "eventDefinitions/";
-  private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
   private final EventUploader eventUploader;
   private final Clock clock;
   //  private final Supplier<Instant> timeSupplier;
   private final int maxBatchSize;
   private final Duration maxFlushInterval;
   private final FailsafeExecutor<Boolean> uploadExecutor;
-  private volatile boolean isClosing = false;
-
+  private volatile boolean intakeClosed = false;
   private final ConcurrentLinkedQueue<Event> sendQueue = new ConcurrentLinkedQueue<>();
 
-  private final AtomicInteger pendingEventCount = new AtomicInteger();
   private final Set<CompletableFuture<?>> pendingBatches = ConcurrentHashMap.newKeySet();
-  private volatile Instant latestFlushTime = Instant.now();
+
+  private final Thread pollingThread = new Thread(this::pollLoop);
 
   public EventSenderEngineImpl2(
       int maxBatchSize, EventUploader eventUploader, Clock clock, int maxFlushInterval) {
@@ -49,89 +46,79 @@ public class EventSenderEngineImpl2 implements EventSenderEngine {
                     .build())
 //            .with(scheduler)
     ;
-    if (maxFlushInterval != 0) {
-      schedulePeriodicFlush(this.maxFlushInterval);
-    }
+    pollingThread.start();
   }
 
   @Override
   public void send(
       String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
-    if (isClosing) return;
+    if (intakeClosed) return;
     sendQueue.add(
         new Event(
             EVENT_NAME_PREFIX + name,
             message.orElse(ConfidenceValue.Struct.EMPTY),
             context,
             clock.currentTimeSeconds()));
-    if (pendingEventCount.incrementAndGet() % maxBatchSize == 0) {
-      flush();
-    }
+    LockSupport.unpark(pollingThread);
+//    if (pendingEventCount.incrementAndGet() % maxBatchSize == 0) {
+//      flush();
+//    }
   }
 
-  private void schedulePeriodicFlush(Duration delay) {
-    if (isClosing) return;
-    final Instant prevFlushTime = latestFlushTime;
-    scheduler.schedule(
-        () -> {
-          // if there hasn't been a flush since we scheduled
-          if (prevFlushTime == latestFlushTime) {
-            flush();
-          }
-          final Duration durationSinceLastFlush = Duration.between(latestFlushTime, Instant.now());
-          schedulePeriodicFlush(maxFlushInterval.minus(durationSinceLastFlush));
-        },
-        delay.toMillis(),
-        TimeUnit.MILLISECONDS);
-  }
+  public void pollLoop() {
+    Instant latestFlushTime = Instant.now();
+    ArrayList<Event> events = new ArrayList<>();
+    while(true) {
 
-  private CompletableFuture<?> flush() {
-    latestFlushTime = Instant.now();
-    final ArrayList<Event> events = new ArrayList<>();
-    for (int i = 0; i < maxBatchSize; i++) {
       Event event = sendQueue.poll();
-      if (event == null) break;
-      events.add(event);
+      if(event != null) {
+        events.add(event);
+      } else {
+        if(intakeClosed) break;
+        LockSupport.parkUntil(Instant.now().plus(maxFlushInterval).toEpochMilli());
+      }
+      boolean passedMaxFlushInterval = !maxFlushInterval.isZero() && Duration.between(latestFlushTime, Instant.now()).compareTo(maxFlushInterval) > 0;
+      if(events.size() == maxBatchSize || passedMaxFlushInterval) {
+        upload(events);
+        events = new ArrayList<>();
+        latestFlushTime = Instant.now();
+      }
     }
-    if (events.isEmpty()) return CompletableFuture.completedFuture(true);
+    upload(events);
+  }
+
+  private void upload(List<Event> events) {
+    if (events.isEmpty()) return;
     final CompletableFuture<Boolean> future =
-        uploadExecutor.getStageAsync(() -> eventUploader.upload(new EventBatch(events)));
+            uploadExecutor.getStageAsync(() -> eventUploader.upload(new EventBatch(events)));
     pendingBatches.add(future);
-    pendingEventCount.addAndGet(-events.size());
     future.whenComplete(
-        (res, err) -> {
-          // TODO log errors
-          pendingBatches.remove(future);
-        });
-    return future;
+            (res, err) -> {
+              // TODO log errors
+              pendingBatches.remove(future);
+            });
   }
 
   private void awaitPending() {
-    CompletableFuture<?>[] pending =
-        pendingBatches.stream()
-            .map(future -> future.exceptionally(throwable -> null))
-            .toArray(CompletableFuture[]::new);
-    System.out.println("Waiting for " + pending.length);
     try {
+      LockSupport.unpark(pollingThread);
+      pollingThread.join();
+      CompletableFuture<?>[] pending =
+              pendingBatches.stream()
+                      .map(future -> future.exceptionally(throwable -> null))
+                      .toArray(CompletableFuture[]::new);
       CompletableFuture.allOf(pending).get(10, TimeUnit.SECONDS);
     } catch (ExecutionException | InterruptedException | TimeoutException e) {
-      System.out.println("failed waiting");
     }
-    System.out.println("Remaining batches: " + pendingBatches.size());
   }
 
   @Override
   public synchronized void close() throws IOException {
-    if (isClosing) return;
-    isClosing = true;
-    scheduler.shutdownNow();
-    while (!sendQueue.isEmpty()) {
-      flush();
-    }
+    if (intakeClosed) return;
+    intakeClosed = true;
     awaitPending();
     pendingBatches.forEach(
         batch -> {
-          System.out.println("Cancel batch");
           batch.cancel(true);
         });
     eventUploader.close();
