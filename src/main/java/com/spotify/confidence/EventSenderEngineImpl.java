@@ -53,6 +53,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
         }
         final var numberOfPendingEvents = eventStorage.write(event);
         if (numberOfPendingEvents >= maxBatchSize) {
+          cancelPendingFlush();
           flush();
         } else {
           scheduleFlush();
@@ -61,21 +62,27 @@ class EventSenderEngineImpl implements EventSenderEngine {
     }
 
     private void scheduleFlush() {
+      cancelPendingFlush();
+      if (flushTimeoutMilliseconds > 0) {
+        pendingFlush =
+            executorService.schedule(
+                () -> {
+                  cancelPendingFlush();
+                  flush();
+                },
+                flushTimeoutMilliseconds,
+                TimeUnit.MILLISECONDS);
+      }
+    }
+
+    private void cancelPendingFlush() {
       // Cancel the existing scheduled task if it exists
       if (pendingFlush != null && !pendingFlush.isDone()) {
         pendingFlush.cancel(false);
-      }
-      if (flushTimeoutMilliseconds > 0) {
-        pendingFlush =
-            executorService.schedule(this::flush, flushTimeoutMilliseconds, TimeUnit.MILLISECONDS);
       }
     }
 
     private void flush() {
-      // Cancel the existing scheduled task if it exists
-      if (pendingFlush != null && !pendingFlush.isDone()) {
-        pendingFlush.cancel(false);
-      }
       eventStorage.createBatch();
       uploadQueue.add(UPLOAD_SIG);
     }
