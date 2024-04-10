@@ -1,14 +1,16 @@
 package com.spotify.confidence;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeUploader implements EventUploader {
   private final List<Integer> failAtUploadWithIndex;
-  private int uploadCount = 0;
-  public List<EventBatch> uploadCalls = new ArrayList<>();
+  private final AtomicInteger uploadCount = new AtomicInteger();
+  public Queue<EventBatch> uploadCalls = new ConcurrentLinkedQueue<>();
 
   public FakeUploader() {
     this.failAtUploadWithIndex = List.of();
@@ -20,8 +22,8 @@ public class FakeUploader implements EventUploader {
 
   @Override
   public CompletableFuture<Boolean> upload(EventBatch batch) {
-    uploadCount++;
     uploadCalls.add(batch);
+    final int uploadCount = this.uploadCount.incrementAndGet();
     if (failAtUploadWithIndex.contains(uploadCount)) {
       return CompletableFuture.completedFuture(false);
     }
@@ -34,7 +36,7 @@ public class FakeUploader implements EventUploader {
   }
 
   public void reset() {
-    uploadCount = 0;
+    uploadCount.set(0);
     uploadCalls.clear();
   }
 }
