@@ -1,10 +1,12 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.EventSenderEngineImpl.DEFAULT_MAX_FLUSH_INTERVAL;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -24,7 +26,8 @@ public class ConfidenceEventSenderIntegrationTest {
     final int maxBatchSize = 6;
     final int numEvents = 14;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 0);
+        new EventSenderEngineImpl(
+            maxBatchSize, alwaysSucceedUploader, clock, DEFAULT_MAX_FLUSH_INTERVAL);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
@@ -54,7 +57,8 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
     final int maxBatchSize = 6;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 500);
+        new EventSenderEngineImpl(
+            maxBatchSize, alwaysSucceedUploader, clock, DEFAULT_MAX_FLUSH_INTERVAL);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
 
     confidence.close(); // Should trigger the upload of an additional incomplete batch
@@ -66,7 +70,8 @@ public class ConfidenceEventSenderIntegrationTest {
     final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
     final int maxBatchSize = 6;
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 100);
+        new EventSenderEngineImpl(
+            maxBatchSize, alwaysSucceedUploader, clock, Duration.ofMillis(100));
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
 
     // send only one event
@@ -91,7 +96,7 @@ public class ConfidenceEventSenderIntegrationTest {
     final List<Integer> failAtUploadWithIndex = List.of(2, 5);
     final FakeUploader fakeUploader = new FakeUploader(failAtUploadWithIndex);
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, fakeUploader, clock, 0);
+        new EventSenderEngineImpl(maxBatchSize, fakeUploader, clock, DEFAULT_MAX_FLUSH_INTERVAL);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     for (int i = 0; i < numEvents; i++) {
       confidence.send("test", ConfidenceValue.of(ImmutableMap.of("id", ConfidenceValue.of(i))));
@@ -104,7 +109,7 @@ public class ConfidenceEventSenderIntegrationTest {
     assertThat(fakeUploader.uploadCalls.size())
         .isEqualTo((numEvents / maxBatchSize + additionalBatch) + failAtUploadWithIndex.size());
 
-    Set<ConfidenceValue> uniqueEventIds =
+    final Set<ConfidenceValue> uniqueEventIds =
         fakeUploader.uploadCalls.stream()
             .flatMap(batch -> batch.events().stream())
             .map(event -> event.message().get("id"))
@@ -120,11 +125,12 @@ public class ConfidenceEventSenderIntegrationTest {
 
     final FakeUploader alwaysSucceedUploader = new FakeUploader();
     final EventSenderEngine engine =
-        new EventSenderEngineImpl(maxBatchSize, alwaysSucceedUploader, clock, 0);
+        new EventSenderEngineImpl(
+            maxBatchSize, alwaysSucceedUploader, clock, DEFAULT_MAX_FLUSH_INTERVAL);
     final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     final CompletableFuture<?>[] eventTasks = new CompletableFuture[numberOfEvents];
 
-    Stopwatch timer = Stopwatch.createStarted();
+    final Stopwatch timer = Stopwatch.createStarted();
     for (int i = 0; i < numberOfEvents; i++) {
       // run all tasks on the common pool
       eventTasks[i] =

@@ -1,8 +1,10 @@
 package com.spotify.confidence;
 
+import com.google.common.annotations.VisibleForTesting;
 import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeExecutor;
 import dev.failsafe.RetryPolicy;
+import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -11,12 +13,13 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
-public class EventSenderEngineImpl implements EventSenderEngine {
+class EventSenderEngineImpl implements EventSenderEngine {
 
   static final String EVENT_NAME_PREFIX = "eventDefinitions/";
+  static final int DEFAULT_BATCH_SIZE = 5;
+  static final Duration DEFAULT_MAX_FLUSH_INTERVAL = Duration.ofSeconds(60);
   private final EventUploader eventUploader;
   private final Clock clock;
-  //  private final Supplier<Instant> timeSupplier;
   private final int maxBatchSize;
   private final Duration maxFlushInterval;
   private final FailsafeExecutor<Boolean> uploadExecutor;
@@ -25,13 +28,13 @@ public class EventSenderEngineImpl implements EventSenderEngine {
   private final Thread pollingThread = new Thread(this::pollLoop);
   private volatile boolean intakeClosed = false;
 
-  public EventSenderEngineImpl(
-      int maxBatchSize, EventUploader eventUploader, Clock clock, int maxFlushInterval) {
+  @VisibleForTesting
+  EventSenderEngineImpl(
+      int maxBatchSize, EventUploader eventUploader, Clock clock, Duration maxFlushInterval) {
     this.eventUploader = eventUploader;
     this.clock = clock;
     this.maxBatchSize = maxBatchSize;
-    this.maxFlushInterval = Duration.ofMillis(maxFlushInterval);
-
+    this.maxFlushInterval = maxFlushInterval;
     uploadExecutor =
         Failsafe.with(
             RetryPolicy.<Boolean>builder()
@@ -42,6 +45,14 @@ public class EventSenderEngineImpl implements EventSenderEngine {
                 .withMaxDuration(Duration.ofMinutes(30))
                 .build());
     pollingThread.start();
+  }
+
+  EventSenderEngineImpl(String clientSecret, ManagedChannel channel) {
+    this(
+        DEFAULT_BATCH_SIZE,
+        new GrpcEventUploader(clientSecret, new SystemClock(), channel),
+        new SystemClock(),
+        DEFAULT_MAX_FLUSH_INTERVAL);
   }
 
   @Override
@@ -62,14 +73,14 @@ public class EventSenderEngineImpl implements EventSenderEngine {
     ArrayList<Event> events = new ArrayList<>();
     while (true) {
 
-      Event event = sendQueue.poll();
+      final var event = sendQueue.poll();
       if (event != null) {
         events.add(event);
       } else {
         if (intakeClosed) break;
         LockSupport.parkUntil(Instant.now().plus(maxFlushInterval).toEpochMilli());
       }
-      boolean passedMaxFlushInterval =
+      final boolean passedMaxFlushInterval =
           !maxFlushInterval.isZero()
               && Duration.between(latestFlushTime, Instant.now()).compareTo(maxFlushInterval) > 0;
       if (events.size() == maxBatchSize || passedMaxFlushInterval) {
@@ -97,7 +108,7 @@ public class EventSenderEngineImpl implements EventSenderEngine {
     try {
       LockSupport.unpark(pollingThread);
       pollingThread.join();
-      CompletableFuture<?>[] pending =
+      final CompletableFuture<?>[] pending =
           pendingBatches.stream()
               .map(future -> future.exceptionally(throwable -> null))
               .toArray(CompletableFuture[]::new);
