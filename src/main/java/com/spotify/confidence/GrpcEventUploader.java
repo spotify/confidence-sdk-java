@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.Timestamp;
 import com.spotify.confidence.events.v1.Event;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
@@ -7,7 +8,9 @@ import com.spotify.confidence.events.v1.PublishEventsRequest;
 import com.spotify.confidence.events.v1.Sdk;
 import com.spotify.confidence.events.v1.SdkId;
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -15,6 +18,15 @@ import org.slf4j.Logger;
 
 class GrpcEventUploader implements EventUploader {
 
+  private final Set<Status.Code> RETRYABLE_STATUS_CODES =
+      ImmutableSet.of(
+          Status.Code.UNKNOWN,
+          Status.Code.DEADLINE_EXCEEDED,
+          Status.Code.RESOURCE_EXHAUSTED,
+          Status.Code.UNAVAILABLE,
+          Status.Code.ABORTED,
+          Status.Code.INTERNAL,
+          Status.Code.DATA_LOSS);
   static final String CONTEXT = "context";
   private final String clientSecret;
   private final Sdk sdk;
@@ -71,7 +83,7 @@ class GrpcEventUploader implements EventUploader {
               log.error(
                   String.format("Publishing batch failed with reason: %s", throwable.getMessage()),
                   throwable);
-              return false;
+              return !RETRYABLE_STATUS_CODES.contains(Status.fromThrowable(throwable).getCode());
             }));
   }
 
