@@ -1,5 +1,8 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.EventSenderEngineImpl.event;
+
+import com.google.protobuf.Timestamp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +16,7 @@ public class FakeEventSenderEngine implements EventSenderEngine {
     this.clock = clock;
   }
 
-  List<Event> events = new ArrayList<>();
+  List<com.spotify.confidence.events.v1.Event> events = new ArrayList<>();
   boolean closed;
 
   @Override
@@ -25,10 +28,8 @@ public class FakeEventSenderEngine implements EventSenderEngine {
   public void send(
       String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
     events.add(
-        new Event(
-            name,
-            message.orElse(ConfidenceValue.Struct.EMPTY),
-            context,
-            clock.currentTimeSeconds()));
+        event(name, context, message)
+            .setEventTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()).build())
+            .build());
   }
 }

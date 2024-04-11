@@ -1,6 +1,5 @@
 package com.spotify.confidence;
 
-import com.google.protobuf.Struct;
 import com.google.protobuf.Timestamp;
 import com.spotify.confidence.events.v1.Event;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
@@ -16,7 +15,7 @@ import org.slf4j.Logger;
 
 class GrpcEventUploader implements EventUploader {
 
-  private static final String CONTEXT = "context";
+  static final String CONTEXT = "context";
   private final String clientSecret;
   private final Sdk sdk;
   private final ManagedChannel managedChannel;
@@ -38,25 +37,13 @@ class GrpcEventUploader implements EventUploader {
   }
 
   @Override
-  public CompletableFuture<Boolean> upload(EventBatch batch) {
+  public CompletableFuture<Boolean> upload(List<Event> events) {
     final PublishEventsRequest request =
         PublishEventsRequest.newBuilder()
             .setClientSecret(clientSecret)
             .setSendTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()))
             .setSdk(sdk)
-            .addAllEvents(
-                batch.events().stream()
-                    .map(
-                        (event) ->
-                            Event.newBuilder()
-                                .setEventDefinition(event.name())
-                                .setEventTime(Timestamp.newBuilder().setSeconds(event.emitTime()))
-                                .setPayload(
-                                    Struct.newBuilder()
-                                        .putAllFields(event.message().asProtoMap())
-                                        .putFields(CONTEXT, event.context().toProto()))
-                                .build())
-                    .collect(Collectors.toList()))
+            .addAllEvents(events)
             .build();
 
     return GrpcUtil.toCompletableFuture(

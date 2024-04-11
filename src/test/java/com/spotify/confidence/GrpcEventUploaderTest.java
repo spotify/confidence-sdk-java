@@ -1,8 +1,10 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.EventSenderEngineImpl.event;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.Timestamp;
 import com.spotify.confidence.events.v1.EventError;
 import com.spotify.confidence.events.v1.EventError.Reason;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
@@ -64,9 +66,11 @@ class GrpcEventUploaderTest {
 
   @Test
   public void testSendTime() {
-    final EventBatch batch =
-        new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"), 1337)));
-    uploader.upload(batch);
+    uploader.upload(
+        List.of(
+            com.spotify.confidence.events.v1.Event.newBuilder()
+                .setEventTime(Timestamp.newBuilder().setSeconds(1337))
+                .build()));
     assertThat(fakedEventsService.requests).hasSize(1);
 
     final PublishEventsRequest request = fakedEventsService.requests.get(0);
@@ -75,9 +79,12 @@ class GrpcEventUploaderTest {
 
   @Test
   public void testMapsSingleEventBatchToProtobuf() throws ExecutionException, InterruptedException {
-    final EventBatch batch =
-        new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"), 1337)));
-    final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
+    final CompletableFuture<Boolean> completableFuture =
+        uploader.upload(
+            List.of(
+                event("event1", contextStruct("1"), Optional.of(messageStruct("1")))
+                    .setEventTime(Timestamp.newBuilder().setSeconds(1337))
+                    .build()));
     final Boolean result = completableFuture.get();
     assertThat(result).isTrue();
 
@@ -87,7 +94,7 @@ class GrpcEventUploaderTest {
     assertThat(request.getEventsList()).hasSize(1);
 
     final com.spotify.confidence.events.v1.Event protoEvent = request.getEvents(0);
-    assertThat(protoEvent.getEventDefinition()).isEqualTo("event1");
+    assertThat(protoEvent.getEventDefinition()).isEqualTo("eventDefinitions/event1");
 
     final Map<String, com.google.protobuf.Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
     assertThat(fieldsMap.get("messageKey").getStringValue()).isEqualTo("value_1");
@@ -103,22 +110,29 @@ class GrpcEventUploaderTest {
 
   @Test
   public void testMapsMultiEventBatchToProtobuf() {
-    final EventBatch batch =
-        new EventBatch(
-            List.of(
-                new Event("event1", messageStruct("m1"), contextStruct("c1"), 1337),
-                new Event("event2", messageStruct("m2"), contextStruct("c2"), 1338),
-                new Event("event3", messageStruct("m3"), contextStruct("c3"), 1339),
-                new Event("event4", messageStruct("m4"), contextStruct("c4"), 1340)));
+    final var batch =
+        List.of(
+            event("event1", contextStruct("c1"), Optional.of(messageStruct("m1")))
+                .setEventTime(Timestamp.newBuilder().setSeconds(1337))
+                .build(),
+            event("event2", contextStruct("c2"), Optional.of(messageStruct("m2")))
+                .setEventTime(Timestamp.newBuilder().setSeconds(1338))
+                .build(),
+            event("event3", contextStruct("c3"), Optional.of(messageStruct("m3")))
+                .setEventTime(Timestamp.newBuilder().setSeconds(1339))
+                .build(),
+            event("event4", contextStruct("c4"), Optional.of(messageStruct("m4")))
+                .setEventTime(Timestamp.newBuilder().setSeconds(1340))
+                .build());
     uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
 
     final PublishEventsRequest request = fakedEventsService.requests.get(0);
     assertThat(request.getEventsList()).hasSize(4);
 
-    for (int i = 0; i < batch.events().size(); i++) {
+    for (int i = 0; i < batch.size(); i++) {
       final com.spotify.confidence.events.v1.Event protoEvent = request.getEvents(i);
-      assertThat(protoEvent.getEventDefinition()).isEqualTo("event" + (i + 1));
+      assertThat(protoEvent.getEventDefinition()).isEqualTo("eventDefinitions/event" + (i + 1));
 
       final Map<String, com.google.protobuf.Value> fieldsMap =
           protoEvent.getPayload().getFieldsMap();
@@ -138,13 +152,20 @@ class GrpcEventUploaderTest {
   public void testMapsMultiEventBatchToProtobufSparseErrors()
       throws ExecutionException, InterruptedException {
     fakedEventsService.resultType = ResultType.FIRST_EVENT_ERROR;
-    final EventBatch batch =
-        new EventBatch(
-            List.of(
-                new Event("event1", messageStruct("m1"), contextStruct("c1"), 1337),
-                new Event("event2", messageStruct("m2"), contextStruct("c2"), 1338),
-                new Event("event3", messageStruct("m3"), contextStruct("c3"), 1339),
-                new Event("event4", messageStruct("m4"), contextStruct("c4"), 1340)));
+    final var batch =
+        List.of(
+            event("event1", contextStruct("c1"), Optional.of(messageStruct("m1")))
+                .setEventTime(Timestamp.newBuilder().setSeconds(1337))
+                .build(),
+            event("event2", contextStruct("c2"), Optional.of(messageStruct("m2")))
+                .setEventTime(Timestamp.newBuilder().setSeconds(1338))
+                .build(),
+            event("event3", contextStruct("c3"), Optional.of(messageStruct("m3")))
+                .setEventTime(Timestamp.newBuilder().setSeconds(1339))
+                .build(),
+            event("event4", contextStruct("c4"), Optional.of(messageStruct("m4")))
+                .setEventTime(Timestamp.newBuilder().setSeconds(1340))
+                .build());
     final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
     final PublishEventsRequest request = fakedEventsService.requests.get(0);
@@ -156,8 +177,11 @@ class GrpcEventUploaderTest {
   @Test
   public void testServiceThrows() throws ExecutionException, InterruptedException {
     fakedEventsService.resultType = ResultType.REQUEST_ERROR;
-    final EventBatch batch =
-        new EventBatch(List.of(new Event("event1", messageStruct("1"), contextStruct("1"), 1337)));
+    final var batch =
+        List.of(
+            event("event1", contextStruct("1"), Optional.of(messageStruct("1")))
+                .setEventTime(Timestamp.newBuilder().setSeconds(1337))
+                .build());
     final CompletableFuture<Boolean> completableFuture = uploader.upload(batch);
     assertThat(fakedEventsService.requests).hasSize(1);
     final Boolean result = completableFuture.get();
