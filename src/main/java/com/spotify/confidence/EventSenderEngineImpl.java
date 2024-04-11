@@ -47,11 +47,11 @@ class EventSenderEngineImpl implements EventSenderEngine {
     pollingThread.start();
   }
 
-  EventSenderEngineImpl(String clientSecret, ManagedChannel channel) {
+  EventSenderEngineImpl(String clientSecret, ManagedChannel channel, Clock clock) {
     this(
         DEFAULT_BATCH_SIZE,
-        new GrpcEventUploader(clientSecret, new SystemClock(), channel),
-        new SystemClock(),
+        new GrpcEventUploader(clientSecret, clock, channel),
+        clock,
         DEFAULT_MAX_FLUSH_INTERVAL);
   }
 
