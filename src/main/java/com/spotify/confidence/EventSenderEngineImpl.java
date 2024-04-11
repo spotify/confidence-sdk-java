@@ -150,7 +150,11 @@ class EventSenderEngineImpl implements EventSenderEngine {
               .map(future -> future.exceptionally(throwable -> null))
               .toArray(CompletableFuture[]::new);
       CompletableFuture.allOf(pending).get(10, TimeUnit.SECONDS);
-    } catch (ExecutionException | InterruptedException | TimeoutException e) {
+    } catch (InterruptedException e) {
+      // reset the interrupt status
+      Thread.currentThread().interrupt();
+    }
+    catch (ExecutionException | TimeoutException e) {
     }
   }
 
