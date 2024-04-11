@@ -1,6 +1,7 @@
 package com.spotify.confidence;
 
 import com.google.common.annotations.Beta;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -98,9 +100,13 @@ public abstract class Confidence implements EventSender, Closeable {
     return client().resolveFlags(flagName, getContext());
   }
 
+  @VisibleForTesting
   static Confidence create(
       EventSenderEngine eventSenderEngine, FlagResolverClient flagResolverClient) {
-    return new RootInstance(new ClientDelegate(flagResolverClient, eventSenderEngine));
+    final Closer closer = Closer.create();
+    closer.register(eventSenderEngine);
+    closer.register(flagResolverClient);
+    return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
   }
 
   public static Confidence.Builder builder(String clientSecret) {
@@ -108,14 +114,17 @@ public abstract class Confidence implements EventSender, Closeable {
   }
 
   private static class ClientDelegate implements FlagResolverClient, EventSenderEngine {
-    private final Closer closer = Closer.create();
+    private final Closeable closeable;
     private final FlagResolverClient flagResolverClient;
     private final EventSenderEngine eventSenderEngine;
 
     private ClientDelegate(
-        FlagResolverClient flagResolverClient, EventSenderEngine eventSenderEngine) {
-      this.flagResolverClient = closer.register(flagResolverClient);
-      this.eventSenderEngine = closer.register(eventSenderEngine);
+        Closeable closeable,
+        FlagResolverClient flagResolverClient,
+        EventSenderEngine eventSenderEngine) {
+      this.closeable = closeable;
+      this.flagResolverClient = flagResolverClient;
+      this.eventSenderEngine = eventSenderEngine;
     }
 
     @Override
@@ -132,7 +141,7 @@ public abstract class Confidence implements EventSender, Closeable {
 
     @Override
     public void close() throws IOException {
-      closer.close();
+      closeable.close();
     }
   }
 
@@ -190,6 +199,7 @@ public abstract class Confidence implements EventSender, Closeable {
 
   public static class Builder {
     private final String clientSecret;
+    private final Closer closer = Closer.create();
 
     private final ManagedChannel DEFAULT_CHANNEL =
         ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build();
@@ -197,11 +207,13 @@ public abstract class Confidence implements EventSender, Closeable {
 
     public Builder(@Nonnull String clientSecret) {
       this.clientSecret = clientSecret;
+      registerChannelForShutdown(DEFAULT_CHANNEL);
     }
 
     public Builder flagResolverManagedChannel(String host, int port) {
       this.flagResolverManagedChannel =
           ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+      registerChannelForShutdown(this.flagResolverManagedChannel);
       return this;
     }
 
@@ -214,9 +226,24 @@ public abstract class Confidence implements EventSender, Closeable {
       final FlagResolverClient flagResolverClient =
           new FlagResolverClientImpl(
               new GrpcFlagResolver(clientSecret, flagResolverManagedChannel));
-      final EventSenderEngine engine =
+      final EventSenderEngine eventSenderEngine =
           new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, new SystemClock());
-      return Confidence.create(engine, flagResolverClient);
+      closer.register(flagResolverClient);
+      closer.register(eventSenderEngine);
+      return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
+    }
+
+    private void registerChannelForShutdown(ManagedChannel channel) {
+      this.closer.register(
+          () -> {
+            channel.shutdown();
+            try {
+              channel.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+              channel.shutdownNow();
+            }
+          });
     }
   }
 }
