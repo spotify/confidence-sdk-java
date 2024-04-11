@@ -16,7 +16,7 @@ import java.util.concurrent.locks.LockSupport;
 class EventSenderEngineImpl implements EventSenderEngine {
 
   static final String EVENT_NAME_PREFIX = "eventDefinitions/";
-  static final int DEFAULT_BATCH_SIZE = 5;
+  static final int DEFAULT_BATCH_SIZE = 25;
   static final Duration DEFAULT_MAX_FLUSH_INTERVAL = Duration.ofSeconds(60);
   private final EventUploader eventUploader;
   private final Clock clock;
