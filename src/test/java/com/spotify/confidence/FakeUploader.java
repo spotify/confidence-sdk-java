@@ -1,7 +1,6 @@
 package com.spotify.confidence;
 
 import com.spotify.confidence.events.v1.Event;
-import java.io.IOException;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
@@ -29,11 +28,6 @@ public class FakeUploader implements EventUploader {
       return CompletableFuture.completedFuture(false);
     }
     return CompletableFuture.completedFuture(true);
-  }
-
-  @Override
-  public void close() throws IOException {
-    // no-op
   }
 
   public void reset() {

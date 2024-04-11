@@ -86,9 +86,4 @@ class GrpcEventUploader implements EventUploader {
               return !RETRYABLE_STATUS_CODES.contains(Status.fromThrowable(throwable).getCode());
             }));
   }
-
-  @Override
-  public void close() {
-    managedChannel.shutdown();
-  }
 }

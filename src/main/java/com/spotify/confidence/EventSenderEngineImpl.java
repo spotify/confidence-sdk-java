@@ -168,6 +168,5 @@ class EventSenderEngineImpl implements EventSenderEngine {
         batch -> {
           batch.cancel(true);
         });
-    eventUploader.close();
   }
 }
