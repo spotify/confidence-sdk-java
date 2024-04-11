@@ -4,7 +4,6 @@ import static com.spotify.confidence.GrpcEventUploader.CONTEXT;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.Struct;
-import com.google.protobuf.Timestamp;
 import com.spotify.confidence.events.v1.Event;
 import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeExecutor;
@@ -90,10 +89,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
       log.warn("EventSenderEngine is closed, dropping event {}", name);
       return;
     }
-    final Event event =
-        event(name, context, message)
-            .setEventTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()))
-            .build();
+    final Event event = event(name, context, message).setEventTime(clock.getTimestamp()).build();
     if (estimatedMemoryConsumption.get() + event.getSerializedSize() > maxMemoryConsumption) {
       log.warn("EventSenderEngine is overloaded, dropping event {}", name);
       return;
@@ -153,8 +149,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
     } catch (InterruptedException e) {
       // reset the interrupt status
       Thread.currentThread().interrupt();
-    }
-    catch (ExecutionException | TimeoutException e) {
+    } catch (ExecutionException | TimeoutException e) {
     }
   }
 

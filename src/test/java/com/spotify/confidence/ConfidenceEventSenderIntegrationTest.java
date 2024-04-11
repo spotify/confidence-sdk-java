@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
-import com.google.protobuf.Timestamp;
 import com.google.protobuf.Value;
 import java.io.IOException;
 import java.time.Duration;
@@ -179,7 +178,7 @@ public class ConfidenceEventSenderIntegrationTest {
   public void testEngineWillRejectEventsIfOverMemoryThreshold() throws IOException {
     final var expectedEvent =
         event("navigate", ConfidenceValue.Struct.EMPTY, Optional.empty())
-            .setEventTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()))
+            .setEventTime(clock.getTimestamp())
             .build();
 
     final FakeUploader fakeUploader = new FakeUploader();

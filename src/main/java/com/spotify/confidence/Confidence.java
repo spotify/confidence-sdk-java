@@ -10,6 +10,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -227,7 +228,7 @@ public abstract class Confidence implements EventSender, Closeable {
           new FlagResolverClientImpl(
               new GrpcFlagResolver(clientSecret, flagResolverManagedChannel));
       final EventSenderEngine eventSenderEngine =
-          new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, new SystemClock());
+          new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);
       closer.register(flagResolverClient);
       closer.register(eventSenderEngine);
       return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));

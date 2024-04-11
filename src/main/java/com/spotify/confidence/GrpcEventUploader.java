@@ -1,7 +1,6 @@
 package com.spotify.confidence;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.protobuf.Timestamp;
 import com.spotify.confidence.events.v1.Event;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
 import com.spotify.confidence.events.v1.PublishEventsRequest;
@@ -53,7 +52,7 @@ class GrpcEventUploader implements EventUploader {
     final PublishEventsRequest request =
         PublishEventsRequest.newBuilder()
             .setClientSecret(clientSecret)
-            .setSendTime(Timestamp.newBuilder().setSeconds(clock.currentTimeSeconds()))
+            .setSendTime(clock.getTimestamp())
             .setSdk(sdk)
             .addAllEvents(events)
             .build();
