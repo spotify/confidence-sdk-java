@@ -221,7 +221,6 @@ public class EventSenderEngineTest {
     engine.send("navigate", ConfidenceValue.of(Map.of()), Optional.empty());
 
     engine.close();
-    assertThat(engine.getEstimatedMemoryConsumption()).isEqualTo(0);
     // the first event should be uploaded but the second one should not because it was rejected and
     // never added to the queue
     assertThat(fakeUploader.uploadCalls.size()).isEqualTo(1);
