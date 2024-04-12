@@ -202,6 +202,21 @@ public class EventSenderEngineTest {
   }
 
   @Test
+  public void testUnsentEventsAreCancelledOnThreadInterrupted() throws Exception {
+    final CompletableFuture<Boolean> batchResult = new CompletableFuture<>();
+    final EventUploader fakeUploader = events -> batchResult;
+
+    // set up the engine so that it cannot support more than 1 event in memory
+    final EventSenderEngineImpl engine =
+        new EventSenderEngineImpl(10, fakeUploader, clock, Duration.ofMillis(10), 1024);
+    engine.send("fake", ConfidenceValue.Struct.EMPTY, Optional.empty());
+    Thread.sleep(100);
+    Thread.currentThread().interrupt();
+    engine.close();
+    assertThat(batchResult.isCancelled()).isTrue();
+  }
+
+  @Test
   public void testEngineWillRejectEventsIfOverMemoryThreshold() throws IOException {
     final var expectedEvent =
         EventUploader.event("navigate", ConfidenceValue.Struct.EMPTY, Optional.empty())
