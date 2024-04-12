@@ -34,6 +34,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private final Thread pollingThread = new Thread(this::pollLoop);
   private final long maxMemoryConsumption;
   private volatile boolean intakeClosed = false;
+  private volatile boolean joinWasInterrupted = false;
   private final AtomicLong estimatedMemoryConsumption = new AtomicLong(0);
 
   @VisibleForTesting
@@ -94,7 +95,6 @@ class EventSenderEngineImpl implements EventSenderEngine {
     Instant latestFlushTime = Instant.now();
     ArrayList<com.spotify.confidence.events.v1.Event> events = new ArrayList<>();
     while (true) {
-
       final var event = sendQueue.poll();
       if (event != null) {
         events.add(event);
@@ -117,7 +117,14 @@ class EventSenderEngineImpl implements EventSenderEngine {
   private void upload(List<com.spotify.confidence.events.v1.Event> events) {
     if (events.isEmpty()) return;
     final CompletableFuture<Boolean> batchUploaded =
-        uploadExecutor.getStageAsync(() -> eventUploader.upload(events));
+        uploadExecutor.getStageAsync(
+            () -> {
+              // we don't want to upload if the thread was interrupted on close
+              if (joinWasInterrupted) {
+                return CompletableFuture.completedFuture(true);
+              }
+              return eventUploader.upload(events);
+            });
     pendingBatches.add(batchUploaded);
     batchUploaded.whenComplete(
         (res, err) -> {
@@ -128,10 +135,19 @@ class EventSenderEngineImpl implements EventSenderEngine {
         });
   }
 
-  private void awaitPending() {
+  private void joinPollingThread() {
     try {
       LockSupport.unpark(pollingThread);
       pollingThread.join();
+    } catch (InterruptedException e) {
+      sendQueue.clear();
+      joinWasInterrupted = true;
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private void awaitPending() {
+    try {
       final CompletableFuture<?>[] pending =
           pendingBatches.stream()
               .map(future -> future.exceptionally(throwable -> null))
@@ -140,7 +156,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
     } catch (InterruptedException e) {
       // reset the interrupt status
       Thread.currentThread().interrupt();
-    } catch (ExecutionException | TimeoutException e) {
+    } catch (ExecutionException | TimeoutException ignored) {
     }
   }
 
@@ -153,7 +169,9 @@ class EventSenderEngineImpl implements EventSenderEngine {
   public synchronized void close() throws IOException {
     if (intakeClosed) return;
     intakeClosed = true;
+    joinPollingThread();
     awaitPending();
+
     pendingBatches.forEach(
         batch -> {
           batch.cancel(true);
