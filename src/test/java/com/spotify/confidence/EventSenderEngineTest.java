@@ -13,12 +13,35 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
-public class ConfidenceEventSenderIntegrationTest {
+public class EventSenderEngineTest {
 
   private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
       new ResolverClientTestUtils.FakeFlagResolverClient();
 
   private final FakeClock clock = new FakeClock();
+
+  @Test
+  public void testEngineRejectsEventsAfterClosed() throws IOException {
+    final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
+    final int maxBatchSize = 6;
+    final EventSenderEngine engine =
+        new EventSenderEngineImpl(
+            maxBatchSize,
+            alwaysSucceedUploader,
+            clock,
+            DEFAULT_MAX_FLUSH_INTERVAL,
+            DEFAULT_MAX_MEMORY_CONSUMPTION);
+    engine.send(
+        "navigate",
+        ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
+        Optional.empty());
+    engine.close();
+    engine.send(
+        "navigate",
+        ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
+        Optional.empty());
+    assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(1);
+  }
 
   @Test
   public void testEngineUploads() throws IOException {
@@ -32,14 +55,15 @@ public class ConfidenceEventSenderIntegrationTest {
             clock,
             DEFAULT_MAX_FLUSH_INTERVAL,
             DEFAULT_MAX_MEMORY_CONSUMPTION);
-    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     int size = 0;
     while (size++ < numEvents) {
-      confidence.send(
-          "navigate", ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
+      engine.send(
+          "navigate",
+          ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
+          Optional.empty());
     }
 
-    confidence.close(); // Should trigger the upload of an additional incomplete batch
+    engine.close(); // Should trigger the upload of an additional incomplete batch
     final int additionalBatch = (numEvents % maxBatchSize) > 0 ? 1 : 0;
 
     final int uploadCallsCount = alwaysSucceedUploader.uploadCalls.size();
@@ -67,9 +91,8 @@ public class ConfidenceEventSenderIntegrationTest {
             clock,
             DEFAULT_MAX_FLUSH_INTERVAL,
             DEFAULT_MAX_MEMORY_CONSUMPTION);
-    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
 
-    confidence.close(); // Should trigger the upload of an additional incomplete batch
+    engine.close(); // Should trigger the upload of an additional incomplete batch
     assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(0);
   }
 
@@ -84,11 +107,12 @@ public class ConfidenceEventSenderIntegrationTest {
             clock,
             Duration.ofMillis(100),
             DEFAULT_MAX_MEMORY_CONSUMPTION);
-    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
 
     // send only one event
-    confidence.send(
-        "navigate", ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
+    engine.send(
+        "navigate",
+        ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
+        Optional.empty());
 
     // wait for the flush timeout to trigger the upload
     Thread.sleep(300);
@@ -97,7 +121,7 @@ public class ConfidenceEventSenderIntegrationTest {
     assertThat(alwaysSucceedUploader.uploadCalls.peek().size()).isEqualTo(1);
 
     // close
-    confidence.close();
+    engine.close();
   }
 
   @Test
@@ -114,12 +138,14 @@ public class ConfidenceEventSenderIntegrationTest {
             clock,
             DEFAULT_MAX_FLUSH_INTERVAL,
             DEFAULT_MAX_MEMORY_CONSUMPTION);
-    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     for (int i = 0; i < numEvents; i++) {
-      confidence.send("test", ConfidenceValue.of(ImmutableMap.of("id", ConfidenceValue.of(i))));
+      engine.send(
+          "test",
+          ConfidenceValue.Struct.EMPTY,
+          Optional.of(ConfidenceValue.of(ImmutableMap.of("id", ConfidenceValue.of(i)))));
     }
 
-    confidence.close(); // Should trigger the upload of an additional incomplete batch
+    engine.close(); // Should trigger the upload of an additional incomplete batch
     final int additionalBatch = (numEvents % maxBatchSize) > 0 ? 1 : 0;
 
     // Verify we had the correct number of calls to the uploader (including retries)
@@ -148,7 +174,6 @@ public class ConfidenceEventSenderIntegrationTest {
             clock,
             DEFAULT_MAX_FLUSH_INTERVAL,
             DEFAULT_MAX_MEMORY_CONSUMPTION);
-    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
     final CompletableFuture<?>[] eventTasks = new CompletableFuture[numberOfEvents];
 
     final Stopwatch timer = Stopwatch.createStarted();
@@ -157,13 +182,14 @@ public class ConfidenceEventSenderIntegrationTest {
       eventTasks[i] =
           CompletableFuture.runAsync(
               () -> {
-                confidence.send(
+                engine.send(
                     "navigate",
-                    ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))));
+                    ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
+                    Optional.empty());
               });
     }
     CompletableFuture.allOf(eventTasks).join();
-    confidence.close();
+    engine.close();
     System.out.println("Finished in (ms): " + timer.elapsed(TimeUnit.MILLISECONDS));
     final int uploadedEventCount =
         alwaysSucceedUploader.uploadCalls.stream().mapToInt(batch -> batch.size()).sum();
@@ -187,14 +213,13 @@ public class ConfidenceEventSenderIntegrationTest {
     final EventSenderEngineImpl engine =
         new EventSenderEngineImpl(
             10, fakeUploader, clock, DEFAULT_MAX_FLUSH_INTERVAL, expectedEvent.getSerializedSize());
-    final Confidence confidence = Confidence.create(engine, fakeFlagResolverClient);
 
     // send two events
-    confidence.send("navigate", ConfidenceValue.of(Map.of()));
+    engine.send("navigate", ConfidenceValue.of(Map.of()), Optional.empty());
     assertThat(engine.getEstimatedMemoryConsumption()).isEqualTo(expectedEvent.getSerializedSize());
-    confidence.send("navigate", ConfidenceValue.of(Map.of()));
+    engine.send("navigate", ConfidenceValue.of(Map.of()), Optional.empty());
 
-    confidence.close();
+    engine.close();
     assertThat(engine.getEstimatedMemoryConsumption()).isEqualTo(0);
     // the first event should be uploaded but the second one should not because it was rejected and
     // never added to the queue
