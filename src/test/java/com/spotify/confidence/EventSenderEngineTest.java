@@ -204,7 +204,7 @@ public class EventSenderEngineTest {
   @Test
   public void testUnsentEventsAreCancelledOnThreadInterrupted() throws Exception {
     final CompletableFuture<Boolean> batchResult = new CompletableFuture<>();
-    CompletableFuture<Void> isUploadCalled = new CompletableFuture<>();
+    final CompletableFuture<Void> isUploadCalled = new CompletableFuture<>();
     final EventUploader fakeUploader =
         events -> {
           isUploadCalled.complete(null);
