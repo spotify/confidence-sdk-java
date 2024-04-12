@@ -1,6 +1,6 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.EventSenderEngineImpl.event;
+import static com.spotify.confidence.EventUploader.event;
 
 import java.io.IOException;
 import java.util.ArrayList;

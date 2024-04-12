@@ -204,7 +204,7 @@ public class EventSenderEngineTest {
   @Test
   public void testEngineWillRejectEventsIfOverMemoryThreshold() throws IOException {
     final var expectedEvent =
-        event("navigate", ConfidenceValue.Struct.EMPTY, Optional.empty())
+        EventUploader.event("navigate", ConfidenceValue.Struct.EMPTY, Optional.empty())
             .setEventTime(clock.getTimestamp())
             .build();
 

@@ -1,6 +1,6 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.EventSenderEngineImpl.event;
+import static com.spotify.confidence.EventUploader.event;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;

@@ -1,9 +1,6 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.GrpcEventUploader.CONTEXT;
-
 import com.google.common.annotations.VisibleForTesting;
-import com.google.protobuf.Struct;
 import com.spotify.confidence.events.v1.Event;
 import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeExecutor;
@@ -75,16 +72,6 @@ class EventSenderEngineImpl implements EventSenderEngine {
         DEFAULT_MAX_MEMORY_CONSUMPTION);
   }
 
-  static Event.Builder event(
-      String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
-    return com.spotify.confidence.events.v1.Event.newBuilder()
-        .setEventDefinition(EVENT_NAME_PREFIX + name)
-        .setPayload(
-            Struct.newBuilder()
-                .putAllFields(message.orElse(ConfidenceValue.Struct.EMPTY).asProtoMap())
-                .putFields(CONTEXT, context.toProto()));
-  }
-
   @Override
   public void send(
       String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
@@ -92,7 +79,8 @@ class EventSenderEngineImpl implements EventSenderEngine {
       log.warn("EventSenderEngine is closed, dropping event {}", name);
       return;
     }
-    final Event event = event(name, context, message).setEventTime(clock.getTimestamp()).build();
+    final Event event =
+        EventUploader.event(name, context, message).setEventTime(clock.getTimestamp()).build();
     if (estimatedMemoryConsumption.get() + event.getSerializedSize() > maxMemoryConsumption) {
       log.warn("EventSenderEngine is overloaded, dropping event {}", name);
       return;
