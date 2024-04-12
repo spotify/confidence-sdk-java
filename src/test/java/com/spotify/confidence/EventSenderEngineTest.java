@@ -2,6 +2,7 @@ package com.spotify.confidence;
 
 import static com.spotify.confidence.EventSenderEngineImpl.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
@@ -224,5 +225,15 @@ public class EventSenderEngineTest {
     // the first event should be uploaded but the second one should not because it was rejected and
     // never added to the queue
     assertThat(fakeUploader.uploadCalls.size()).isEqualTo(1);
+  }
+
+  @Test
+  public void testEngineThrowsExceptionWhenMaxFlushIntervalIsZero() {
+    assertThatThrownBy(
+            () ->
+                new EventSenderEngineImpl(
+                    10, new FakeUploader(), clock, Duration.ZERO, DEFAULT_MAX_MEMORY_CONSUMPTION))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("maxFlushInterval must be positive");
   }
 }

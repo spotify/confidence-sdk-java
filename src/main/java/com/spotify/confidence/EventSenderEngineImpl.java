@@ -46,6 +46,9 @@ class EventSenderEngineImpl implements EventSenderEngine {
       Clock clock,
       Duration maxFlushInterval,
       long maxMemoryConsumption) {
+    if (maxFlushInterval.isZero()) {
+      throw new IllegalArgumentException("maxFlushInterval must be positive");
+    }
     this.eventUploader = eventUploader;
     this.clock = clock;
     this.maxBatchSize = maxBatchSize;
