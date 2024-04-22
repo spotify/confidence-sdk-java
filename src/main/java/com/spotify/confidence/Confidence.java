@@ -10,6 +10,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -203,7 +204,9 @@ public abstract class Confidence implements EventSender, Closeable {
     private final Closer closer = Closer.create();
 
     private final ManagedChannel DEFAULT_CHANNEL =
-        ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build();
+        ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443)
+            .keepAliveTime(Duration.ofMinutes(5).getSeconds(), TimeUnit.SECONDS)
+            .build();
     private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
 
     public Builder(@Nonnull String clientSecret) {
