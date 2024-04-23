@@ -26,7 +26,6 @@ class GrpcEventUploader implements EventUploader {
           Status.Code.ABORTED,
           Status.Code.INTERNAL,
           Status.Code.DATA_LOSS);
-  static final String CONTEXT = "context";
   private final String clientSecret;
   private final Sdk sdk;
   private final ManagedChannel managedChannel;

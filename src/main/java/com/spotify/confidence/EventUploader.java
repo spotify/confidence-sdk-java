@@ -1,7 +1,5 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.GrpcEventUploader.CONTEXT;
-
 import com.google.protobuf.Struct;
 import com.spotify.confidence.events.v1.Event;
 import java.util.List;
@@ -15,8 +13,8 @@ interface EventUploader {
         .setEventDefinition(EventSenderEngineImpl.EVENT_NAME_PREFIX + name)
         .setPayload(
             Struct.newBuilder()
-                .putAllFields(message.orElse(ConfidenceValue.Struct.EMPTY).asProtoMap())
-                .putFields(CONTEXT, context.toProto()));
+                .putAllFields(context.asProtoMap())
+                .putFields("message", message.orElse(ConfidenceValue.Struct.EMPTY).toProto()));
   }
 
   CompletableFuture<Boolean> upload(List<Event> events);

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import java.io.IOException;
 import java.time.Duration;
@@ -79,6 +80,48 @@ public class EventSenderEngineTest {
     assertThat(uploadCallsCount).isEqualTo((numEvents / maxBatchSize + additionalBatch));
     assertThat(eventsCount).isEqualTo(numEvents);
     assertThat(uploadCallsCount - fullBatchCount).isEqualTo(additionalBatch);
+  }
+
+  @Test
+  public void testOverlappingKeysInPayload() throws InterruptedException {
+    final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
+    final EventSenderEngine engine =
+        new EventSenderEngineImpl(
+            1,
+            alwaysSucceedUploader,
+            clock,
+            DEFAULT_MAX_FLUSH_INTERVAL,
+            DEFAULT_MAX_MEMORY_CONSUMPTION);
+    // wait for the flush timeout to trigger the upload
+    engine.send(
+        "my_event",
+        ConfidenceValue.of(
+            ImmutableMap.of(
+                "a", ConfidenceValue.of(2),
+                "message", ConfidenceValue.of(3))),
+        Optional.of(
+            ConfidenceValue.Struct.of(
+                Map.of(
+                    "a", ConfidenceValue.of(0),
+                    "message", ConfidenceValue.of(1)))));
+    Thread.sleep(300);
+    assertThat(alwaysSucceedUploader.uploadCalls.peek().get(0).getPayload())
+        .isEqualTo(
+            Struct.newBuilder()
+                .putAllFields(
+                    Map.of(
+                        "message",
+                            Value.newBuilder()
+                                .setStructValue(
+                                    Struct.newBuilder()
+                                        .putFields(
+                                            "a", Value.newBuilder().setNumberValue(0).build())
+                                        .putFields(
+                                            "message",
+                                            Value.newBuilder().setNumberValue(1).build()))
+                                .build(),
+                        "a", Value.newBuilder().setNumberValue(2).build()))
+                .build());
   }
 
   @Test
@@ -156,7 +199,15 @@ public class EventSenderEngineTest {
     final Set<Value> uniqueEventIds =
         fakeUploader.uploadCalls.stream()
             .flatMap(Collection::stream)
-            .map(event -> event.getPayload().getFieldsMap().get("id"))
+            .map(
+                event ->
+                    event
+                        .getPayload()
+                        .getFieldsMap()
+                        .get("message")
+                        .getStructValue()
+                        .getFieldsMap()
+                        .get("id"))
             .collect(Collectors.toSet());
     // Verify all events reached the uploader
     assertThat(uniqueEventIds.size()).isEqualTo(numEvents);

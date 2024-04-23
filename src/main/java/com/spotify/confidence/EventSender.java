@@ -5,9 +5,9 @@ import java.util.Map;
 
 @Beta
 public interface EventSender extends Contextual {
-  public void send(String name, ConfidenceValue.Struct message);
+  public void send(String eventName, ConfidenceValue.Struct message);
 
-  public void send(String name);
+  public void send(String eventName);
 
   @Override
   EventSender withContext(ConfidenceValue.Struct context);
