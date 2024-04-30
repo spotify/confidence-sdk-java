@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.0.11](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.10...v0.0.11) (2024-04-30)
+
+
+### 🐛 Bug Fixes
+
+* adding connection keepalive for eventsender channel ([#118](https://github.com/spotify/confidence-openfeature-provider-java/issues/118)) ([394e377](https://github.com/spotify/confidence-openfeature-provider-java/commit/394e377bbe3bebca35419e9fc3546b7930b29d52))
+* drop the flushpolicies interface to keep it simple ([#113](https://github.com/spotify/confidence-openfeature-provider-java/issues/113)) ([ba04c2d](https://github.com/spotify/confidence-openfeature-provider-java/commit/ba04c2d9f8c87864206192caa90a8ac148584cae))
+* event engine rewrite  ([#117](https://github.com/spotify/confidence-openfeature-provider-java/issues/117)) ([b14e7d3](https://github.com/spotify/confidence-openfeature-provider-java/commit/b14e7d3c13ca593827433690c628a879a47d02dd))
+* Event errors dont trigger retries ([81cfcfd](https://github.com/spotify/confidence-openfeature-provider-java/commit/81cfcfd1b1b92de3c732e6aa18e50fd18ded36d0))
+* eventsender engine uploads on a cadence ([#112](https://github.com/spotify/confidence-openfeature-provider-java/issues/112)) ([1c895d0](https://github.com/spotify/confidence-openfeature-provider-java/commit/1c895d0757205090b7967a4717d6cc4ccc968c72))
+* remove some protos that can cause collisions ([#110](https://github.com/spotify/confidence-openfeature-provider-java/issues/110)) ([08878af](https://github.com/spotify/confidence-openfeature-provider-java/commit/08878af001813e36e24966d5e2e5bceb513eaba6))
+* Response Errors don't trigger retries ([#108](https://github.com/spotify/confidence-openfeature-provider-java/issues/108)) ([81cfcfd](https://github.com/spotify/confidence-openfeature-provider-java/commit/81cfcfd1b1b92de3c732e6aa18e50fd18ded36d0))
+
+
+### ✨ New Features
+
+* add logging with slf4j ([#90](https://github.com/spotify/confidence-openfeature-provider-java/issues/90)) ([9d10bfd](https://github.com/spotify/confidence-openfeature-provider-java/commit/9d10bfd5fd077f7af518b80f86bfe0d4d2728c00))
+* Telemetry for Events (SDK metadata) ([#109](https://github.com/spotify/confidence-openfeature-provider-java/issues/109)) ([3447e47](https://github.com/spotify/confidence-openfeature-provider-java/commit/3447e47f12cf10e31740d6a934c4e6579c7c274b))
+* Total Confidence - functionality to send tracking events ([#88](https://github.com/spotify/confidence-openfeature-provider-java/issues/88)) ([4106c9f](https://github.com/spotify/confidence-openfeature-provider-java/commit/4106c9f57e161f6e575f053b1c64814b7020092c))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.11-SNAPSHOT ([#98](https://github.com/spotify/confidence-openfeature-provider-java/issues/98)) ([173c72e](https://github.com/spotify/confidence-openfeature-provider-java/commit/173c72e212b0df56edf17f540ca474f4618707c3))
+
+
+### 🔄 Refactoring
+
+* Add message container to payload ([#119](https://github.com/spotify/confidence-openfeature-provider-java/issues/119)) ([176dec1](https://github.com/spotify/confidence-openfeature-provider-java/commit/176dec1ba1c997a5a753b7ac701433b716e7f8b5))
+* Remove message container ([#120](https://github.com/spotify/confidence-openfeature-provider-java/issues/120)) ([55e495b](https://github.com/spotify/confidence-openfeature-provider-java/commit/55e495b6b6974cfebaae7fed66422e1679746ba4))
+
 ## [0.0.10](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.9...v0.0.10) (2024-03-19)
 
 
