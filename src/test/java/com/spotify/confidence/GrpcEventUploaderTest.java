@@ -97,14 +97,7 @@ class GrpcEventUploaderTest {
     assertThat(protoEvent.getEventDefinition()).isEqualTo("eventDefinitions/event1");
 
     final Map<String, com.google.protobuf.Value> fieldsMap = protoEvent.getPayload().getFieldsMap();
-    assertThat(
-            fieldsMap
-                .get("message")
-                .getStructValue()
-                .getFieldsMap()
-                .get("messageKey")
-                .getStringValue())
-        .isEqualTo("value_1");
+    assertThat(fieldsMap.get("messageKey").getStringValue()).isEqualTo("value_1");
     assertThat(fieldsMap.get("contextKey").getStringValue()).isEqualTo("value_1");
   }
 
@@ -136,14 +129,7 @@ class GrpcEventUploaderTest {
 
       final Map<String, com.google.protobuf.Value> fieldsMap =
           protoEvent.getPayload().getFieldsMap();
-      assertThat(
-              fieldsMap
-                  .get("message")
-                  .getStructValue()
-                  .getFieldsMap()
-                  .get("messageKey")
-                  .getStringValue())
-          .isEqualTo("value_m" + (i + 1));
+      assertThat(fieldsMap.get("messageKey").getStringValue()).isEqualTo("value_m" + (i + 1));
       assertThat(fieldsMap.get("contextKey").getStringValue()).isEqualTo("value_c" + (i + 1));
     }
   }
