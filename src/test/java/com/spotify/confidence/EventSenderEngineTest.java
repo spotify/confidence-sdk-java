@@ -110,17 +110,10 @@ public class EventSenderEngineTest {
             Struct.newBuilder()
                 .putAllFields(
                     Map.of(
+                        "a",
+                        Value.newBuilder().setNumberValue(0).build(),
                         "message",
-                            Value.newBuilder()
-                                .setStructValue(
-                                    Struct.newBuilder()
-                                        .putFields(
-                                            "a", Value.newBuilder().setNumberValue(0).build())
-                                        .putFields(
-                                            "message",
-                                            Value.newBuilder().setNumberValue(1).build()))
-                                .build(),
-                        "a", Value.newBuilder().setNumberValue(2).build()))
+                        Value.newBuilder().setNumberValue(1).build()))
                 .build());
   }
 
@@ -199,15 +192,7 @@ public class EventSenderEngineTest {
     final Set<Value> uniqueEventIds =
         fakeUploader.uploadCalls.stream()
             .flatMap(Collection::stream)
-            .map(
-                event ->
-                    event
-                        .getPayload()
-                        .getFieldsMap()
-                        .get("message")
-                        .getStructValue()
-                        .getFieldsMap()
-                        .get("id"))
+            .map(event -> event.getPayload().getFieldsMap().get("id"))
             .collect(Collectors.toSet());
     // Verify all events reached the uploader
     assertThat(uniqueEventIds.size()).isEqualTo(numEvents);

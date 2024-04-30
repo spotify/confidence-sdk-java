@@ -14,7 +14,7 @@ interface EventUploader {
         .setPayload(
             Struct.newBuilder()
                 .putAllFields(context.asProtoMap())
-                .putFields("message", message.orElse(ConfidenceValue.Struct.EMPTY).toProto()));
+                .putAllFields(message.orElse(ConfidenceValue.Struct.EMPTY).asProtoMap()));
   }
 
   CompletableFuture<Boolean> upload(List<Event> events);
