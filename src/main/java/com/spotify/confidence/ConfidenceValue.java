@@ -8,7 +8,6 @@ import com.google.protobuf.ListValue;
 import com.google.protobuf.NullValue;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -121,6 +120,10 @@ public abstract class ConfidenceValue {
 
   public static ConfidenceValue of(boolean value) {
     return new BooleanValue(value);
+  }
+
+  public static ConfidenceValue.List of(java.util.List<ConfidenceValue> values) {
+    return new List(values);
   }
 
   public static ConfidenceValue.List ofStrings(java.util.List<String> values) {
@@ -445,6 +448,10 @@ public abstract class ConfidenceValue {
 
     static Struct fromProto(com.google.protobuf.Struct struct) {
       return new Struct(Maps.transformValues(struct.getFieldsMap(), ConfidenceValue::fromProto));
+    }
+
+    static Struct ofMap(Map<String, ConfidenceValue> map) {
+      return new Struct(map);
     }
 
     public Map<String, ConfidenceValue> asMap() {

@@ -140,13 +140,10 @@ public abstract class Confidence implements EventSender, Closeable {
         log.debug(errorMessage);
         return new FlagEvaluation<>(defaultValue, "", resolvedFlag.getReason().toString());
       } else {
-        // TODO Convert proto to Confidence directly
         final ConfidenceValue confidenceValue =
-            ConfidenceValue.fromProto(
-                TypeMapper.from(
-                    getValueForPath(
-                        flagPath.getPath(),
-                        TypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()))));
+            getValueForPath(
+                flagPath.getPath(),
+                TypeMapper.toConfidence(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
 
         // regular resolve was successful
         return new FlagEvaluation<>(

@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import com.spotify.confidence.ConfidenceValue.Struct;
 import dev.openfeature.sdk.Structure;
 import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.GeneralError;
@@ -77,6 +78,39 @@ final class SdkUtils {
       }
 
       value = structure.getValue(fieldName);
+
+      if (value == null) {
+        // we know that null indicates absence of a proper value because intended nulls would be an
+        // instance of type Value
+        log.warn(
+            "Illegal attempt to derive non-existing field '{}' on structure value '{}'",
+            fieldName,
+            structure);
+        throw new TypeMismatchError(
+            String.format(
+                "Illegal attempt to derive non-existing field '%s' on structure value '%s'",
+                fieldName, structure));
+      }
+    }
+
+    return value;
+  }
+
+  static ConfidenceValue getValueForPath(List<String> path, ConfidenceValue fullValue) {
+    ConfidenceValue value = fullValue;
+    for (String fieldName : path) {
+      final Struct structure = value.asStruct();
+      if (structure == null) {
+        // value's inner object actually is no structure
+        log.warn(
+            "Illegal attempt to derive field '{}' on non-structure value '{}'", fieldName, value);
+        throw new TypeMismatchError(
+            String.format(
+                "Illegal attempt to derive field '%s' on non-structure value '%s'",
+                fieldName, value));
+      }
+
+      value = structure.get(fieldName);
 
       if (value == null) {
         // we know that null indicates absence of a proper value because intended nulls would be an
