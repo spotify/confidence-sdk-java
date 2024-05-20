@@ -5,7 +5,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
-import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.Closeable;
@@ -98,7 +97,8 @@ public abstract class Confidence implements EventSender, Closeable {
     }
   }
 
-  CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName) {
+  CompletableFuture<com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse>
+      resolveFlags(String flagName) {
     return client().resolveFlags(flagName, getContext());
   }
 
@@ -136,8 +136,8 @@ public abstract class Confidence implements EventSender, Closeable {
     }
 
     @Override
-    public CompletableFuture<ResolveFlagsResponse> resolveFlags(
-        String flag, ConfidenceValue.Struct context) {
+    public CompletableFuture<com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse>
+        resolveFlags(String flag, ConfidenceValue.Struct context) {
       return flagResolverClient.resolveFlags(flag, context);
     }
 

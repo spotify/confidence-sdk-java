@@ -1,8 +1,9 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.shaded.flags.resolver.v1.FlagResolverServiceGrpc.*;
+
 import com.google.common.base.Strings;
 import com.google.protobuf.Struct;
-import com.spotify.confidence.shaded.flags.resolver.v1.*;
 import io.grpc.ManagedChannel;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -11,9 +12,9 @@ import java.util.concurrent.TimeUnit;
 public class GrpcFlagResolver implements FlagResolver {
   private final ManagedChannel managedChannel;
   private final String clientSecret;
-  private final Sdk sdk;
+  private final com.spotify.confidence.shaded.flags.resolver.v1.Sdk sdk;
 
-  private final FlagResolverServiceGrpc.FlagResolverServiceFutureStub stub;
+  private final FlagResolverServiceFutureStub stub;
 
   public GrpcFlagResolver(String clientSecret, ManagedChannel managedChannel) {
     if (Strings.isNullOrEmpty(clientSecret)) {
@@ -21,19 +22,22 @@ public class GrpcFlagResolver implements FlagResolver {
     }
     this.clientSecret = clientSecret;
     this.sdk =
-        Sdk.newBuilder()
-            .setId(SdkId.SDK_ID_JAVA_PROVIDER)
+        com.spotify.confidence.shaded.flags.resolver.v1.Sdk.newBuilder()
+            .setId(com.spotify.confidence.shaded.flags.resolver.v1.SdkId.SDK_ID_JAVA_PROVIDER)
             .setVersion(SdkUtils.getSdkVersion())
             .build();
     this.managedChannel = managedChannel;
-    this.stub = FlagResolverServiceGrpc.newFutureStub(managedChannel);
+    this.stub =
+        com.spotify.confidence.shaded.flags.resolver.v1.FlagResolverServiceGrpc.newFutureStub(
+            managedChannel);
   }
 
-  public CompletableFuture<ResolveFlagsResponse> resolve(String flag, Struct context) {
+  public CompletableFuture<com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse>
+      resolve(String flag, Struct context) {
     return GrpcUtil.toCompletableFuture(
         stub.withDeadlineAfter(10, TimeUnit.SECONDS)
             .resolveFlags(
-                ResolveFlagsRequest.newBuilder()
+                com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest.newBuilder()
                     .setClientSecret(this.clientSecret)
                     .addAllFlags(List.of(flag))
                     .setEvaluationContext(context)
