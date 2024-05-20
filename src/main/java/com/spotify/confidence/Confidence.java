@@ -1,11 +1,15 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.SdkUtils.getValueForPath;
+
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
+import com.spotify.confidence.SdkUtils.FlagPath;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.Closeable;
@@ -16,17 +20,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
 
 @Beta
 public abstract class Confidence implements EventSender, Closeable {
 
-  private static final int FLUSH_TIMEOUT_MILLISECONDS = 500;
   protected Map<String, ConfidenceValue> context = Maps.newHashMap();
+  private static final Logger log = org.slf4j.LoggerFactory.getLogger(Confidence.class);
 
   private Confidence() {}
 
@@ -95,6 +101,89 @@ public abstract class Confidence implements EventSender, Closeable {
       client().emit(eventName, getContext(), Optional.of(message));
     } catch (IllegalStateException e) {
       // swallow this exception
+    }
+  }
+
+  public <T> T getValue(String key, T defaultValue) {
+    return getEvaluation(key, defaultValue).getValue();
+  }
+
+  public <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue) {
+    try {
+      final FlagPath flagPath = SdkUtils.getPath(key);
+      final String requestFlagName = "flags/" + flagPath.getFlag();
+      final ResolveFlagsResponse response = resolveFlags(requestFlagName).get();
+      if (response.getResolvedFlagsList().isEmpty()) {
+        final String errorMessage =
+            String.format("No active flag '%s' was found", flagPath.getFlag());
+        log.warn(errorMessage);
+        return new FlagEvaluation<>(
+            defaultValue, "", "ERROR", ErrorType.FLAG_NOT_FOUND, errorMessage);
+      }
+
+      final String responseFlagName = response.getResolvedFlags(0).getFlag();
+      if (!requestFlagName.equals(responseFlagName)) {
+        final String errorMessage =
+            String.format(
+                "Unexpected flag '%s' from remote", responseFlagName.replaceFirst("^flags/", ""));
+        log.warn(errorMessage);
+        return new FlagEvaluation<>(
+            defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
+      }
+      final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
+      if (resolvedFlag.getVariant().isEmpty()) {
+        final String errorMessage =
+            String.format(
+                "The server returned no assignment for the flag '%s'. Typically, this happens "
+                    + "if no configured rules matches the given evaluation context.",
+                flagPath.getFlag());
+        log.debug(errorMessage);
+        return new FlagEvaluation<>(defaultValue, "", resolvedFlag.getReason().toString());
+      } else {
+        // TODO Convert proto to Confidence directly
+        final ConfidenceValue confidenceValue =
+            ConfidenceValue.fromProto(
+                TypeMapper.from(
+                    getValueForPath(
+                        flagPath.getPath(),
+                        TypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()))));
+
+        // regular resolve was successful
+        return new FlagEvaluation<>(
+            getTyped(confidenceValue, defaultValue),
+            resolvedFlag.getVariant(),
+            resolvedFlag.getReason().toString());
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      return new FlagEvaluation<>(
+          defaultValue,
+          "",
+          "ERROR",
+          ErrorType.NETWORK_ERROR,
+          "Error while fetching data from backend");
+    }
+  }
+
+  private <T> T getTyped(ConfidenceValue value, T defaultValue) {
+    if (value.isString()) {
+      return (T) value.asString();
+    } else if (value.isDouble()) {
+      return (T) Double.valueOf(value.asDouble());
+    } else if (value.isInteger()) {
+      return (T) Integer.valueOf(value.asInteger());
+    } else if (value.isBoolean()) {
+      return (T) Boolean.valueOf(value.asBoolean());
+    } else if (value.isDate()) {
+      return (T) value.asLocalDate();
+    } else if (value.isTimestamp()) {
+      return (T) value.asInstant();
+    } else if (value.isStruct()) {
+      return (T) value.asStruct();
+    } else if (value.isList()) {
+      return (T) value.asList();
+    } else {
+      // Empty value from backend signals to use client defaults
+      return defaultValue;
     }
   }
 

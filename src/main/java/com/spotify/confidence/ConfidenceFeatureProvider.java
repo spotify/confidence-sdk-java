@@ -1,13 +1,16 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.SdkUtils.getPath;
+import static com.spotify.confidence.SdkUtils.getValueForPath;
+
 import com.google.protobuf.Struct;
+import com.spotify.confidence.SdkUtils.FlagPath;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FeatureProvider;
 import dev.openfeature.sdk.Metadata;
 import dev.openfeature.sdk.ProviderEvaluation;
-import dev.openfeature.sdk.Structure;
 import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.FlagNotFoundError;
 import dev.openfeature.sdk.exceptions.GeneralError;
@@ -16,12 +19,9 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 /** OpenFeature Provider for feature flagging with the Confidence platform */
@@ -238,74 +238,6 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
           String.format(
               "Unknown error occurred when calling the provider backend. Exception: %s",
               e.getMessage()));
-    }
-  }
-
-  private static Value getValueForPath(List<String> path, Value fullValue) {
-    Value value = fullValue;
-    for (String fieldName : path) {
-      final Structure structure = value.asStructure();
-      if (structure == null) {
-        // value's inner object actually is no structure
-        log.warn(
-            "Illegal attempt to derive field '{}' on non-structure value '{}'", fieldName, value);
-        throw new TypeMismatchError(
-            String.format(
-                "Illegal attempt to derive field '%s' on non-structure value '%s'",
-                fieldName, value));
-      }
-
-      value = structure.getValue(fieldName);
-
-      if (value == null) {
-        // we know that null indicates absence of a proper value because intended nulls would be an
-        // instance of type Value
-        log.warn(
-            "Illegal attempt to derive non-existing field '{}' on structure value '{}'",
-            fieldName,
-            structure);
-        throw new TypeMismatchError(
-            String.format(
-                "Illegal attempt to derive non-existing field '%s' on structure value '%s'",
-                fieldName, structure));
-      }
-    }
-
-    return value;
-  }
-
-  private static FlagPath getPath(String str) {
-    final String regex = Pattern.quote(".");
-    final String[] parts = str.split(regex);
-
-    if (parts.length == 0) {
-      // this happens for malformed corner cases such as: str = "..."
-      log.warn("Illegal path string '{}'", str);
-      throw new GeneralError(String.format("Illegal path string '%s'", str));
-    } else if (parts.length == 1) {
-      // str doesn't contain the delimiter
-      return new FlagPath(str, List.of());
-    } else {
-      return new FlagPath(parts[0], Arrays.asList(parts).subList(1, parts.length));
-    }
-  }
-
-  private static class FlagPath {
-
-    private final String flag;
-    private final List<String> path;
-
-    public FlagPath(String flag, List<String> path) {
-      this.flag = flag;
-      this.path = path;
-    }
-
-    public String getFlag() {
-      return flag;
-    }
-
-    public List<String> getPath() {
-      return path;
     }
   }
 }
