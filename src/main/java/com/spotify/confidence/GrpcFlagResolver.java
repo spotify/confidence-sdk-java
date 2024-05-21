@@ -23,7 +23,7 @@ public class GrpcFlagResolver implements FlagResolver {
     this.sdk =
         Sdk.newBuilder()
             .setId(SdkId.SDK_ID_JAVA_PROVIDER)
-            .setVersion(SdkUtils.getSdkVersion())
+            .setVersion(ConfidenceUtils.getSdkVersion())
             .build();
     this.managedChannel = managedChannel;
     this.stub = FlagResolverServiceGrpc.newFutureStub(managedChannel);

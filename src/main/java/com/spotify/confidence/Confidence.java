@@ -1,13 +1,14 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.SdkUtils.getValueForPath;
+import static com.spotify.confidence.ConfidenceUtils.FlagPath.getPath;
+import static com.spotify.confidence.ConfidenceUtils.getValueForPath;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
-import com.spotify.confidence.SdkUtils.FlagPath;
+import com.spotify.confidence.ConfidenceUtils.FlagPath;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import io.grpc.ManagedChannel;
@@ -110,7 +111,7 @@ public abstract class Confidence implements EventSender, Closeable {
 
   public <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue) {
     try {
-      final FlagPath flagPath = SdkUtils.getPath(key);
+      final FlagPath flagPath = getPath(key);
       final String requestFlagName = "flags/" + flagPath.getFlag();
       final ResolveFlagsResponse response = resolveFlags(requestFlagName).get();
       if (response.getResolvedFlagsList().isEmpty()) {
@@ -121,16 +122,16 @@ public abstract class Confidence implements EventSender, Closeable {
             defaultValue, "", "ERROR", ErrorType.FLAG_NOT_FOUND, errorMessage);
       }
 
-      final String responseFlagName = response.getResolvedFlags(0).getFlag();
-      if (!requestFlagName.equals(responseFlagName)) {
+      final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
+      if (!requestFlagName.equals(resolvedFlag.getFlag())) {
         final String errorMessage =
             String.format(
-                "Unexpected flag '%s' from remote", responseFlagName.replaceFirst("^flags/", ""));
+                "Unexpected flag '%s' from remote",
+                resolvedFlag.getFlag().replaceFirst("^flags/", ""));
         log.warn(errorMessage);
         return new FlagEvaluation<>(
             defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
       }
-      final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
       if (resolvedFlag.getVariant().isEmpty()) {
         final String errorMessage =
             String.format(
@@ -143,7 +144,7 @@ public abstract class Confidence implements EventSender, Closeable {
         final ConfidenceValue confidenceValue =
             getValueForPath(
                 flagPath.getPath(),
-                TypeMapper.toConfidence(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
+                ConfidenceTypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
 
         // regular resolve was successful
         return new FlagEvaluation<>(

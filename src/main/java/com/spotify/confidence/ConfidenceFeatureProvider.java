@@ -1,10 +1,10 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.SdkUtils.getPath;
-import static com.spotify.confidence.SdkUtils.getValueForPath;
+import static com.spotify.confidence.ConfidenceUtils.FlagPath.getPath;
+import static com.spotify.confidence.OpenFeatureUtils.getValueForPath;
 
 import com.google.protobuf.Struct;
-import com.spotify.confidence.SdkUtils.FlagPath;
+import com.spotify.confidence.ConfidenceUtils.FlagPath;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import dev.openfeature.sdk.EvaluationContext;
@@ -191,7 +191,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
             .build();
       } else {
         final Value fullValue =
-            TypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema());
+            OpenFeatureTypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema());
 
         // if a path is given, extract expected portion from the structured value
         Value value = getValueForPath(flagPath.getPath(), fullValue);
