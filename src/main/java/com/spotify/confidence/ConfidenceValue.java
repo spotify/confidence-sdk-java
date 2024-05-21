@@ -468,7 +468,7 @@ public abstract class ConfidenceValue {
       private final ImmutableMap.Builder<String, ConfidenceValue> builder = ImmutableMap.builder();
 
       public Builder set(String key, ConfidenceValue value) {
-        if (!value.isNull()) builder.put(key, value);
+        builder.put(key, value);
         return this;
       }
 

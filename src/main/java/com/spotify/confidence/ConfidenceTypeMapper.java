@@ -88,4 +88,27 @@ class ConfidenceTypeMapper {
 
     return ConfidenceValue.Struct.ofMap(map);
   }
+
+  public static <T> T getTyped(ConfidenceValue value, T defaultValue) {
+    if (value.isString()) {
+      return (T) value.asString();
+    } else if (value.isDouble()) {
+      return (T) Double.valueOf(value.asDouble());
+    } else if (value.isInteger()) {
+      return (T) Integer.valueOf(value.asInteger());
+    } else if (value.isBoolean()) {
+      return (T) Boolean.valueOf(value.asBoolean());
+    } else if (value.isDate()) {
+      return (T) value.asLocalDate();
+    } else if (value.isTimestamp()) {
+      return (T) value.asInstant();
+    } else if (value.isStruct()) {
+      return (T) value.asStruct();
+    } else if (value.isList()) {
+      return (T) value.asList();
+    } else {
+      // Empty value from backend signals to use client defaults
+      return defaultValue;
+    }
+  }
 }
