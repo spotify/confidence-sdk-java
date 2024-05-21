@@ -74,7 +74,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
   }
 
   @Override
-  public void send(
+  public void emit(
       String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
     if (intakeClosed) {
       log.warn("EventSenderEngine is closed, dropping event {}", name);

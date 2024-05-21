@@ -24,7 +24,7 @@ public class FakeEventSenderEngine implements EventSenderEngine {
   }
 
   @Override
-  public void send(
+  public void emit(
       String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
     events.add(event(name, context, message).setEventTime(clock.getTimestamp()).build());
   }
