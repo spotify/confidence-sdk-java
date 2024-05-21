@@ -52,7 +52,7 @@ public class ConfidenceTest {
     final Integer value = confidence.getValue("wrong-flag.prop-E", 20);
     assertEquals(20, value);
 
-    FlagEvaluation<Integer> evaluation = confidence.getEvaluation("wrong-flag.prop-E", 20);
+    final FlagEvaluation<Integer> evaluation = confidence.getEvaluation("wrong-flag.prop-E", 20);
 
     assertEquals(20, evaluation.getValue());
     assertEquals("", evaluation.getVariant());
@@ -67,7 +67,7 @@ public class ConfidenceTest {
     final Integer value = confidence.getValue("flag.prop-X", 20);
     assertEquals(20, value);
 
-    FlagEvaluation<Integer> evaluation = confidence.getEvaluation("flag.prop-X", 20);
+    final FlagEvaluation<Integer> evaluation = confidence.getEvaluation("flag.prop-X", 20);
 
     assertEquals(20, evaluation.getValue());
     assertEquals("", evaluation.getVariant());
@@ -87,7 +87,7 @@ public class ConfidenceTest {
     final Integer value = confidence.getValue("...", 20);
     assertEquals(20, value);
 
-    FlagEvaluation<Integer> evaluation = confidence.getEvaluation("...", 20);
+    final FlagEvaluation<Integer> evaluation = confidence.getEvaluation("...", 20);
 
     assertEquals(20, evaluation.getValue());
     assertEquals("", evaluation.getVariant());
