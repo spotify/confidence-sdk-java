@@ -3,7 +3,12 @@ package com.spotify.confidence;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.spotify.confidence.ConfidenceValue.Struct;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Test;
 
 public class ConfidenceTest {
@@ -16,6 +21,19 @@ public class ConfidenceTest {
     final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("flag.prop-E", 20);
     assertEquals(50, value);
+  }
+
+  @Test
+  void getValueWrongType() {
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-E", "test");
+    assertEquals("test", evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("ERROR", evaluation.getReason());
+    assertEquals(ErrorType.INVALID_VALUE_TYPE, evaluation.getErrorType().get());
+    assertEquals(
+        "Default type class java.lang.String, but value of type class com.spotify.confidence.ConfidenceValue$Integer",
+        evaluation.getErrorMessage().get());
   }
 
   @Test
@@ -94,5 +112,75 @@ public class ConfidenceTest {
     assertEquals("ERROR", evaluation.getReason());
     assertEquals(ErrorType.INVALID_VALUE_PATH, evaluation.getErrorType().get());
     assertTrue(evaluation.getErrorMessage().get().startsWith("Illegal path string '...'"));
+  }
+
+  @Test
+  void flagNotFound() {
+    fakeFlagResolverClient.response = ResolveFlagsResponse.newBuilder().getDefaultInstanceForType();
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final Integer value = confidence.getValue("unknown-flag", 20);
+    assertEquals(20, value);
+
+    final FlagEvaluation<Integer> evaluation = confidence.getEvaluation("unknown-flag", 20);
+
+    assertEquals(20, evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("ERROR", evaluation.getReason());
+    assertEquals(ErrorType.FLAG_NOT_FOUND, evaluation.getErrorType().get());
+    assertTrue(
+        evaluation.getErrorMessage().get().startsWith("No active flag 'unknown-flag' was found"));
+  }
+
+  @Test
+  void noSegmentMatch() {
+    fakeFlagResolverClient.response =
+        ResolveFlagsResponse.newBuilder()
+            .addResolvedFlags(
+                ResolvedFlag.newBuilder()
+                    .setFlag("flags/no-match-flag")
+                    .setVariant("")
+                    .setReason(ResolveReason.RESOLVE_REASON_NO_SEGMENT_MATCH)
+                    .build())
+            .build();
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final Integer value = confidence.getValue("no-match-flag", 20);
+    assertEquals(20, value);
+
+    final FlagEvaluation<Integer> evaluation = confidence.getEvaluation("no-match-flag", 20);
+
+    assertEquals(20, evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("RESOLVE_REASON_NO_SEGMENT_MATCH", evaluation.getReason());
+    assertTrue(evaluation.getErrorType().isEmpty());
+    assertTrue(evaluation.getErrorMessage().isEmpty());
+  }
+
+  @Test
+  void internalError() {
+    final Confidence confidence = Confidence.create(fakeEngine, new FailingFlagResolverClient());
+    final Integer value = confidence.getValue("no-match-flag", 20);
+    assertEquals(20, value);
+
+    final FlagEvaluation<Integer> evaluation = confidence.getEvaluation("no-match-flag", 20);
+
+    assertEquals(20, evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("ERROR", evaluation.getReason());
+    assertEquals(ErrorType.INTERNAL_ERROR, evaluation.getErrorType().get());
+    assertTrue(
+        evaluation.getErrorMessage().get().startsWith("Crashing while performing network call"));
+  }
+
+  public static class FailingFlagResolverClient implements FlagResolverClient {
+
+    @Override
+    public CompletableFuture<ResolveFlagsResponse> resolveFlags(String flag, Struct context) {
+      throw new RuntimeException("Crashing while performing network call");
+    }
+
+    @Override
+    public void close() throws IOException {
+      // NOOP
+    }
   }
 }

@@ -1,6 +1,8 @@
 package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
+import com.spotify.confidence.ConfidenceExceptions.IllegalValueType;
+import com.spotify.confidence.ConfidenceExceptions.IncompatibleValueType;
 import com.spotify.confidence.ConfidenceExceptions.ParseError;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.SchemaTypeCase;
@@ -90,26 +92,51 @@ class ConfidenceTypeMapper {
     return ConfidenceValue.Struct.ofMap(map);
   }
 
-  public static <T> T getTyped(ConfidenceValue value, T defaultValue) {
-    if (value.isString()) {
-      return (T) value.asString();
-    } else if (value.isDouble()) {
-      return (T) Double.valueOf(value.asDouble());
-    } else if (value.isInteger()) {
-      return (T) Integer.valueOf(value.asInteger());
-    } else if (value.isBoolean()) {
-      return (T) Boolean.valueOf(value.asBoolean());
-    } else if (value.isDate()) {
-      return (T) value.asLocalDate();
-    } else if (value.isTimestamp()) {
-      return (T) value.asInstant();
-    } else if (value.isStruct()) {
-      return (T) value.asStruct();
-    } else if (value.isList()) {
-      return (T) value.asList();
-    } else {
-      // Empty value from backend signals to use client defaults
+  public static <T> T getTyped(ConfidenceValue value, T defaultValue)
+      throws IllegalValueType, IncompatibleValueType {
+    if (value.equals(ConfidenceValue.NULL_VALUE)) {
       return defaultValue;
+    }
+
+    if (defaultValue instanceof String) {
+      if (value.isString()) {
+        return (T) value.asString();
+      }
+      throw new IncompatibleValueType(
+          String.format(
+              "Default type %s, but value of type %s", defaultValue.getClass(), value.getClass()));
+    } else if (defaultValue instanceof Integer) {
+      if (value.isInteger()) {
+        return (T) java.lang.Integer.valueOf(value.asInteger());
+      }
+      throw new IncompatibleValueType(
+          String.format(
+              "Default type %s, but value of type %s", defaultValue.getClass(), value.getClass()));
+    } else if (defaultValue instanceof Double) {
+      if (value.isDouble()) {
+        return (T) Double.valueOf(value.asDouble());
+      }
+      throw new IncompatibleValueType(
+          String.format(
+              "Default type %s, but value of type %s", defaultValue.getClass(), value.getClass()));
+    } else if (defaultValue instanceof Boolean) {
+      if (value.isBoolean()) {
+        return (T) Boolean.valueOf(value.asBoolean());
+      }
+      throw new IncompatibleValueType(
+          String.format(
+              "Default type %s, but value of type %s", defaultValue.getClass(), value.getClass()));
+    } else if (defaultValue instanceof ConfidenceValue.Struct) {
+      if (value.isStruct()) {
+        return (T) value.asStruct();
+      }
+      throw new IncompatibleValueType(
+          String.format(
+              "Default value type %s, but value of type %s",
+              defaultValue.getClass(), value.getClass()));
+    } else {
+      // Unsupported default value type
+      throw new IllegalValueType(String.format("Illegal value type: %s", defaultValue.getClass()));
     }
   }
 }

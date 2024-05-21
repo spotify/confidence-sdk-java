@@ -10,6 +10,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
 import com.spotify.confidence.ConfidenceExceptions.IllegalValuePath;
+import com.spotify.confidence.ConfidenceExceptions.IllegalValueType;
+import com.spotify.confidence.ConfidenceExceptions.IncompatibleValueType;
 import com.spotify.confidence.ConfidenceExceptions.ValueNotFound;
 import com.spotify.confidence.ConfidenceUtils.FlagPath;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
@@ -24,7 +26,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
@@ -156,18 +157,14 @@ public abstract class Confidence implements EventSender, Closeable {
             resolvedFlag.getVariant(),
             resolvedFlag.getReason().toString());
       }
-    } catch (InterruptedException | ExecutionException e) {
-      log.warn(e.getMessage());
-      return new FlagEvaluation<>(
-          defaultValue,
-          "",
-          "ERROR",
-          ErrorType.NETWORK_ERROR,
-          "Error while fetching data from backend");
     } catch (IllegalValuePath | ValueNotFound e) {
       log.warn(e.getMessage());
       return new FlagEvaluation<>(
           defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
+    } catch (IncompatibleValueType | IllegalValueType e) {
+      log.warn(e.getMessage());
+      return new FlagEvaluation<>(
+          defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_TYPE, e.getMessage());
     } catch (Exception e) {
       // catch all for any runtime exception
       log.warn(e.getMessage());

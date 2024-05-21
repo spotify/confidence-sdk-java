@@ -19,4 +19,16 @@ public class ConfidenceExceptions {
       super(message);
     }
   }
+
+  public static class IllegalValueType extends Exception {
+    public IllegalValueType(String message) {
+      super(message);
+    }
+  }
+
+  public static class IncompatibleValueType extends Exception {
+    public IncompatibleValueType(String message) {
+      super(message);
+    }
+  }
 }
