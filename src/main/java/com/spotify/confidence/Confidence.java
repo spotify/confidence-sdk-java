@@ -9,8 +9,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
+import com.spotify.confidence.ConfidenceExceptions.IllegalValuePath;
+import com.spotify.confidence.ConfidenceExceptions.ValueNotFound;
 import com.spotify.confidence.ConfidenceUtils.FlagPath;
-import com.spotify.confidence.ConfidenceUtils.ValueNotFound;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import io.grpc.ManagedChannel;
@@ -144,15 +145,10 @@ public abstract class Confidence implements EventSender, Closeable {
         return new FlagEvaluation<>(defaultValue, "", resolvedFlag.getReason().toString());
       } else {
         final ConfidenceValue confidenceValue;
-        try {
-          confidenceValue =
-              getValueForPath(
-                  flagPath.getPath(),
-                  ConfidenceTypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
-        } catch (ValueNotFound e) {
-          return new FlagEvaluation<>(
-              defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
-        }
+        confidenceValue =
+            getValueForPath(
+                flagPath.getPath(),
+                ConfidenceTypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
 
         // regular resolve was successful
         return new FlagEvaluation<>(
@@ -161,12 +157,22 @@ public abstract class Confidence implements EventSender, Closeable {
             resolvedFlag.getReason().toString());
       }
     } catch (InterruptedException | ExecutionException e) {
+      log.warn(e.getMessage());
       return new FlagEvaluation<>(
           defaultValue,
           "",
           "ERROR",
           ErrorType.NETWORK_ERROR,
           "Error while fetching data from backend");
+    } catch (IllegalValuePath | ValueNotFound e) {
+      log.warn(e.getMessage());
+      return new FlagEvaluation<>(
+          defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
+    } catch (Exception e) {
+      // catch all for any runtime exception
+      log.warn(e.getMessage());
+      return new FlagEvaluation<>(
+          defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
     }
   }
 

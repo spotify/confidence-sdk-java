@@ -1,17 +1,18 @@
 package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
+import com.spotify.confidence.ConfidenceExceptions.ParseError;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.SchemaTypeCase;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StructFlagSchema;
-import dev.openfeature.sdk.exceptions.ParseError;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 class ConfidenceTypeMapper {
 
-  private static ConfidenceValue from(com.google.protobuf.Value value, FlagSchema schema) {
+  private static ConfidenceValue from(com.google.protobuf.Value value, FlagSchema schema)
+      throws ParseError {
     if (schema.getSchemaTypeCase() == SchemaTypeCase.SCHEMATYPE_NOT_SET) {
       throw new ParseError("schemaType not set in FlagSchema");
     }

@@ -4,6 +4,7 @@ import static com.spotify.confidence.ConfidenceUtils.FlagPath.getPath;
 import static com.spotify.confidence.OpenFeatureUtils.getValueForPath;
 
 import com.google.protobuf.Struct;
+import com.spotify.confidence.ConfidenceExceptions.IllegalValuePath;
 import com.spotify.confidence.ConfidenceUtils.FlagPath;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
@@ -144,7 +145,13 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
   public ProviderEvaluation<Value> getObjectEvaluation(
       String key, Value defaultValue, EvaluationContext ctx) {
 
-    final FlagPath flagPath = getPath(key);
+    final FlagPath flagPath;
+    try {
+      flagPath = getPath(key);
+    } catch (IllegalValuePath e) {
+      log.warn(e.getMessage());
+      throw new RuntimeException(e);
+    }
 
     final Struct evaluationContext = OpenFeatureUtils.convertToProto(ctx);
     // resolve the flag by calling the resolver API

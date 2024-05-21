@@ -1,7 +1,8 @@
 package com.spotify.confidence;
 
+import com.spotify.confidence.ConfidenceExceptions.IllegalValuePath;
+import com.spotify.confidence.ConfidenceExceptions.ValueNotFound;
 import com.spotify.confidence.ConfidenceValue.Struct;
-import dev.openfeature.sdk.exceptions.GeneralError;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -66,14 +67,14 @@ final class ConfidenceUtils {
       return path;
     }
 
-    public static FlagPath getPath(String str) {
+    public static FlagPath getPath(String str) throws IllegalValuePath {
       final String regex = Pattern.quote(".");
       final String[] parts = str.split(regex);
 
       if (parts.length == 0) {
         // this happens for malformed corner cases such as: str = "..."
         log.warn("Illegal path string '{}'", str);
-        throw new GeneralError(String.format("Illegal path string '%s'", str));
+        throw new IllegalValuePath(String.format("Illegal path string '%s'", str));
       } else if (parts.length == 1) {
         // str doesn't contain the delimiter
         return new FlagPath(str, List.of());
@@ -90,12 +91,6 @@ final class ConfidenceUtils {
       return prop.getProperty("version");
     } catch (IOException e) {
       throw new RuntimeException("Can't determine version of the SDK", e);
-    }
-  }
-
-  public static class ValueNotFound extends Exception {
-    public ValueNotFound(String message) {
-      super(message);
     }
   }
 }

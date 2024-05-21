@@ -80,4 +80,19 @@ public class ConfidenceTest {
             .startsWith(
                 "Illegal attempt to derive non-existing field 'prop-X' on structure value"));
   }
+
+  @Test
+  void malformedValuePath() {
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final Integer value = confidence.getValue("...", 20);
+    assertEquals(20, value);
+
+    FlagEvaluation<Integer> evaluation = confidence.getEvaluation("...", 20);
+
+    assertEquals(20, evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("ERROR", evaluation.getReason());
+    assertEquals(ErrorType.INVALID_VALUE_PATH, evaluation.getErrorType().get());
+    assertTrue(evaluation.getErrorMessage().get().startsWith("Illegal path string '...'"));
+  }
 }
