@@ -45,4 +45,39 @@ public class ConfidenceTest {
             .build();
     assertEquals(expected, value);
   }
+
+  @Test
+  void unexpectedReturnedFlag() {
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final Integer value = confidence.getValue("wrong-flag.prop-E", 20);
+    assertEquals(20, value);
+
+    FlagEvaluation<Integer> evaluation = confidence.getEvaluation("wrong-flag.prop-E", 20);
+
+    assertEquals(20, evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("ERROR", evaluation.getReason());
+    assertEquals(ErrorType.INTERNAL_ERROR, evaluation.getErrorType().get());
+    assertEquals("Unexpected flag 'flag' from remote", evaluation.getErrorMessage().get());
+  }
+
+  @Test
+  void invalidValuePath() {
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final Integer value = confidence.getValue("flag.prop-X", 20);
+    assertEquals(20, value);
+
+    FlagEvaluation<Integer> evaluation = confidence.getEvaluation("flag.prop-X", 20);
+
+    assertEquals(20, evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("ERROR", evaluation.getReason());
+    assertEquals(ErrorType.INVALID_VALUE_PATH, evaluation.getErrorType().get());
+    assertTrue(
+        evaluation
+            .getErrorMessage()
+            .get()
+            .startsWith(
+                "Illegal attempt to derive non-existing field 'prop-X' on structure value"));
+  }
 }

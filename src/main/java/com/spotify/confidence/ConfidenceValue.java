@@ -425,7 +425,7 @@ public abstract class ConfidenceValue {
           // todo better error
           throw new IllegalStateException();
         }
-        value = values.getOrDefault(path[i], NULL_VALUE);
+        value = values.getOrDefault(path[i], null);
       }
       return value;
     }

@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
 import com.spotify.confidence.ConfidenceUtils.FlagPath;
+import com.spotify.confidence.ConfidenceUtils.ValueNotFound;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import io.grpc.ManagedChannel;
@@ -142,10 +143,16 @@ public abstract class Confidence implements EventSender, Closeable {
         log.debug(errorMessage);
         return new FlagEvaluation<>(defaultValue, "", resolvedFlag.getReason().toString());
       } else {
-        final ConfidenceValue confidenceValue =
-            getValueForPath(
-                flagPath.getPath(),
-                ConfidenceTypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
+        final ConfidenceValue confidenceValue;
+        try {
+          confidenceValue =
+              getValueForPath(
+                  flagPath.getPath(),
+                  ConfidenceTypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
+        } catch (ValueNotFound e) {
+          return new FlagEvaluation<>(
+              defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
+        }
 
         // regular resolve was successful
         return new FlagEvaluation<>(

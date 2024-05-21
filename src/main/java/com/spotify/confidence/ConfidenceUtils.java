@@ -2,7 +2,6 @@ package com.spotify.confidence;
 
 import com.spotify.confidence.ConfidenceValue.Struct;
 import dev.openfeature.sdk.exceptions.GeneralError;
-import dev.openfeature.sdk.exceptions.TypeMismatchError;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +15,8 @@ final class ConfidenceUtils {
 
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(ConfidenceUtils.class);
 
-  static ConfidenceValue getValueForPath(List<String> path, ConfidenceValue fullValue) {
+  static ConfidenceValue getValueForPath(List<String> path, ConfidenceValue fullValue)
+      throws ValueNotFound {
     ConfidenceValue value = fullValue;
     for (String fieldName : path) {
       final Struct structure = value.asStruct();
@@ -24,7 +24,7 @@ final class ConfidenceUtils {
         // value's inner object actually is no structure
         log.warn(
             "Illegal attempt to derive field '{}' on non-structure value '{}'", fieldName, value);
-        throw new TypeMismatchError(
+        throw new ValueNotFound(
             String.format(
                 "Illegal attempt to derive field '%s' on non-structure value '%s'",
                 fieldName, value));
@@ -39,7 +39,7 @@ final class ConfidenceUtils {
             "Illegal attempt to derive non-existing field '{}' on structure value '{}'",
             fieldName,
             structure);
-        throw new TypeMismatchError(
+        throw new ValueNotFound(
             String.format(
                 "Illegal attempt to derive non-existing field '%s' on structure value '%s'",
                 fieldName, structure));
@@ -90,6 +90,12 @@ final class ConfidenceUtils {
       return prop.getProperty("version");
     } catch (IOException e) {
       throw new RuntimeException("Can't determine version of the SDK", e);
+    }
+  }
+
+  public static class ValueNotFound extends Exception {
+    public ValueNotFound(String message) {
+      super(message);
     }
   }
 }
