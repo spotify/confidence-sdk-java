@@ -76,20 +76,21 @@ public class ConfidenceTest {
   @Test
   void getValueIncompatibleType() {
     final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
-    FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-E", "test");
+    final FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-E", "test");
     assertEquals("test", evaluation.getValue());
     assertEquals("", evaluation.getVariant());
     assertEquals("ERROR", evaluation.getReason());
     assertEquals(ErrorType.INVALID_VALUE_TYPE, evaluation.getErrorType().get());
     assertEquals(
-        "Default type class java.lang.String, but value of type class com.spotify.confidence.ConfidenceValue$Integer",
+        "Default type class java.lang.String, but value of "
+            + "type class com.spotify.confidence.ConfidenceValue$Integer",
         evaluation.getErrorMessage().get());
   }
 
   @Test
   void getValueUnsupportedType() {
     final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
-    FlagEvaluation<Date> evaluation =
+    final FlagEvaluation<Date> evaluation =
         confidence.getEvaluation("flag.prop-E", Date.valueOf("2024-4-2"));
     assertEquals(Date.valueOf("2024-4-2"), evaluation.getValue());
     assertEquals("", evaluation.getVariant());
@@ -101,7 +102,7 @@ public class ConfidenceTest {
   @Test
   void getNullValue() {
     final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
-    FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-G.prop-H", "test");
+    final FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-G.prop-H", "test");
     assertEquals("test", evaluation.getValue());
     assertEquals("flags/flag/variants/var-A", evaluation.getVariant());
     assertEquals("RESOLVE_REASON_MATCH", evaluation.getReason());
