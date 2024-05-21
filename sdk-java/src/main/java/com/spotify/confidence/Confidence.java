@@ -186,8 +186,8 @@ public abstract class Confidence implements EventSender, Closeable {
     return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
   }
 
-  public static Confidence.Builder builder(String clientSecret) {
-    return new Confidence.Builder(clientSecret);
+  public static Builder builder(String clientSecret) {
+    return new Builder(clientSecret);
   }
 
   private static class ClientDelegate implements FlagResolverClient, EventSenderEngine {

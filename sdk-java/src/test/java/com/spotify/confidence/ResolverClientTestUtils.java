@@ -54,8 +54,7 @@ public class ResolverClientTestUtils {
     FlagSchema.SchemaTypeCase schemaTypeCase;
   }
 
-  private static ResolvedFlag generateResolvedFlag(
-      List<ResolverClientTestUtils.ValueSchemaHolder> additionalProps) {
+  private static ResolvedFlag generateResolvedFlag(List<ValueSchemaHolder> additionalProps) {
     final Struct.Builder valueBuilder =
         Struct.newBuilder()
             .putAllFields(
@@ -153,8 +152,7 @@ public class ResolverClientTestUtils {
         .build();
   }
 
-  private static FlagSchema.Builder getSchemaBuilder(
-      ResolverClientTestUtils.ValueSchemaHolder valueSchemaHolder) {
+  private static FlagSchema.Builder getSchemaBuilder(ValueSchemaHolder valueSchemaHolder) {
     final FlagSchema.Builder builder = FlagSchema.newBuilder();
     switch (valueSchemaHolder.schemaTypeCase) {
       case STRUCT_SCHEMA:

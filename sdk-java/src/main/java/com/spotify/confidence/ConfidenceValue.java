@@ -122,31 +122,31 @@ public abstract class ConfidenceValue {
     return new BooleanValue(value);
   }
 
-  public static ConfidenceValue.List of(java.util.List<ConfidenceValue> values) {
+  public static List of(java.util.List<ConfidenceValue> values) {
     return new List(values);
   }
 
-  public static ConfidenceValue.List ofStrings(java.util.List<String> values) {
+  public static List ofStrings(java.util.List<String> values) {
     return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
   }
 
-  public static ConfidenceValue.List ofBooleans(java.util.List<Boolean> values) {
+  public static List ofBooleans(java.util.List<Boolean> values) {
     return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
   }
 
-  public static ConfidenceValue.List ofIntegers(java.util.List<java.lang.Integer> values) {
+  public static List ofIntegers(java.util.List<java.lang.Integer> values) {
     return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
   }
 
-  public static ConfidenceValue.List ofDoubles(java.util.List<java.lang.Double> values) {
+  public static List ofDoubles(java.util.List<java.lang.Double> values) {
     return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
   }
 
-  public static ConfidenceValue.List ofTimestamps(java.util.List<Instant> values) {
+  public static List ofTimestamps(java.util.List<Instant> values) {
     return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
   }
 
-  public static ConfidenceValue.List ofDates(java.util.List<LocalDate> values) {
+  public static List ofDates(java.util.List<LocalDate> values) {
     return new List(values.stream().map(ConfidenceValue::of).collect(Collectors.toList()));
   }
 
@@ -521,7 +521,7 @@ public abstract class ConfidenceValue {
         return this;
       }
 
-      public Builder setBooleans(String key, java.util.List<java.lang.Boolean> values) {
+      public Builder setBooleans(String key, java.util.List<Boolean> values) {
         builder.put(key, ConfidenceValue.ofBooleans(values));
         return this;
       }
