@@ -2,6 +2,8 @@ package com.spotify.confidence;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.spotify.confidence.ConfidenceValue.Struct;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class ConfidenceTest {
@@ -14,5 +16,33 @@ public class ConfidenceTest {
     final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("flag.prop-E", 20);
     assertEquals(50, value);
+  }
+
+  @Test
+  void getFullValue() {
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final Struct value = confidence.getValue("flag", Struct.EMPTY);
+    // This mocked struct is defined in ResolverClientTestUtils
+    final Struct expected =
+        Struct.builder()
+            .set("prop-A", ConfidenceValue.of(false))
+            .set(
+                "prop-B",
+                Struct.builder()
+                    .set("prop-C", ConfidenceValue.of("str-val"))
+                    .set("prop-D", ConfidenceValue.of(5.3))
+                    .build())
+            .set("prop-E", ConfidenceValue.of(50))
+            .set(
+                "prop-F",
+                ConfidenceValue.List.of(List.of(ConfidenceValue.of("a"), ConfidenceValue.of("b"))))
+            .set(
+                "prop-G",
+                Struct.builder()
+                    .set("prop-H", ConfidenceValue.NULL_VALUE)
+                    .set("prop-I", ConfidenceValue.NULL_VALUE)
+                    .build())
+            .build();
+    assertEquals(expected, value);
   }
 }
