@@ -42,7 +42,7 @@ public class ConfidenceResourceManagementTest {
   public void testCloseChildShouldNotThrowFromSend() throws IOException {
     final Confidence child = root.withContext(Map.of("child-key", ConfidenceValue.of("child")));
     child.close();
-    child.send("Test");
+    child.track("Test");
   }
 
   @Test
@@ -51,7 +51,7 @@ public class ConfidenceResourceManagementTest {
     final Confidence child = root.withContext(Map.of("child-key", ConfidenceValue.of("child")));
     child.close();
     root.resolveFlags("test").get();
-    root.send("test", ConfidenceValue.of(Map.of("messageKey", ConfidenceValue.of("parent"))));
+    root.track("test", ConfidenceValue.of(Map.of("messageKey", ConfidenceValue.of("parent"))));
   }
 
   @Test

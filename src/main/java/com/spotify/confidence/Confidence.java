@@ -81,18 +81,18 @@ public abstract class Confidence implements EventSender, Closeable {
   }
 
   @Override
-  public void send(String eventName) {
+  public void track(String eventName) {
     try {
-      client().send(eventName, getContext(), Optional.empty());
+      client().emit(eventName, getContext(), Optional.empty());
     } catch (IllegalStateException e) {
       // swallow this exception
     }
   }
 
   @Override
-  public void send(String eventName, ConfidenceValue.Struct message) {
+  public void track(String eventName, ConfidenceValue.Struct message) {
     try {
-      client().send(eventName, getContext(), Optional.of(message));
+      client().emit(eventName, getContext(), Optional.of(message));
     } catch (IllegalStateException e) {
       // swallow this exception
     }
@@ -130,9 +130,9 @@ public abstract class Confidence implements EventSender, Closeable {
     }
 
     @Override
-    public void send(
+    public void emit(
         String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
-      this.eventSenderEngine.send(name, context, message);
+      this.eventSenderEngine.emit(name, context, message);
     }
 
     @Override

@@ -33,12 +33,12 @@ public class EventSenderEngineTest {
             clock,
             DEFAULT_MAX_FLUSH_INTERVAL,
             DEFAULT_MAX_MEMORY_CONSUMPTION);
-    engine.send(
+    engine.emit(
         "navigate",
         ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
         Optional.empty());
     engine.close();
-    engine.send(
+    engine.emit(
         "navigate",
         ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
         Optional.empty());
@@ -59,7 +59,7 @@ public class EventSenderEngineTest {
             DEFAULT_MAX_MEMORY_CONSUMPTION);
     int size = 0;
     while (size++ < numEvents) {
-      engine.send(
+      engine.emit(
           "navigate",
           ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
           Optional.empty());
@@ -93,7 +93,7 @@ public class EventSenderEngineTest {
             DEFAULT_MAX_FLUSH_INTERVAL,
             DEFAULT_MAX_MEMORY_CONSUMPTION);
     // wait for the flush timeout to trigger the upload
-    engine.send(
+    engine.emit(
         "my_event",
         ConfidenceValue.of(
             ImmutableMap.of(
@@ -146,7 +146,7 @@ public class EventSenderEngineTest {
             DEFAULT_MAX_MEMORY_CONSUMPTION);
 
     // send only one event
-    engine.send(
+    engine.emit(
         "navigate",
         ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
         Optional.empty());
@@ -176,7 +176,7 @@ public class EventSenderEngineTest {
             DEFAULT_MAX_FLUSH_INTERVAL,
             DEFAULT_MAX_MEMORY_CONSUMPTION);
     for (int i = 0; i < numEvents; i++) {
-      engine.send(
+      engine.emit(
           "test",
           ConfidenceValue.Struct.EMPTY,
           Optional.of(ConfidenceValue.of(ImmutableMap.of("id", ConfidenceValue.of(i)))));
@@ -219,7 +219,7 @@ public class EventSenderEngineTest {
       eventTasks[i] =
           CompletableFuture.runAsync(
               () -> {
-                engine.send(
+                engine.emit(
                     "navigate",
                     ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
                     Optional.empty());
@@ -250,7 +250,7 @@ public class EventSenderEngineTest {
     // set up the engine so that it cannot support more than 1 event in memory
     final EventSenderEngineImpl engine =
         new EventSenderEngineImpl(10, fakeUploader, clock, Duration.ofMillis(10), 1024);
-    engine.send("fake", ConfidenceValue.Struct.EMPTY, Optional.empty());
+    engine.emit("fake", ConfidenceValue.Struct.EMPTY, Optional.empty());
     isUploadCalled.join();
     Thread.currentThread().interrupt();
     engine.close();
@@ -272,9 +272,9 @@ public class EventSenderEngineTest {
             10, fakeUploader, clock, DEFAULT_MAX_FLUSH_INTERVAL, expectedEvent.getSerializedSize());
 
     // send two events
-    engine.send("navigate", ConfidenceValue.of(Map.of()), Optional.empty());
+    engine.emit("navigate", ConfidenceValue.of(Map.of()), Optional.empty());
     assertThat(engine.getEstimatedMemoryConsumption()).isEqualTo(expectedEvent.getSerializedSize());
-    engine.send("navigate", ConfidenceValue.of(Map.of()), Optional.empty());
+    engine.emit("navigate", ConfidenceValue.of(Map.of()), Optional.empty());
 
     engine.close();
     // the first event should be uploaded but the second one should not because it was rejected and
