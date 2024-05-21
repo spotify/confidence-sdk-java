@@ -117,7 +117,7 @@ class ConfidenceTypeMapper {
               "Default type %s, but value of type %s", defaultValue.getClass(), value.getClass()));
     } else if (defaultValue instanceof Integer) {
       if (value.isInteger()) {
-        return (T) java.lang.Integer.valueOf(value.asInteger());
+        return (T) Integer.valueOf(value.asInteger());
       }
       throw new IncompatibleValueType(
           String.format(

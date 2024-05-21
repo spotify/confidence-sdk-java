@@ -102,7 +102,8 @@ public class ConfidenceTest {
   @Test
   void getNullValue() {
     final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
-    final FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-G.prop-H", "test");
+    final FlagEvaluation<String> evaluation =
+        confidence.getEvaluation("flag.prop-G.prop-H", "test");
     assertEquals("test", evaluation.getValue());
     assertEquals("flags/flag/variants/var-A", evaluation.getVariant());
     assertEquals("RESOLVE_REASON_MATCH", evaluation.getReason());
