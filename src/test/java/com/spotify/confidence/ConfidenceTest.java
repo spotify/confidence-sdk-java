@@ -2,12 +2,18 @@ package com.spotify.confidence;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.google.protobuf.Value;
 import com.spotify.confidence.ConfidenceValue.Struct;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
+import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
+import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StringFlagSchema;
+import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StructFlagSchema;
 import java.io.IOException;
+import java.sql.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Test;
 
@@ -68,7 +74,7 @@ public class ConfidenceTest {
   }
 
   @Test
-  void getValueWrongType() {
+  void getValueIncompatibleType() {
     final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-E", "test");
     assertEquals("test", evaluation.getValue());
@@ -78,6 +84,18 @@ public class ConfidenceTest {
     assertEquals(
         "Default type class java.lang.String, but value of type class com.spotify.confidence.ConfidenceValue$Integer",
         evaluation.getErrorMessage().get());
+  }
+
+  @Test
+  void getValueUnsupportedType() {
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    FlagEvaluation<Date> evaluation =
+        confidence.getEvaluation("flag.prop-E", Date.valueOf("2024-4-2"));
+    assertEquals(Date.valueOf("2024-4-2"), evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("ERROR", evaluation.getReason());
+    assertEquals(ErrorType.INVALID_VALUE_TYPE, evaluation.getErrorType().get());
+    assertEquals("Illegal value type: class java.sql.Date", evaluation.getErrorMessage().get());
   }
 
   @Test
@@ -180,6 +198,48 @@ public class ConfidenceTest {
     assertEquals("RESOLVE_REASON_NO_SEGMENT_MATCH", evaluation.getReason());
     assertTrue(evaluation.getErrorType().isEmpty());
     assertTrue(evaluation.getErrorMessage().isEmpty());
+  }
+
+  @Test
+  void flagWithErroneousSchema() {
+    fakeFlagResolverClient.response =
+        ResolveFlagsResponse.newBuilder()
+            .addResolvedFlags(
+                ResolvedFlag.newBuilder()
+                    .setFlagSchema(
+                        StructFlagSchema.newBuilder()
+                            .putSchema(
+                                "key",
+                                FlagSchema.newBuilder()
+                                    .setStringSchema(StringFlagSchema.getDefaultInstance())
+                                    .build()))
+                    .setValue(
+                        com.google.protobuf.Struct.newBuilder()
+                            .putAllFields(
+                                Map.of("key", Value.newBuilder().setNumberValue(3.14).build()))
+                            .build())
+                    .setFlag("flags/wrong-schema-flag")
+                    .setVariant("testB")
+                    .setReason(ResolveReason.RESOLVE_REASON_MATCH)
+                    .build())
+            .build();
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final Integer value = confidence.getValue("wrong-schema-flag", 20);
+    assertEquals(20, value);
+
+    final FlagEvaluation<Integer> evaluation = confidence.getEvaluation("wrong-schema-flag", 20);
+
+    assertEquals(20, evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("ERROR", evaluation.getReason());
+    assertEquals(ErrorType.INTERNAL_ERROR, evaluation.getErrorType().get());
+    assertTrue(
+        evaluation
+            .getErrorMessage()
+            .get()
+            .startsWith(
+                "Mismatch between schema and value: number_value: 3.14\n"
+                    + " is a Number, but it should be STRING_SCHEMA"));
   }
 
   @Test

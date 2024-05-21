@@ -30,37 +30,47 @@ class ConfidenceTypeMapper {
             if (intVal != value.getNumberValue()) {
               throw new ParseError(
                   String.format(
-                      "%s value should be an int, but it is a double/long", mismatchPrefix));
+                      "%s %s should be an int, but it is a double/long", mismatchPrefix, value));
             }
             return ConfidenceValue.of(intVal);
           case DOUBLE_SCHEMA:
             return ConfidenceValue.of(value.getNumberValue());
           default:
-            throw new ParseError("Number field must have schema type int or double");
+            throw new ParseError(
+                String.format(
+                    "%s %s is a Number, but it should be %s",
+                    mismatchPrefix, value, schema.getSchemaTypeCase()));
         }
       case STRING_VALUE:
         if (schema.getSchemaTypeCase() != SchemaTypeCase.STRING_SCHEMA) {
           throw new ParseError(
               String.format(
-                  "%s value is a String, but it should be something else", mismatchPrefix));
+                  "%s %s is a String, but it should be %s",
+                  mismatchPrefix, value, schema.getSchemaTypeCase()));
         }
         return ConfidenceValue.of(value.getStringValue());
       case BOOL_VALUE:
         if (schema.getSchemaTypeCase() != SchemaTypeCase.BOOL_SCHEMA) {
           throw new ParseError(
-              String.format("%s value is a bool, but should be something else", mismatchPrefix));
+              String.format(
+                  "%s %s is a Bool, but it should be %s",
+                  mismatchPrefix, value, schema.getSchemaTypeCase()));
         }
         return ConfidenceValue.of(value.getBoolValue());
       case STRUCT_VALUE:
         if (schema.getSchemaTypeCase() != SchemaTypeCase.STRUCT_SCHEMA) {
           throw new ParseError(
-              String.format("%s value is a struct, but should be something else", mismatchPrefix));
+              String.format(
+                  "%s %s is a Struct, but it should be %s",
+                  mismatchPrefix, value, schema.getSchemaTypeCase()));
         }
         return from(value.getStructValue(), schema.getStructSchema());
       case LIST_VALUE:
         if (schema.getSchemaTypeCase() != SchemaTypeCase.LIST_SCHEMA) {
           throw new ParseError(
-              String.format("%s value is a list, but should be something else", mismatchPrefix));
+              String.format(
+                  "%s %s is a List, but it should be %s",
+                  mismatchPrefix, value, schema.getSchemaTypeCase()));
         }
         final List<ConfidenceValue> mappedList =
             value.getListValue().getValuesList().stream()
@@ -126,6 +136,14 @@ class ConfidenceTypeMapper {
       throw new IncompatibleValueType(
           String.format(
               "Default type %s, but value of type %s", defaultValue.getClass(), value.getClass()));
+    } else if (defaultValue instanceof ConfidenceValue.List) {
+      if (value.isList()) {
+        return (T) value.asList();
+      }
+      throw new IncompatibleValueType(
+          String.format(
+              "Default value type %s, but value of type %s",
+              defaultValue.getClass(), value.getClass()));
     } else if (defaultValue instanceof ConfidenceValue.Struct) {
       if (value.isStruct()) {
         return (T) value.asStruct();
