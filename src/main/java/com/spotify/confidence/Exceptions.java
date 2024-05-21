@@ -1,6 +1,6 @@
 package com.spotify.confidence;
 
-public class ConfidenceExceptions {
+public class Exceptions {
 
   public static class ValueNotFound extends Exception {
     public ValueNotFound(String message) {

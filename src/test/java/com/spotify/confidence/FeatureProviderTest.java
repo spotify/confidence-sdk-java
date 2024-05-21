@@ -404,8 +404,7 @@ final class FeatureProviderTest {
     assertThat(evaluationDetails.getVariant()).isBlank();
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
     assertThat(evaluationDetails.getErrorMessage())
-        .isEqualTo(
-            "com.spotify.confidence.ConfidenceExceptions$IllegalValuePath: Illegal path string '...'");
+        .isEqualTo("com.spotify.confidence.Exceptions$IllegalValuePath: Illegal path string '...'");
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
   }
 

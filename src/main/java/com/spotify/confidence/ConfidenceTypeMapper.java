@@ -1,9 +1,9 @@
 package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
-import com.spotify.confidence.ConfidenceExceptions.IllegalValueType;
-import com.spotify.confidence.ConfidenceExceptions.IncompatibleValueType;
-import com.spotify.confidence.ConfidenceExceptions.ParseError;
+import com.spotify.confidence.Exceptions.IllegalValueType;
+import com.spotify.confidence.Exceptions.IncompatibleValueType;
+import com.spotify.confidence.Exceptions.ParseError;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.SchemaTypeCase;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StructFlagSchema;

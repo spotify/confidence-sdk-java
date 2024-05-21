@@ -1,8 +1,8 @@
 package com.spotify.confidence;
 
-import com.spotify.confidence.ConfidenceExceptions.IllegalValuePath;
-import com.spotify.confidence.ConfidenceExceptions.ValueNotFound;
 import com.spotify.confidence.ConfidenceValue.Struct;
+import com.spotify.confidence.Exceptions.IllegalValuePath;
+import com.spotify.confidence.Exceptions.ValueNotFound;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
