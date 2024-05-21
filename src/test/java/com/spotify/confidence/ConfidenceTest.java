@@ -21,19 +21,14 @@ public class ConfidenceTest {
     final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("flag.prop-E", 20);
     assertEquals(50, value);
-  }
 
-  @Test
-  void getValueWrongType() {
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
-    FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-E", "test");
-    assertEquals("test", evaluation.getValue());
-    assertEquals("", evaluation.getVariant());
-    assertEquals("ERROR", evaluation.getReason());
-    assertEquals(ErrorType.INVALID_VALUE_TYPE, evaluation.getErrorType().get());
-    assertEquals(
-        "Default type class java.lang.String, but value of type class com.spotify.confidence.ConfidenceValue$Integer",
-        evaluation.getErrorMessage().get());
+    final FlagEvaluation<Integer> evaluation = confidence.getEvaluation("flag.prop-E", 20);
+
+    assertEquals(50, evaluation.getValue());
+    assertEquals("flags/flag/variants/var-A", evaluation.getVariant());
+    assertEquals("RESOLVE_REASON_MATCH", evaluation.getReason());
+    assertTrue(evaluation.getErrorType().isEmpty());
+    assertTrue(evaluation.getErrorMessage().isEmpty());
   }
 
   @Test
@@ -62,6 +57,38 @@ public class ConfidenceTest {
                     .build())
             .build();
     assertEquals(expected, value);
+
+    final FlagEvaluation<Struct> evaluation = confidence.getEvaluation("flag", Struct.EMPTY);
+
+    assertEquals(expected, evaluation.getValue());
+    assertEquals("flags/flag/variants/var-A", evaluation.getVariant());
+    assertEquals("RESOLVE_REASON_MATCH", evaluation.getReason());
+    assertTrue(evaluation.getErrorType().isEmpty());
+    assertTrue(evaluation.getErrorMessage().isEmpty());
+  }
+
+  @Test
+  void getValueWrongType() {
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-E", "test");
+    assertEquals("test", evaluation.getValue());
+    assertEquals("", evaluation.getVariant());
+    assertEquals("ERROR", evaluation.getReason());
+    assertEquals(ErrorType.INVALID_VALUE_TYPE, evaluation.getErrorType().get());
+    assertEquals(
+        "Default type class java.lang.String, but value of type class com.spotify.confidence.ConfidenceValue$Integer",
+        evaluation.getErrorMessage().get());
+  }
+
+  @Test
+  void getNullValue() {
+    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-G.prop-H", "test");
+    assertEquals("test", evaluation.getValue());
+    assertEquals("flags/flag/variants/var-A", evaluation.getVariant());
+    assertEquals("RESOLVE_REASON_MATCH", evaluation.getReason());
+    assertTrue(evaluation.getErrorType().isEmpty());
+    assertTrue(evaluation.getErrorMessage().isEmpty());
   }
 
   @Test

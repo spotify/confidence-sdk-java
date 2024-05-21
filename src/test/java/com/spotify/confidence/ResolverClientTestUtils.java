@@ -4,6 +4,7 @@ import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import java.util.Collections;
@@ -146,6 +147,7 @@ public class ResolverClientTestUtils {
     return ResolvedFlag.newBuilder()
         .setFlag("flags/flag")
         .setVariant("flags/flag/variants/var-A")
+        .setReason(ResolveReason.RESOLVE_REASON_MATCH)
         .setValue(valueBuilder)
         .setFlagSchema(schemaBuilder)
         .build();
