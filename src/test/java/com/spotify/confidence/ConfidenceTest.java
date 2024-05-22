@@ -11,7 +11,7 @@ import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StringFlagSchema;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StructFlagSchema;
 import java.io.IOException;
-import java.sql.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -94,13 +94,14 @@ final class ConfidenceTest {
 
   @Test
   void getValueUnsupportedType() {
-    final FlagEvaluation<Date> evaluation =
-        confidence.getEvaluation("flag.prop-E", Date.valueOf("2024-4-2"));
-    assertEquals(Date.valueOf("2024-4-2"), evaluation.getValue());
+    final java.util.Date dateObject = java.util.Date.from(Instant.ofEpochSecond(100));
+    final FlagEvaluation<java.util.Date> evaluation =
+        confidence.getEvaluation("flag.prop-E", dateObject);
+    assertEquals(dateObject, evaluation.getValue());
     assertEquals("", evaluation.getVariant());
     assertEquals("ERROR", evaluation.getReason());
     assertEquals(ErrorType.INVALID_VALUE_TYPE, evaluation.getErrorType().get());
-    assertEquals("Illegal value type: class java.sql.Date", evaluation.getErrorMessage().get());
+    assertEquals("Illegal value type: class java.util.Date", evaluation.getErrorMessage().get());
   }
 
   @Test
