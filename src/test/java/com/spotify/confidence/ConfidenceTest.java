@@ -76,6 +76,7 @@ public class ConfidenceTest {
   @Test
   void getValueIncompatibleType() {
     final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    // flag.prop-E is actually of type int
     final FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-E", "test");
     assertEquals("test", evaluation.getValue());
     assertEquals("", evaluation.getVariant());
