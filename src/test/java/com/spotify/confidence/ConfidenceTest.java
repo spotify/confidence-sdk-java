@@ -15,16 +15,22 @@ import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ConfidenceTest {
+final class ConfidenceTest {
   private final FakeEventSenderEngine fakeEngine = new FakeEventSenderEngine(new FakeClock());
   private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
       new ResolverClientTestUtils.FakeFlagResolverClient();
+  private static Confidence confidence;
+
+  @BeforeEach
+  void beforeEach() {
+    confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
+  }
 
   @Test
   void getValue() {
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("flag.prop-E", 20);
     assertEquals(50, value);
 
@@ -39,7 +45,6 @@ public class ConfidenceTest {
 
   @Test
   void getFullValue() {
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Struct value = confidence.getValue("flag", Struct.EMPTY);
     // This mocked struct is defined in ResolverClientTestUtils
     final Struct expected =
@@ -75,7 +80,6 @@ public class ConfidenceTest {
 
   @Test
   void getValueIncompatibleType() {
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     // flag.prop-E is actually of type int
     final FlagEvaluation<String> evaluation = confidence.getEvaluation("flag.prop-E", "test");
     assertEquals("test", evaluation.getValue());
@@ -90,7 +94,6 @@ public class ConfidenceTest {
 
   @Test
   void getValueUnsupportedType() {
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final FlagEvaluation<Date> evaluation =
         confidence.getEvaluation("flag.prop-E", Date.valueOf("2024-4-2"));
     assertEquals(Date.valueOf("2024-4-2"), evaluation.getValue());
@@ -102,7 +105,6 @@ public class ConfidenceTest {
 
   @Test
   void getNullValue() {
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final FlagEvaluation<String> evaluation =
         confidence.getEvaluation("flag.prop-G.prop-H", "test");
     assertEquals("test", evaluation.getValue());
@@ -114,7 +116,6 @@ public class ConfidenceTest {
 
   @Test
   void unexpectedReturnedFlag() {
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("wrong-flag.prop-E", 20);
     assertEquals(20, value);
 
@@ -129,7 +130,6 @@ public class ConfidenceTest {
 
   @Test
   void invalidValuePath() {
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("flag.prop-X", 20);
     assertEquals(20, value);
 
@@ -149,7 +149,6 @@ public class ConfidenceTest {
 
   @Test
   void malformedValuePath() {
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("...", 20);
     assertEquals(20, value);
 
@@ -165,7 +164,6 @@ public class ConfidenceTest {
   @Test
   void flagNotFound() {
     fakeFlagResolverClient.response = ResolveFlagsResponse.newBuilder().getDefaultInstanceForType();
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("unknown-flag", 20);
     assertEquals(20, value);
 
@@ -190,7 +188,6 @@ public class ConfidenceTest {
                     .setReason(ResolveReason.RESOLVE_REASON_NO_SEGMENT_MATCH)
                     .build())
             .build();
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("no-match-flag", 20);
     assertEquals(20, value);
 
@@ -226,7 +223,6 @@ public class ConfidenceTest {
                     .setReason(ResolveReason.RESOLVE_REASON_MATCH)
                     .build())
             .build();
-    final Confidence confidence = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final Integer value = confidence.getValue("wrong-schema-flag", 20);
     assertEquals(20, value);
 
