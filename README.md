@@ -30,8 +30,8 @@ To use a snapshot, add the following repository to your `pom.xml`:
 
 ## Usage
 
-The SDK is instantiated using a client token that is configured in the Confidence UI or via the
-management.
+The SDK is instantiated using a client secret that is configured in the Confidence UI or via the
+management console.
 
 ### Resolving flags
 Flag values are evaluated remotely and returned to the application:
