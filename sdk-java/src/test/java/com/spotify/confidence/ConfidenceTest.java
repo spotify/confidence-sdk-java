@@ -3,7 +3,14 @@ package com.spotify.confidence;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.protobuf.Value;
-import com.spotify.confidence.ConfidenceValue.Struct;
+import com.spotify.confidence.common.ConfidenceUtils.ResolverClientTestUtils;
+import com.spotify.confidence.common.ConfidenceValue;
+import com.spotify.confidence.common.ConfidenceValue.Struct;
+import com.spotify.confidence.common.ErrorType;
+import com.spotify.confidence.common.FakeClock;
+import com.spotify.confidence.common.FakeEventSenderEngine;
+import com.spotify.confidence.common.FlagEvaluation;
+import com.spotify.confidence.common.FlagResolverClient;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
@@ -88,7 +95,7 @@ final class ConfidenceTest {
     assertEquals(ErrorType.INVALID_VALUE_TYPE, evaluation.getErrorType().get());
     assertEquals(
         "Default type class java.lang.String, but value of "
-            + "type class com.spotify.confidence.ConfidenceValue$Integer",
+            + "type class com.spotify.confidence.common.ConfidenceValue$Integer",
         evaluation.getErrorMessage().get());
   }
 

@@ -5,6 +5,7 @@
   <modules>
     <module>sdk-java</module>
     <module>openfeature-provider</module>
+    <module>common</module>
   </modules>
 
   <distributionManagement>
@@ -99,11 +100,6 @@
   <dependencies>
     <!-- compile scope -->
     <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-netty-shaded</artifactId>
-      <version>${grpc.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java-util</artifactId>
       <version>${protobuf.version}</version>
@@ -142,11 +138,6 @@
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
       <version>${protobuf.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>dev.openfeature</groupId>
-      <artifactId>sdk</artifactId>
-      <version>1.6.1</version>
     </dependency>
     <dependency>
       <groupId>javax.annotation</groupId>

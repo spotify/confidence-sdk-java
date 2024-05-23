@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ListValue;
+import com.spotify.confidence.common.ConfidenceValue;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;

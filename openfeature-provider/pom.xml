@@ -10,4 +10,24 @@
   </parent>
 
   <artifactId>openfeature-provider</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.spotify.confidence</groupId>
+      <artifactId>sdk-java</artifactId>
+      <version>0.0.12-SNAPSHOT</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify.confidence</groupId>
+      <artifactId>common</artifactId>
+      <version>0.0.12-SNAPSHOT</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>dev.openfeature</groupId>
+      <artifactId>sdk</artifactId>
+      <version>1.6.1</version>
+    </dependency>
+  </dependencies>
 </project>

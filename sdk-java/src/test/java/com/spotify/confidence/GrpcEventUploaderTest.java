@@ -1,10 +1,14 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.EventUploader.event;
+import static com.spotify.confidence.common.EventUploader.event;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.Timestamp;
+import com.spotify.confidence.common.ConfidenceValue;
+import com.spotify.confidence.common.ConfidenceValue.Struct;
+import com.spotify.confidence.common.FakeClock;
+import com.spotify.confidence.common.GrpcEventUploader;
 import com.spotify.confidence.events.v1.EventError;
 import com.spotify.confidence.events.v1.EventError.Reason;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
@@ -174,7 +178,7 @@ class GrpcEventUploaderTest {
     assertThat(result).isFalse();
   }
 
-  private ConfidenceValue.Struct contextStruct(String s) {
+  private Struct contextStruct(String s) {
     return ConfidenceValue.of(ImmutableMap.of("contextKey", ConfidenceValue.of("value_" + s)));
   }
 

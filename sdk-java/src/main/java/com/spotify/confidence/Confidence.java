@@ -1,19 +1,29 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.ConfidenceTypeMapper.getTyped;
-import static com.spotify.confidence.ConfidenceUtils.FlagPath.getPath;
-import static com.spotify.confidence.ConfidenceUtils.getValueForPath;
+import static com.spotify.confidence.common.ConfidenceTypeMapper.getTyped;
+import static com.spotify.confidence.common.ConfidenceUtils.FlagPath.getPath;
+import static com.spotify.confidence.common.ConfidenceUtils.getValueForPath;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
-import com.spotify.confidence.ConfidenceUtils.FlagPath;
-import com.spotify.confidence.Exceptions.IllegalValuePath;
-import com.spotify.confidence.Exceptions.IllegalValueType;
-import com.spotify.confidence.Exceptions.IncompatibleValueType;
-import com.spotify.confidence.Exceptions.ValueNotFound;
+import com.spotify.confidence.common.ConfidenceTypeMapper;
+import com.spotify.confidence.common.ConfidenceUtils.FlagPath;
+import com.spotify.confidence.common.ConfidenceValue;
+import com.spotify.confidence.common.ErrorType;
+import com.spotify.confidence.common.EventSender;
+import com.spotify.confidence.common.EventSenderEngine;
+import com.spotify.confidence.common.EventSenderEngineImpl;
+import com.spotify.confidence.common.Exceptions.IllegalValuePath;
+import com.spotify.confidence.common.Exceptions.IllegalValueType;
+import com.spotify.confidence.common.Exceptions.IncompatibleValueType;
+import com.spotify.confidence.common.Exceptions.ValueNotFound;
+import com.spotify.confidence.common.FlagEvaluation;
+import com.spotify.confidence.common.FlagResolverClient;
+import com.spotify.confidence.common.FlagResolverClientImpl;
+import com.spotify.confidence.common.GrpcFlagResolver;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import io.grpc.ManagedChannel;
@@ -173,12 +183,12 @@ public abstract class Confidence implements EventSender, Closeable {
     }
   }
 
-  CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName) {
+  public CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName) {
     return client().resolveFlags(flagName, getContext());
   }
 
   @VisibleForTesting
-  static Confidence create(
+  public static Confidence create(
       EventSenderEngine eventSenderEngine, FlagResolverClient flagResolverClient) {
     final Closer closer = Closer.create();
     closer.register(eventSenderEngine);

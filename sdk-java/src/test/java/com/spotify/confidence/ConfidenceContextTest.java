@@ -3,13 +3,17 @@ package com.spotify.confidence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
+import com.spotify.confidence.common.ConfidenceUtils.ResolverClientTestUtils.FakeFlagResolverClient;
+import com.spotify.confidence.common.ConfidenceValue;
+import com.spotify.confidence.common.EventSender;
+import com.spotify.confidence.common.FakeClock;
+import com.spotify.confidence.common.FakeEventSenderEngine;
 import org.junit.jupiter.api.Test;
 
 public class ConfidenceContextTest {
 
   private final FakeEventSenderEngine fakeEngine = new FakeEventSenderEngine(new FakeClock());
-  private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
-      new ResolverClientTestUtils.FakeFlagResolverClient();
+  private final FakeFlagResolverClient fakeFlagResolverClient = new FakeFlagResolverClient();
 
   @Test
   public void getContextContainsParentContextValues() {

@@ -1,6 +1,7 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.EventSenderEngineImpl.*;
+import static com.spotify.confidence.common.EventSenderEngineImpl.DEFAULT_MAX_FLUSH_INTERVAL;
+import static com.spotify.confidence.common.EventSenderEngineImpl.DEFAULT_MAX_MEMORY_CONSUMPTION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -8,6 +9,12 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
+import com.spotify.confidence.common.ConfidenceUtils.ResolverClientTestUtils.FakeFlagResolverClient;
+import com.spotify.confidence.common.ConfidenceValue;
+import com.spotify.confidence.common.EventSenderEngine;
+import com.spotify.confidence.common.EventSenderEngineImpl;
+import com.spotify.confidence.common.EventUploader;
+import com.spotify.confidence.common.FakeClock;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
@@ -17,8 +24,7 @@ import org.junit.jupiter.api.Test;
 
 public class EventSenderEngineTest {
 
-  private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
-      new ResolverClientTestUtils.FakeFlagResolverClient();
+  private final FakeFlagResolverClient fakeFlagResolverClient = new FakeFlagResolverClient();
 
   private final FakeClock clock = new FakeClock();
 
