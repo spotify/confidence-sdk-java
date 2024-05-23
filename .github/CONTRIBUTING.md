@@ -37,4 +37,4 @@ Github Actions are set up that are able to:
 In order to promote an uploaded version from **Staging** to **Release** (hence making it openly available on [Maven Central Search](https://central.sonatype.com/)) a user with the right credentials must login into the the [Sonatype UI](https://oss.sonatype.org/#welcome) and perform the release process manually.
 
 #### After realeasing
-After a release PR is merged, the main branch will stay at the release version (non-snapshot) until updated. Release please will create a PR ([example](https://github.com/spotify/confidence-openfeature-provider-java/pull/55)) that does this "snapshot bump". The recommendation is to merge that PR directly when possible.
+After a release PR is merged, the main branch will stay at the release version (non-snapshot) until updated. Release please will create a PR ([example](https://github.com/spotify/confidence-sdk-java/pull/55)) that does this "snapshot bump". The recommendation is to merge that PR directly when possible.
