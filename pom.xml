@@ -15,7 +15,7 @@
 
   <groupId>com.spotify.confidence</groupId>
   <artifactId>sdk-java</artifactId>
-  <version>0.0.12</version>
+  <version>0.0.13-SNAPSHOT</version>
 
   <url>https://github.com/spotify/confidence-sdk-java</url>
   <description>Confidence SDK for Java</description>
