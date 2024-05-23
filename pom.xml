@@ -60,7 +60,7 @@
           scm:git:git@github.com:spotify/confidence-sdk-java.git
       </connection>
       <developerConnection>
-          scm:git:git@github.com:spotify/sdk-java.git
+          scm:git:git@github.com:spotify/confidence-sdk-java.git
       </developerConnection>
   </scm>
   <developers>
