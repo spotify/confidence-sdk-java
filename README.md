@@ -38,10 +38,13 @@ Flag values are evaluated remotely and returned to the application:
 ```java
 final Confidence confidence = Confidence.builder("<CLIENT_TOKEN>").build();
 confidence.setContext(Map.of("country", ConfidenceValue.of("SE")));
-final String propertyValue = confidence.getValue(
-    "flag-name.property-name",
-    "defaultValue"
-);
+final String propertyValue =
+    confidence
+        .withContext(
+            Map.of(
+                "user_id", ConfidenceValue.of("<some-user-id>"),
+                "country", ConfidenceValue.of("SE")))
+        .getValue("flag-name.property-name", "defaultValue");
 ```
 
 ### Tracking events
