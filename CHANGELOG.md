@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.0.12](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.11...v0.0.12) (2024-05-23)
+
+
+### ✨ New Features
+
+* Native getEvaluation APIs ([#124](https://github.com/spotify/confidence-openfeature-provider-java/issues/124)) ([4ffa37f](https://github.com/spotify/confidence-openfeature-provider-java/commit/4ffa37f0251038561ee33209464c030d190348e3))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.12-SNAPSHOT ([#121](https://github.com/spotify/confidence-openfeature-provider-java/issues/121)) ([9bc883c](https://github.com/spotify/confidence-openfeature-provider-java/commit/9bc883ceb904659f580f21afb87aea172fcd37ad))
+
+
+### 🔄 Refactoring
+
+* align api with other sdks ([#125](https://github.com/spotify/confidence-openfeature-provider-java/issues/125)) ([f29035b](https://github.com/spotify/confidence-openfeature-provider-java/commit/f29035b650d4a07c495ceba75bf86d9049579fa5))
+
 ## [0.0.11](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.10...v0.0.11) (2024-04-30)
 
 
