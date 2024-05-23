@@ -325,7 +325,7 @@ class ConfidenceValueTest {
     map.put("key", ConfidenceValue.of("value"));
     final ConfidenceValue.Struct struct = ConfidenceValue.of(map);
     assertEquals(ConfidenceValue.of("value"), struct.get("key"));
-    assertEquals(ConfidenceValue.NULL_VALUE, struct.get("nonexistent"));
+    assertNull(struct.get("nonexistent"));
   }
 
   @Test
@@ -417,7 +417,7 @@ class ConfidenceValueTest {
     final ConfidenceValue.Struct.Builder builder = ConfidenceValue.Struct.builder();
     builder.set("key", "value");
     final ConfidenceValue.Struct structValue = builder.build();
-    assertTrue(structValue.get("missingKey").isNull());
+    assertNull(structValue.get("missingKey"));
   }
 
   @Test

@@ -8,7 +8,6 @@ import com.google.protobuf.ListValue;
 import com.google.protobuf.NullValue;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -121,6 +120,10 @@ public abstract class ConfidenceValue {
 
   public static ConfidenceValue of(boolean value) {
     return new BooleanValue(value);
+  }
+
+  public static ConfidenceValue.List of(java.util.List<ConfidenceValue> values) {
+    return new List(values);
   }
 
   public static ConfidenceValue.List ofStrings(java.util.List<String> values) {
@@ -422,7 +425,7 @@ public abstract class ConfidenceValue {
           // todo better error
           throw new IllegalStateException();
         }
-        value = values.getOrDefault(path[i], NULL_VALUE);
+        value = values.getOrDefault(path[i], null);
       }
       return value;
     }
@@ -447,6 +450,10 @@ public abstract class ConfidenceValue {
       return new Struct(Maps.transformValues(struct.getFieldsMap(), ConfidenceValue::fromProto));
     }
 
+    static Struct ofMap(Map<String, ConfidenceValue> map) {
+      return new Struct(map);
+    }
+
     public Map<String, ConfidenceValue> asMap() {
       return values;
     }
@@ -461,7 +468,7 @@ public abstract class ConfidenceValue {
       private final ImmutableMap.Builder<String, ConfidenceValue> builder = ImmutableMap.builder();
 
       public Builder set(String key, ConfidenceValue value) {
-        if (!value.isNull()) builder.put(key, value);
+        builder.put(key, value);
         return this;
       }
 

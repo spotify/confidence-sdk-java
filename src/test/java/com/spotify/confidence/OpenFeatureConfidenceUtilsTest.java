@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
-class OpenFeatureUtilsTest {
+class OpenFeatureConfidenceUtilsTest {
 
   @Test
   public void testConvertingEmptyEvaluationContext() {

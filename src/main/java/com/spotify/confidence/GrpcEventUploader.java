@@ -42,7 +42,7 @@ class GrpcEventUploader implements EventUploader {
     this.sdk =
         Sdk.newBuilder()
             .setId(SdkId.SDK_ID_JAVA_CONFIDENCE)
-            .setVersion(SdkUtils.getSdkVersion())
+            .setVersion(ConfidenceUtils.getSdkVersion())
             .build();
   }
 

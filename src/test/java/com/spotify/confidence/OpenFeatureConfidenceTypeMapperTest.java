@@ -11,14 +11,14 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-class TypeMapperTest {
+class OpenFeatureConfidenceTypeMapperTest {
 
   @Test
   public void testFromIntegerNumber() {
     // given
     final Value intValue = new Value(42);
     // when
-    final com.google.protobuf.Value protoValue = TypeMapper.from(intValue);
+    final com.google.protobuf.Value protoValue = OpenFeatureTypeMapper.from(intValue);
     // then
     assertEquals(42, protoValue.getNumberValue());
   }
@@ -28,7 +28,7 @@ class TypeMapperTest {
     // given
     final Value intValue = new Value(42.0);
     // when
-    final com.google.protobuf.Value protoValue = TypeMapper.from(intValue);
+    final com.google.protobuf.Value protoValue = OpenFeatureTypeMapper.from(intValue);
     // then
     assertEquals(42.0, protoValue.getNumberValue());
   }
@@ -39,7 +39,7 @@ class TypeMapperTest {
     final Value value = new Value(true);
 
     // Call the method under test
-    final com.google.protobuf.Value protoValue = TypeMapper.from(value);
+    final com.google.protobuf.Value protoValue = OpenFeatureTypeMapper.from(value);
 
     // Check the result
     assertTrue(protoValue.getBoolValue());
@@ -51,7 +51,7 @@ class TypeMapperTest {
     final Value value = new Value();
 
     // Call the method under test
-    final com.google.protobuf.Value protoValue = TypeMapper.from(value);
+    final com.google.protobuf.Value protoValue = OpenFeatureTypeMapper.from(value);
 
     // Check the result
     assertTrue(protoValue.hasNullValue());
@@ -63,7 +63,7 @@ class TypeMapperTest {
     final Value value = new Value(java.time.Instant.now());
 
     // Call the method under test
-    assertThrows(ValueNotConvertableError.class, () -> TypeMapper.from(value));
+    assertThrows(ValueNotConvertableError.class, () -> OpenFeatureTypeMapper.from(value));
   }
 
   @Test
@@ -72,7 +72,7 @@ class TypeMapperTest {
     final Value value = new Value("test");
 
     // Call the method under test
-    final com.google.protobuf.Value protoValue = TypeMapper.from(value);
+    final com.google.protobuf.Value protoValue = OpenFeatureTypeMapper.from(value);
 
     // Check the result
     assertEquals("test", protoValue.getStringValue());
@@ -84,7 +84,7 @@ class TypeMapperTest {
     final Value value = new Value(Arrays.asList(new Value("item1"), new Value("item2")));
 
     // Call the method under test
-    final com.google.protobuf.Value protoValue = TypeMapper.from(value);
+    final com.google.protobuf.Value protoValue = OpenFeatureTypeMapper.from(value);
 
     // Check the result
     assertEquals(
@@ -100,7 +100,7 @@ class TypeMapperTest {
     final Value value = new Value(new MutableStructure(map));
 
     // Call the method under test
-    final com.google.protobuf.Value protoValue = TypeMapper.from(value);
+    final com.google.protobuf.Value protoValue = OpenFeatureTypeMapper.from(value);
 
     // Check the result
     assertEquals(Values.of("value"), protoValue.getStructValue().getFieldsMap().get("field"));

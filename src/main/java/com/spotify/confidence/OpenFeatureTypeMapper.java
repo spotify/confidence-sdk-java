@@ -15,10 +15,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // For now, only package visibility to keep control on this part of the code
-class TypeMapper {
+class OpenFeatureTypeMapper {
 
   private static Value from(com.google.protobuf.Value value, FlagSchema schema) {
-
     if (schema.getSchemaTypeCase() == SchemaTypeCase.SCHEMATYPE_NOT_SET) {
       throw new ParseError("schemaType not set in FlagSchema");
     }
@@ -115,7 +114,8 @@ class TypeMapper {
       return Values.of(val.asString());
     } else if (val.isList()) {
       final List<Value> values = val.asList();
-      return Values.of(values.stream().map(TypeMapper::from).collect(Collectors.toList()));
+      return Values.of(
+          values.stream().map(OpenFeatureTypeMapper::from).collect(Collectors.toList()));
     } else if (val.isStructure()) {
       final Structure structure = val.asStructure();
       final Map<String, com.google.protobuf.Value> protoMap =

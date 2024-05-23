@@ -1,11 +1,21 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.ConfidenceTypeMapper.getTyped;
+import static com.spotify.confidence.ConfidenceUtils.FlagPath.getPath;
+import static com.spotify.confidence.ConfidenceUtils.getValueForPath;
+
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
+import com.spotify.confidence.ConfidenceUtils.FlagPath;
+import com.spotify.confidence.Exceptions.IllegalValuePath;
+import com.spotify.confidence.Exceptions.IllegalValueType;
+import com.spotify.confidence.Exceptions.IncompatibleValueType;
+import com.spotify.confidence.Exceptions.ValueNotFound;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.Closeable;
@@ -21,12 +31,13 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
 
 @Beta
 public abstract class Confidence implements EventSender, Closeable {
 
-  private static final int FLUSH_TIMEOUT_MILLISECONDS = 500;
   protected Map<String, ConfidenceValue> context = Maps.newHashMap();
+  private static final Logger log = org.slf4j.LoggerFactory.getLogger(Confidence.class);
 
   private Confidence() {}
 
@@ -95,6 +106,70 @@ public abstract class Confidence implements EventSender, Closeable {
       client().emit(eventName, getContext(), Optional.of(message));
     } catch (IllegalStateException e) {
       // swallow this exception
+    }
+  }
+
+  public <T> T getValue(String key, T defaultValue) {
+    return getEvaluation(key, defaultValue).getValue();
+  }
+
+  public <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue) {
+    try {
+      final FlagPath flagPath = getPath(key);
+      final String requestFlagName = "flags/" + flagPath.getFlag();
+      final ResolveFlagsResponse response = resolveFlags(requestFlagName).get();
+      if (response.getResolvedFlagsList().isEmpty()) {
+        final String errorMessage =
+            String.format("No active flag '%s' was found", flagPath.getFlag());
+        log.warn(errorMessage);
+        return new FlagEvaluation<>(
+            defaultValue, "", "ERROR", ErrorType.FLAG_NOT_FOUND, errorMessage);
+      }
+
+      final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
+      if (!requestFlagName.equals(resolvedFlag.getFlag())) {
+        final String errorMessage =
+            String.format(
+                "Unexpected flag '%s' from remote",
+                resolvedFlag.getFlag().replaceFirst("^flags/", ""));
+        log.warn(errorMessage);
+        return new FlagEvaluation<>(
+            defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
+      }
+      if (resolvedFlag.getVariant().isEmpty()) {
+        final String errorMessage =
+            String.format(
+                "The server returned no assignment for the flag '%s'. Typically, this happens "
+                    + "if no configured rules matches the given evaluation context.",
+                flagPath.getFlag());
+        log.debug(errorMessage);
+        return new FlagEvaluation<>(defaultValue, "", resolvedFlag.getReason().toString());
+      } else {
+        final ConfidenceValue confidenceValue;
+        confidenceValue =
+            getValueForPath(
+                flagPath.getPath(),
+                ConfidenceTypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
+
+        // regular resolve was successful
+        return new FlagEvaluation<>(
+            getTyped(confidenceValue, defaultValue),
+            resolvedFlag.getVariant(),
+            resolvedFlag.getReason().toString());
+      }
+    } catch (IllegalValuePath | ValueNotFound e) {
+      log.warn(e.getMessage());
+      return new FlagEvaluation<>(
+          defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
+    } catch (IncompatibleValueType | IllegalValueType e) {
+      log.warn(e.getMessage());
+      return new FlagEvaluation<>(
+          defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_TYPE, e.getMessage());
+    } catch (Exception e) {
+      // catch all for any runtime exception
+      log.warn(e.getMessage());
+      return new FlagEvaluation<>(
+          defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
     }
   }
 
