@@ -14,11 +14,11 @@
   </distributionManagement>
 
   <groupId>com.spotify.confidence</groupId>
-  <artifactId>openfeature-provider</artifactId>
+  <artifactId>sdk-java</artifactId>
   <version>0.0.12-SNAPSHOT</version>
 
-  <url>https://github.com/spotify/confidence-openfeature-provider-java</url>
-  <description>Confidence OpenFeature provider for Java</description>
+  <url>https://github.com/spotify/sdk-java</url>
+  <description>Confidence SDK for Java</description>
 
   <properties>
     <!-- Required by maven to compile Java 11 -->
@@ -35,7 +35,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <name>Confidence OpenFeature Provider</name>
+  <name>Confidence SDK</name>
   <organization>
       <name>com.spotify</name>
       <url>https://github.com/spotify</url>
@@ -43,24 +43,24 @@
 
   <issueManagement>
       <system>GitHub</system>
-      <url>https://github.com/spotify/confidence-openfeature-provider-java/issues</url>
+      <url>https://github.com/spotify/sdk-java/issues</url>
   </issueManagement>
 
   <licenses>
       <license>
           <name>Apache License 2.0</name>
-          <url>https://github.com/spotify/confidence-openfeature-provider-java/blob/main/LICENSE</url>
+          <url>https://github.com/spotify/sdk-java/blob/main/LICENSE</url>
           <distribution>repo</distribution>
       </license>
   </licenses>
 
   <scm>
-      <url>https://github.com/spotify/confidence-openfeature-provider-java</url>
+      <url>https://github.com/spotify/sdk-java</url>
       <connection>
-          scm:git:git@github.com:spotify/confidence-openfeature-provider-java.git
+          scm:git:git@github.com:spotify/sdk-java.git
       </connection>
       <developerConnection>
-          scm:git:git@github.com:spotify/confidence-openfeature-provider-java.git
+          scm:git:git@github.com:spotify/sdk-java.git
       </developerConnection>
   </scm>
   <developers>
