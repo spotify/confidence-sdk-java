@@ -91,13 +91,25 @@ class EventSenderEngineImpl implements EventSenderEngine {
     LockSupport.unpark(pollingThread);
   }
 
+  @Override
+  public void flush() {
+    sendQueue.add(Event.newBuilder().setEventDefinition("manual_flash").build());
+    LockSupport.unpark(pollingThread);
+  }
+
   private void pollLoop() {
     Instant latestFlushTime = Instant.now();
     ArrayList<com.spotify.confidence.events.v1.Event> events = new ArrayList<>();
     while (true) {
       final var event = sendQueue.poll();
       if (event != null) {
-        events.add(event);
+        if ("manual_flash".equals(event.getEventDefinition())) {
+          upload(events);
+          events = new ArrayList<>();
+          break;
+        } else {
+          events.add(event);
+        }
       } else {
         if (intakeClosed) break;
         LockSupport.parkUntil(Instant.now().plus(maxFlushInterval).toEpochMilli());

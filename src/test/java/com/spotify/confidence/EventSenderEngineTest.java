@@ -162,6 +162,36 @@ public class EventSenderEngineTest {
   }
 
   @Test
+  public void testFlushForcesUploadsDespiteBatchLimits() throws IOException, InterruptedException {
+    final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
+    final EventSenderEngine engine =
+        new EventSenderEngineImpl(
+            10000, // Big batch size
+            alwaysSucceedUploader,
+            clock,
+            Duration.ofMillis(10000), // Long max flush interval
+            DEFAULT_MAX_MEMORY_CONSUMPTION);
+
+    // send only one event
+    engine.emit(
+        "navigate",
+        ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
+        Optional.empty());
+
+    engine.flush();
+
+    // wait for the upload to be triggered
+    Thread.sleep(100);
+
+    // assert
+    assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(1);
+    assertThat(alwaysSucceedUploader.uploadCalls.peek().size()).isEqualTo(1);
+
+    // close
+    engine.close();
+  }
+
+  @Test
   public void testEngineUploadsWhenIntermittentErrorWillRetry() throws IOException {
     final int maxBatchSize = 3;
     final int numEvents = 14;

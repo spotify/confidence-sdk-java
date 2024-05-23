@@ -9,6 +9,8 @@ public interface EventSender extends Contextual {
 
   public void track(String eventName);
 
+  void flush();
+
   @Override
   EventSender withContext(ConfidenceValue.Struct context);
 
