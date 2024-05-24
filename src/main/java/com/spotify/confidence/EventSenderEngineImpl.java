@@ -104,6 +104,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
       final var event = sendQueue.poll();
       if (event != null) {
         if ("manual_flash".equals(event.getEventDefinition())) {
+          log.debug("Starting events upload due to manual flush");
           upload(events);
           events = new ArrayList<>();
           break;
