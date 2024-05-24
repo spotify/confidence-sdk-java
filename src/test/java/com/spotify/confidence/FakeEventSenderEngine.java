@@ -28,4 +28,9 @@ public class FakeEventSenderEngine implements EventSenderEngine {
       String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
     events.add(event(name, context, message).setEventTime(clock.getTimestamp()).build());
   }
+
+  @Override
+  public void flush() {
+    // NOOP
+  }
 }

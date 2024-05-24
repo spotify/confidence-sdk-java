@@ -211,6 +211,11 @@ public abstract class Confidence implements EventSender, Closeable {
     }
 
     @Override
+    public void flush() {
+      this.eventSenderEngine.flush();
+    }
+
+    @Override
     public CompletableFuture<ResolveFlagsResponse> resolveFlags(
         String flag, ConfidenceValue.Struct context) {
       return flagResolverClient.resolveFlags(flag, context);
@@ -249,6 +254,11 @@ public abstract class Confidence implements EventSender, Closeable {
     public void close() throws IOException {
       closed = true;
     }
+
+    @Override
+    public void flush() {
+      parent.flush();
+    }
   }
 
   private static class RootInstance extends Confidence {
@@ -271,6 +281,11 @@ public abstract class Confidence implements EventSender, Closeable {
       } finally {
         client = null;
       }
+    }
+
+    @Override
+    public void flush() {
+      client.flush();
     }
   }
 
