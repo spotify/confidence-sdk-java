@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.13](https://github.com/spotify/confidence-sdk-java/compare/v0.0.12...v0.0.13) (2024-05-24)
+
+
+### ✨ New Features
+
+* Add flush functionality ([#130](https://github.com/spotify/confidence-sdk-java/issues/130)) ([0483702](https://github.com/spotify/confidence-sdk-java/commit/0483702f56665cbda84360095183d2e577b67c59))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.13-SNAPSHOT ([#129](https://github.com/spotify/confidence-sdk-java/issues/129)) ([a0ad7a5](https://github.com/spotify/confidence-sdk-java/commit/a0ad7a59efe1cb77aae84ee0cd458934e1920873))
+
 ## [0.0.12](https://github.com/spotify/confidence-openfeature-provider-java/compare/v0.0.11...v0.0.12) (2024-05-23)
 
 
