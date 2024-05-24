@@ -17,9 +17,6 @@ import org.junit.jupiter.api.Test;
 
 public class EventSenderEngineTest {
 
-  private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
-      new ResolverClientTestUtils.FakeFlagResolverClient();
-
   private final FakeClock clock = new FakeClock();
 
   @Test
