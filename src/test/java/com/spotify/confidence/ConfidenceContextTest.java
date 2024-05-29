@@ -1,8 +1,10 @@
 package com.spotify.confidence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 public class ConfidenceContextTest {
@@ -10,6 +12,15 @@ public class ConfidenceContextTest {
   private final FakeEventSenderEngine fakeEngine = new FakeEventSenderEngine(new FakeClock());
   private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
       new ResolverClientTestUtils.FakeFlagResolverClient();
+
+  @Test
+  public void testThrowInvalidContextInMessage() {
+    final Confidence root = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    assertThrows(
+        Exceptions.InvalidContextInMessaageError.class,
+        () ->
+            root.track("hello", ConfidenceValue.of(Map.of("context", ConfidenceValue.NULL_VALUE))));
+  }
 
   @Test
   public void getContextContainsParentContextValues() {

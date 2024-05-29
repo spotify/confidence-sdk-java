@@ -102,6 +102,10 @@ public abstract class Confidence implements EventSender, Closeable {
 
   @Override
   public void track(String eventName, ConfidenceValue.Struct data) {
+    if (data.asMap().containsKey("context")) {
+      throw new Exceptions.InvalidContextInMessaageError(
+          "Field 'context' is not allowed in event's data");
+    }
     try {
       client().emit(eventName, getContext(), Optional.of(data));
     } catch (IllegalStateException e) {
