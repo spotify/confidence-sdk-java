@@ -101,9 +101,9 @@ public abstract class Confidence implements EventSender, Closeable {
   }
 
   @Override
-  public void track(String eventName, ConfidenceValue.Struct message) {
+  public void track(String eventName, ConfidenceValue.Struct data) {
     try {
-      client().emit(eventName, getContext(), Optional.of(message));
+      client().emit(eventName, getContext(), Optional.of(data));
     } catch (IllegalStateException e) {
       // swallow this exception
     }

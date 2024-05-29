@@ -5,7 +5,7 @@ import java.util.Map;
 
 @Beta
 public interface EventSender extends Contextual {
-  public void track(String eventName, ConfidenceValue.Struct message);
+  public void track(String eventName, ConfidenceValue.Struct data);
 
   public void track(String eventName);
 

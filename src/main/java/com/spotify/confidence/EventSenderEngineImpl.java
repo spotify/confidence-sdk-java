@@ -75,13 +75,13 @@ class EventSenderEngineImpl implements EventSenderEngine {
 
   @Override
   public void emit(
-      String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> message) {
+      String name, ConfidenceValue.Struct context, Optional<ConfidenceValue.Struct> data) {
     if (intakeClosed) {
       log.warn("EventSenderEngine is closed, dropping event {}", name);
       return;
     }
     final Event event =
-        EventUploader.event(name, context, message).setEventTime(clock.getTimestamp()).build();
+        EventUploader.event(name, context, data).setEventTime(clock.getTimestamp()).build();
     if (estimatedMemoryConsumption.get() + event.getSerializedSize() > maxMemoryConsumption) {
       log.warn("EventSenderEngine is overloaded, dropping event {}", name);
       return;
