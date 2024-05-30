@@ -110,7 +110,19 @@ public class EventSenderEngineTest {
                         "a",
                         Value.newBuilder().setNumberValue(0).build(),
                         "message",
-                        Value.newBuilder().setNumberValue(1).build()))
+                        Value.newBuilder().setNumberValue(1).build(),
+                        "context",
+                        Value.newBuilder()
+                            .setStructValue(
+                                Struct.newBuilder()
+                                    .putAllFields(
+                                        Map.of(
+                                            "a",
+                                            Value.newBuilder().setNumberValue(2).build(),
+                                            "message",
+                                            Value.newBuilder().setNumberValue(3).build()))
+                                    .build())
+                            .build()))
                 .build());
   }
 

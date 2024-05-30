@@ -20,6 +20,12 @@ public class Exceptions {
     }
   }
 
+  public static class InvalidContextInMessaageError extends RuntimeException {
+    public InvalidContextInMessaageError(String message) {
+      super(message);
+    }
+  }
+
   public static class IllegalValueType extends Exception {
     public IllegalValueType(String message) {
       super(message);
