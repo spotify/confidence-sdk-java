@@ -107,7 +107,7 @@ class EventSenderEngineImpl implements EventSenderEngine {
           log.debug("Starting events upload due to manual flush");
           upload(events);
           events = new ArrayList<>();
-          break;
+          continue;
         } else {
           events.add(event);
         }
