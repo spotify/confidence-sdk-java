@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.0.14](https://github.com/spotify/confidence-sdk-java/compare/v0.0.13...v0.0.14) (2024-06-03)
+
+
+### 🐛 Bug Fixes
+
+* add context field in the payload ([#135](https://github.com/spotify/confidence-sdk-java/issues/135)) ([7f09f3e](https://github.com/spotify/confidence-sdk-java/commit/7f09f3edad1ab65a5ceec43401f0d1d5dbc8aa27))
+* not break after manual flush ([#136](https://github.com/spotify/confidence-sdk-java/issues/136)) ([58fcd84](https://github.com/spotify/confidence-sdk-java/commit/58fcd849c81ff773d2874ef1f5ec50769d58b00d))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.14-SNAPSHOT ([#132](https://github.com/spotify/confidence-sdk-java/issues/132)) ([87407c7](https://github.com/spotify/confidence-sdk-java/commit/87407c72111cba8f5322e5591df7b9fafb0df29d))
+
+
+### 📚 Documentation
+
+* designed for backend ([#134](https://github.com/spotify/confidence-sdk-java/issues/134)) ([e220139](https://github.com/spotify/confidence-sdk-java/commit/e220139b6ac48ad2adec103f7401d3485d4247a2))
+
 ## [0.0.13](https://github.com/spotify/confidence-sdk-java/compare/v0.0.12...v0.0.13) (2024-05-24)
 
 
