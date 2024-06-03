@@ -80,6 +80,42 @@ public class EventSenderEngineTest {
   }
 
   @Test
+  public void testSendingEventsAfterManualFlush() throws Exception {
+    final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
+    final int maxBatchSize = 6;
+    final int numEvents = 14;
+    final EventSenderEngine engine =
+        new EventSenderEngineImpl(
+            maxBatchSize,
+            alwaysSucceedUploader,
+            clock,
+            DEFAULT_MAX_FLUSH_INTERVAL,
+            DEFAULT_MAX_MEMORY_CONSUMPTION);
+    engine.emit(
+        "navigate",
+        ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
+        Optional.empty());
+
+    engine.flush();
+
+    final int timeoutCalls = 5;
+    int calls = 0;
+    while (calls++ <= timeoutCalls) {
+      Thread.sleep(200);
+      if (alwaysSucceedUploader.uploadCalls.size() == 1) {
+        break;
+      }
+    }
+    assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(1);
+    engine.emit(
+        "navigate",
+        ConfidenceValue.of(ImmutableMap.of("key", ConfidenceValue.of("size"))),
+        Optional.empty());
+    engine.close();
+    assertThat(alwaysSucceedUploader.uploadCalls.size()).isEqualTo(2);
+  }
+
+  @Test
   public void testOverlappingKeysInPayload() throws InterruptedException {
     final FakeUploader alwaysSucceedUploader = new FakeUploader(List.of());
     final EventSenderEngine engine =
