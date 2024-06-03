@@ -1,6 +1,6 @@
 # Java Confidence SDK
 
-Java library for [Confidence](https://confidence.spotify.com/).
+Java library for [Confidence](https://confidence.spotify.com/). This library is designed to work in a java backend environment. For Android, please visit [Confidence-SDK-Android](https://github.com/spotify/confidence-sdk-android).
 
 ## Install
 
