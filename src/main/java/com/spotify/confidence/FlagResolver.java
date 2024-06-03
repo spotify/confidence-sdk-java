@@ -7,5 +7,6 @@ import java.util.concurrent.CompletableFuture;
 interface FlagResolver {
   void close();
 
-  public CompletableFuture<ResolveFlagsResponse> resolve(String flag, Struct context);
+  public CompletableFuture<ResolveFlagsResponse> resolve(
+      String flag, Struct context, Boolean isProvider);
 }

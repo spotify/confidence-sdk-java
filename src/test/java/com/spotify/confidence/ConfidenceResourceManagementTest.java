@@ -27,7 +27,7 @@ public class ConfidenceResourceManagementTest {
   public void testCloseChildShouldThrowFromResolveFlags() throws IOException {
     final Confidence child = root.withContext(Map.of("child-key", ConfidenceValue.of("child")));
     child.close();
-    assertThrows(IllegalStateException.class, () -> child.resolveFlags("test").get());
+    assertThrows(IllegalStateException.class, () -> child.resolveFlags("test", false).get());
   }
 
   @Test
@@ -50,7 +50,7 @@ public class ConfidenceResourceManagementTest {
       throws IOException, ExecutionException, InterruptedException {
     final Confidence child = root.withContext(Map.of("child-key", ConfidenceValue.of("child")));
     child.close();
-    root.resolveFlags("test").get();
+    root.resolveFlags("test", false).get();
     root.track("test", ConfidenceValue.of(Map.of("messageKey", ConfidenceValue.of("parent"))));
   }
 
@@ -58,8 +58,8 @@ public class ConfidenceResourceManagementTest {
   public void testCloseParentShouldAffectChild() throws IOException {
     final Confidence child = root.withContext(Map.of("child-key", ConfidenceValue.of("child")));
     root.close();
-    assertThrows(IllegalStateException.class, () -> child.resolveFlags("test").get());
-    assertThrows(IllegalStateException.class, () -> root.resolveFlags("test").get());
+    assertThrows(IllegalStateException.class, () -> child.resolveFlags("test", false).get());
+    assertThrows(IllegalStateException.class, () -> root.resolveFlags("test", false).get());
     assertTrue(fakeEngine.closed);
     assertTrue(fakeFlagResolverClient.closed);
   }

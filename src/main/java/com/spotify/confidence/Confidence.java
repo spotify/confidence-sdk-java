@@ -49,7 +49,6 @@ public abstract class Confidence implements EventSender, Closeable {
 
   @Override
   public ConfidenceValue.Struct getContext() {
-
     return contextEntries()
         .collect(
             Collector.of(
@@ -121,7 +120,7 @@ public abstract class Confidence implements EventSender, Closeable {
     try {
       final FlagPath flagPath = getPath(key);
       final String requestFlagName = "flags/" + flagPath.getFlag();
-      final ResolveFlagsResponse response = resolveFlags(requestFlagName).get();
+      final ResolveFlagsResponse response = resolveFlags(requestFlagName, false).get();
       if (response.getResolvedFlagsList().isEmpty()) {
         final String errorMessage =
             String.format("No active flag '%s' was found", flagPath.getFlag());
@@ -177,8 +176,8 @@ public abstract class Confidence implements EventSender, Closeable {
     }
   }
 
-  CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName) {
-    return client().resolveFlags(flagName, getContext());
+  CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName, Boolean isProvider) {
+    return client().resolveFlags(flagName, getContext(), isProvider);
   }
 
   @VisibleForTesting
@@ -221,8 +220,8 @@ public abstract class Confidence implements EventSender, Closeable {
 
     @Override
     public CompletableFuture<ResolveFlagsResponse> resolveFlags(
-        String flag, ConfidenceValue.Struct context) {
-      return flagResolverClient.resolveFlags(flag, context);
+        String flag, ConfidenceValue.Struct context, Boolean isProvider) {
+      return flagResolverClient.resolveFlags(flag, context, isProvider);
     }
 
     @Override
