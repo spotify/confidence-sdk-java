@@ -320,10 +320,18 @@ public abstract class Confidence implements EventSender, Closeable {
       return this;
     }
 
+    Confidence buildForProvider() {
+      return build(true);
+    }
+
     public Confidence build() {
+      return build(false);
+    }
+
+    private Confidence build(Boolean isProvider) {
       final FlagResolverClient flagResolverClient =
           new FlagResolverClientImpl(
-              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel));
+              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel, isProvider));
       final EventSenderEngine eventSenderEngine =
           new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);
       closer.register(flagResolverClient);

@@ -15,14 +15,14 @@ public class GrpcFlagResolver implements FlagResolver {
 
   private final FlagResolverServiceGrpc.FlagResolverServiceFutureStub stub;
 
-  public GrpcFlagResolver(String clientSecret, ManagedChannel managedChannel) {
+  public GrpcFlagResolver(String clientSecret, ManagedChannel managedChannel, Boolean isProvider) {
     if (Strings.isNullOrEmpty(clientSecret)) {
       throw new IllegalArgumentException("clientSecret must be a non-empty string.");
     }
     this.clientSecret = clientSecret;
     this.sdk =
         Sdk.newBuilder()
-            .setId(SdkId.SDK_ID_JAVA_PROVIDER)
+            .setId(isProvider ? SdkId.SDK_ID_JAVA_PROVIDER : SdkId.SDK_ID_JAVA_CONFIDENCE)
             .setVersion(ConfidenceUtils.getSdkVersion())
             .build();
     this.managedChannel = managedChannel;

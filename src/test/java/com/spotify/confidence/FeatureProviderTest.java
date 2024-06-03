@@ -70,7 +70,7 @@ final class FeatureProviderTest {
     final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
     final FlagResolverClientImpl flagResolver =
-        new FlagResolverClientImpl(new GrpcFlagResolver("fake-secret", channel));
+        new FlagResolverClientImpl(new GrpcFlagResolver("fake-secret", channel, false));
     final Confidence confidence = Confidence.create(fakeEventSender, flagResolver);
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 
