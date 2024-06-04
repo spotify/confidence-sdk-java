@@ -2,12 +2,10 @@ package com.spotify.confidence;
 
 import com.google.common.annotations.Beta;
 import com.google.protobuf.Struct;
-import com.google.protobuf.util.Values;
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.Structure;
 import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
-import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
 import java.util.List;
 import org.slf4j.Logger;
 
@@ -36,9 +34,13 @@ public class OpenFeatureUtils {
               protoEvaluationContext.putFields(mapKey, OpenFeatureTypeMapper.from(mapValue));
             });
     // add targeting key as a regular value to proto struct
-    if (!StringUtil.isNullOrEmpty(evaluationContext.getTargetingKey())) {
+    if (evaluationContext.getTargetingKey() != null
+        && !evaluationContext.getTargetingKey().isEmpty()) {
       protoEvaluationContext.putFields(
-          TARGETING_KEY, Values.of(evaluationContext.getTargetingKey()));
+          TARGETING_KEY,
+          com.google.protobuf.Value.newBuilder()
+              .setStringValue(evaluationContext.getTargetingKey())
+              .build());
     }
     return protoEvaluationContext.build();
   }

@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <packaging>pom</packaging>
+  <modules>
+    <module>sdk-java</module>
+    <module>openfeature-provider</module>
+  </modules>
 
   <distributionManagement>
     <snapshotRepository>
@@ -14,7 +19,7 @@
   </distributionManagement>
 
   <groupId>com.spotify.confidence</groupId>
-  <artifactId>sdk-java</artifactId>
+  <artifactId>confidence-sdk-java</artifactId>
   <version>0.0.16-SNAPSHOT</version>
 
   <url>https://github.com/spotify/confidence-sdk-java</url>
@@ -92,26 +97,10 @@
   </developers>
 
   <dependencies>
-    <!-- compile scope -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-netty-shaded</artifactId>
-      <version>${grpc.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java-util</artifactId>
-      <version>${protobuf.version}</version>
-    </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
       <artifactId>grpc-google-common-protos</artifactId>
       <version>${common.protos.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>dev.failsafe</groupId>
-      <artifactId>failsafe</artifactId>
-      <version>3.3.2</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
@@ -119,29 +108,9 @@
       <version>${grpc.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-stub</artifactId>
-      <version>${grpc.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-protobuf</artifactId>
-      <version>${grpc.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>proto-google-common-protos</artifactId>
-      <version>${common.protos.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
       <version>${protobuf.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>dev.openfeature</groupId>
-      <artifactId>sdk</artifactId>
-      <version>1.6.1</version>
     </dependency>
     <dependency>
       <groupId>javax.annotation</groupId>
@@ -259,46 +228,10 @@
           </excludePackageNames>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.xolstice.maven.plugins</groupId>
-        <artifactId>protobuf-maven-plugin</artifactId>
-        <version>0.6.1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>compile</goal>
-              <!-- https://www.xolstice.org/protobuf-maven-plugin/compile-custom-mojo.html -->
-              <goal>compile-custom</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
-          <pluginId>grpc-java</pluginId>
-          <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
-        <configuration>
-          <annotationProcessorPaths combine.children="append">
-            <annotationProcessorPath>
-              <groupId>com.google.auto.value</groupId>
-              <artifactId>auto-value</artifactId>
-              <version>1.10.3</version>
-            </annotationProcessorPath>
-            <annotationProcessorPath>
-              <groupId>com.jakewharton.nopen</groupId>
-              <artifactId>nopen-checker</artifactId>
-              <version>1.0.1</version>
-            </annotationProcessorPath>
-          </annotationProcessorPaths>
-        </configuration>
-      </plugin>
+
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <id>analyze</id>
@@ -306,7 +239,7 @@
               <goal>analyze-only</goal>
             </goals>
             <configuration>
-              <failOnWarning>true</failOnWarning>
+              <failOnWarning>false</failOnWarning>
               <ignoreNonCompile>true</ignoreNonCompile>
               <ignoredUnusedDeclaredDependencies>
                 <ignoredUnusedDeclaredDependency>com.google.api.grpc:grpc-google-common-protos</ignoredUnusedDeclaredDependency>
@@ -316,6 +249,9 @@
               <ignoredUsedUndeclaredDependencies>
                 <ignoredUnusedDeclaredDependency>com.google.guava:guava</ignoredUnusedDeclaredDependency>
               </ignoredUsedUndeclaredDependencies>
+              <ignoredNonTestScopedDependencies>
+                <ignoredNonTestScopedDependency>io.grpc:grpc-stub</ignoredNonTestScopedDependency>
+              </ignoredNonTestScopedDependencies>
             </configuration>
           </execution>
         </executions>
@@ -361,7 +297,7 @@
           </dependency>
         </dependencies>
         <configuration combine.self="override">
-          <configLocation>src/main/resources/checkstyle.xml</configLocation>
+          <configLocation>checkstyle.xml</configLocation>
           <consoleOutput>true</consoleOutput>
           <failOnViolation>true</failOnViolation>
           <logViolationsToConsole>true</logViolationsToConsole>
@@ -408,53 +344,6 @@
             <goals>
               <goal>sign</goal>
             </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.1</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-                  <resource>.proto</resource>
-                  <resource>checkstyle.xml</resource>
-                </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer">
-                  <addHeader>true</addHeader>
-                </transformer>
-              </transformers>
-              <relocations>
-                <relocation>
-                  <pattern>com.google</pattern>
-                  <shadedPattern>com.spotify.confidence.shaded.com.google</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>io.grpc</pattern>
-                  <shadedPattern>com.spotify.confidence.shaded.io.grpc</shadedPattern>
-                </relocation>
-              </relocations>
-              <artifactSet>
-                <excludes>
-                  <exclude>dev.openfeature:sdk</exclude>
-                  <exclude>org.slf4j:slf4j-api</exclude>
-                  <exclude>javax.annotation:javax.annotation-api</exclude>
-                  <exclude>org.checkerframework:checker-qual</exclude>
-                  <exclude>com.google.code.findbugs:jsr305</exclude>
-                  <exclude>com.google.android:annotations</exclude>
-                  <exclude>org.codehaus.mojo:animal-sniffer-annotations</exclude>
-                  <exclude>io.perfmark:perfmark-api</exclude>
-                </excludes>
-              </artifactSet>
-            </configuration>
           </execution>
         </executions>
       </plugin>

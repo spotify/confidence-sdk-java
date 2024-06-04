@@ -2,7 +2,7 @@
   "bootstrap-sha": "188faf7e47b03bde3bf02c3521771301c77580d6",
   "packages": {
     ".": {
-      "package-name": "com.spotify.confidence.java-sdk",
+      "package-name": "com.spotify.confidence.confidence-java-sdk",
       "release-type": "maven",
       "monorepo-tags": false,
       "include-component-in-tag": false,

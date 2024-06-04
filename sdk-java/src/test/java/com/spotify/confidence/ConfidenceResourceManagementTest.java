@@ -1,9 +1,7 @@
 package com.spotify.confidence;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-import dev.openfeature.sdk.*;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -62,24 +60,5 @@ public class ConfidenceResourceManagementTest {
     assertThrows(IllegalStateException.class, () -> root.resolveFlags("test", false).get());
     assertTrue(fakeEngine.closed);
     assertTrue(fakeFlagResolverClient.closed);
-  }
-
-  @Test
-  public void testCloseChildShouldReturnDefaultsFromOpenFeatureApi() throws IOException {
-    final Confidence child = root.withContext(Map.of("child-key", ConfidenceValue.of("child")));
-    OpenFeatureAPI.getInstance().setProvider(new ConfidenceFeatureProvider(child));
-    child.close();
-    final boolean defaultValue = false;
-    final FlagEvaluationDetails<Boolean> booleanDetails =
-        OpenFeatureAPI.getInstance()
-            .getClient()
-            .getBooleanDetails(
-                "some-flag",
-                defaultValue,
-                new ImmutableContext("some-key", Map.of("some", new Value("value"))));
-    assertThat(booleanDetails.getValue()).isEqualTo(defaultValue);
-    assertThat(booleanDetails.getReason()).isEqualTo(Reason.ERROR.name());
-    assertThat(booleanDetails.getErrorCode()).isEqualTo(ErrorCode.GENERAL);
-    assertThat(booleanDetails.getErrorMessage()).isEqualTo("Resource closed");
   }
 }
