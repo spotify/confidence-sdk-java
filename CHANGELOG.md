@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.15](https://github.com/spotify/confidence-sdk-java/compare/v0.0.14...v0.0.15) (2024-06-04)
+
+
+### ✨ New Features
+
+* Telemetry ID improvements ([#140](https://github.com/spotify/confidence-sdk-java/issues/140)) ([8d22dc7](https://github.com/spotify/confidence-sdk-java/commit/8d22dc7d5e2180b5f5486f65cce52286e6bec18f))
+
+
+### 🧹 Chore
+
+* **main:** release 0.0.15-SNAPSHOT ([#137](https://github.com/spotify/confidence-sdk-java/issues/137)) ([42cec7f](https://github.com/spotify/confidence-sdk-java/commit/42cec7f3f09e43c82dd368af231b2638058fadaf))
+
 ## [0.0.14](https://github.com/spotify/confidence-sdk-java/compare/v0.0.13...v0.0.14) (2024-06-03)
 
 
