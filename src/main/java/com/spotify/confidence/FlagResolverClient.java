@@ -5,5 +5,6 @@ import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 
 interface FlagResolverClient extends Closeable {
-  CompletableFuture<ResolveFlagsResponse> resolveFlags(String flag, ConfidenceValue.Struct context);
+  CompletableFuture<ResolveFlagsResponse> resolveFlags(
+      String flag, ConfidenceValue.Struct context, Boolean isProvider);
 }

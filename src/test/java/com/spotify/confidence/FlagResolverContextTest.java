@@ -49,7 +49,8 @@ class FakeFlagResolver implements FlagResolver {
   public void close() {}
 
   @Override
-  public CompletableFuture<ResolveFlagsResponse> resolve(String flag, Struct context) {
+  public CompletableFuture<ResolveFlagsResponse> resolve(
+      String flag, Struct context, Boolean isProvider) {
     this.context = context;
     return null;
   }
