@@ -11,7 +11,9 @@
       "versioning": "default",
       "extra-files": [
         "pom.xml",
-        "README.md"
+        "README.md",
+        "openfeature-provider/pom.xml",
+        "sdk-java/pom.xml"
       ],
       "changelog-sections": [
         {
