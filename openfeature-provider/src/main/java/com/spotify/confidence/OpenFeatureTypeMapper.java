@@ -1,7 +1,8 @@
 package com.spotify.confidence;
 
+import com.google.protobuf.ListValue;
+import com.google.protobuf.NullValue;
 import com.google.protobuf.Struct;
-import com.google.protobuf.util.Values;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.SchemaTypeCase;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema.StructFlagSchema;
@@ -103,25 +104,33 @@ class OpenFeatureTypeMapper {
 
   public static com.google.protobuf.Value from(Value val) {
     if (val.isNumber()) {
-      return Values.of(val.asDouble());
+      return com.google.protobuf.Value.newBuilder().setNumberValue(val.asDouble()).build();
     } else if (val.isBoolean()) {
-      return Values.of(val.asBoolean());
+      return com.google.protobuf.Value.newBuilder().setBoolValue(val.asBoolean()).build();
     } else if (val.isNull()) {
-      return Values.ofNull();
+      return com.google.protobuf.Value.newBuilder().setNullValue(NullValue.NULL_VALUE).build();
     } else if (val.isInstant()) {
       throw new ValueNotConvertableError("Converting Instant Value is currently not supported");
     } else if (val.isString()) {
-      return Values.of(val.asString());
+      return com.google.protobuf.Value.newBuilder().setStringValue(val.asString()).build();
     } else if (val.isList()) {
-      final List<Value> values = val.asList();
-      return Values.of(
-          values.stream().map(OpenFeatureTypeMapper::from).collect(Collectors.toList()));
+      return com.google.protobuf.Value.newBuilder()
+          .setListValue(
+              ListValue.newBuilder()
+                  .addAllValues(
+                      val.asList().stream()
+                          .map(OpenFeatureTypeMapper::from)
+                          .collect(Collectors.toList()))
+                  .build())
+          .build();
     } else if (val.isStructure()) {
       final Structure structure = val.asStructure();
       final Map<String, com.google.protobuf.Value> protoMap =
           structure.asMap().keySet().stream()
               .collect(Collectors.toMap(key -> key, key -> from(structure.getValue(key))));
-      return Values.of(Struct.newBuilder().putAllFields(protoMap).build());
+      return com.google.protobuf.Value.newBuilder()
+          .setStructValue(Struct.newBuilder().putAllFields(protoMap).build())
+          .build();
     }
     throw new ValueNotConvertableError("Unknown Value type");
   }

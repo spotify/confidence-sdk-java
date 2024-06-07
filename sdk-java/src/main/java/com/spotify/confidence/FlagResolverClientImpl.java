@@ -1,13 +1,12 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.ConfidenceFeatureProvider.OPEN_FEATURE_RESOLVE_CONTEXT_KEY;
-
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.util.concurrent.CompletableFuture;
 
 class FlagResolverClientImpl implements FlagResolverClient {
+  public static final String OPEN_FEATURE_RESOLVE_CONTEXT_KEY = "open-feature";
   private final FlagResolver grpcFlagResolver;
 
   public FlagResolverClientImpl(FlagResolver grpcFlagResolver) {

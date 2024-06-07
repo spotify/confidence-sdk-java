@@ -1,7 +1,6 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.ConfidenceUtils.FlagPath.getPath;
-import static com.spotify.confidence.OpenFeatureUtils.getValueForPath;
+import static com.spotify.confidence.FlagResolverClientImpl.OPEN_FEATURE_RESOLVE_CONTEXT_KEY;
 
 import com.google.protobuf.Struct;
 import com.spotify.confidence.ConfidenceUtils.FlagPath;
@@ -28,7 +27,6 @@ import org.slf4j.Logger;
 /** OpenFeature Provider for feature flagging with the Confidence platform */
 public class ConfidenceFeatureProvider implements FeatureProvider {
 
-  public static final String OPEN_FEATURE_RESOLVE_CONTEXT_KEY = "open-feature";
   private final Confidence confidence;
 
   /**
@@ -147,7 +145,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
 
     final FlagPath flagPath;
     try {
-      flagPath = getPath(key);
+      flagPath = FlagPath.getPath(key);
     } catch (IllegalValuePath e) {
       log.warn(e.getMessage());
       throw new RuntimeException(e);
@@ -201,7 +199,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
             OpenFeatureTypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema());
 
         // if a path is given, extract expected portion from the structured value
-        Value value = getValueForPath(flagPath.getPath(), fullValue);
+        Value value = OpenFeatureUtils.getValueForPath(flagPath.getPath(), fullValue);
 
         if (value.isNull()) {
           value = defaultValue;
