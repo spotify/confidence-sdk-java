@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.Timestamp;
+import com.spotify.confidence.Confidence.ConfidenceMetadata;
 import com.spotify.confidence.events.v1.EventError;
 import com.spotify.confidence.events.v1.EventError.Reason;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
@@ -54,7 +55,8 @@ class GrpcEventUploaderTest {
     fakeClock.setCurrentTimeSeconds(1337);
 
     // Create a client that uses the channel
-    uploader = new GrpcEventUploader("my-client-secret", fakeClock, channel);
+    uploader =
+        new GrpcEventUploader("my-client-secret", fakeClock, channel, new ConfidenceMetadata(""));
   }
 
   @AfterEach

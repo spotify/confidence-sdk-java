@@ -15,8 +15,6 @@ import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.FlagNotFoundError;
 import dev.openfeature.sdk.exceptions.GeneralError;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import java.util.Map;
@@ -27,63 +25,18 @@ import org.slf4j.Logger;
 /** OpenFeature Provider for feature flagging with the Confidence platform */
 public class ConfidenceFeatureProvider implements FeatureProvider {
 
-  private final Confidence confidence;
-
-  /**
-   * ConfidenceFeatureProvider constructor
-   *
-   * @param confidence an instance of the Confidence
-   */
-  public ConfidenceFeatureProvider(Confidence confidence) {
-    this.confidence = confidence;
-  }
+  private final FlagReaderForProvider confidence;
 
   private static final Logger log =
       org.slf4j.LoggerFactory.getLogger(ConfidenceFeatureProvider.class);
 
-  /**
-   * ConfidenceFeatureProvider constructor
-   *
-   * @param clientSecret generated from the Confidence portal
-   * @param managedChannel gRPC channel
-   * @deprecated This constructor is deprecated. Please use {@link
-   *     #ConfidenceFeatureProvider(Confidence)} instead.
-   */
-  @Deprecated()
-  public ConfidenceFeatureProvider(String clientSecret, ManagedChannel managedChannel) {
-    this(Confidence.builder(clientSecret).flagResolverManagedChannel(managedChannel).build());
-  }
-
-  /**
-   * ConfidenceFeatureProvider constructor
-   *
-   * @param clientSecret generated from the Confidence portal
-   * @deprecated This constructor is deprecated. Please use {@link
-   *     #ConfidenceFeatureProvider(Confidence)} instead.
-   */
-  @Deprecated()
-  public ConfidenceFeatureProvider(String clientSecret) {
-    this(clientSecret, ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
-  }
-
-  /**
-   * ConfidenceFeatureProvider constructor that allows you to override the default gRPC host and
-   * port, used for local resolver.
-   *
-   * @param clientSecret generated from the Confidence portal
-   * @param host gRPC host you want to connect to.
-   * @param port port of the gRPC host that you want to use.
-   * @deprecated This constructor is deprecated. Please use {@link
-   *     #ConfidenceFeatureProvider(Confidence)} instead.
-   */
-  @Deprecated()
-  public ConfidenceFeatureProvider(String clientSecret, String host, int port) {
-    this(clientSecret, ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
+  public ConfidenceFeatureProvider(FlagReaderForProvider confidence) {
+    this.confidence = confidence;
   }
 
   @Override
   public Metadata getMetadata() {
-    return () -> "com.spotify.confidence.flags.resolver.v1.FlagResolverService";
+    return () -> "ConfidenceProvider";
   }
 
   @Override
@@ -163,7 +116,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
                   Map.of(
                       OPEN_FEATURE_RESOLVE_CONTEXT_KEY,
                       ConfidenceValue.Struct.fromProto(evaluationContext)))
-              .resolveFlags(requestFlagName, true)
+              .resolveFlags(requestFlagName, "SDK_ID_JAVA_PROVIDER")
               .get();
 
       if (resolveFlagResponse.getResolvedFlagsList().isEmpty()) {

@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
 import com.spotify.confidence.ConfidenceUtils.FlagPath;
+import com.spotify.confidence.ConfidenceValue.Struct;
 import com.spotify.confidence.Exceptions.IllegalValuePath;
 import com.spotify.confidence.Exceptions.IllegalValueType;
 import com.spotify.confidence.Exceptions.IncompatibleValueType;
@@ -34,8 +35,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 
 @Beta
-public abstract class Confidence implements EventSender, Closeable {
-
+public abstract class Confidence implements ConfidenceInstance, FlagReaderForProvider {
   protected Map<String, ConfidenceValue> context = Maps.newHashMap();
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(Confidence.class);
 
@@ -120,7 +120,8 @@ public abstract class Confidence implements EventSender, Closeable {
     try {
       final FlagPath flagPath = getPath(key);
       final String requestFlagName = "flags/" + flagPath.getFlag();
-      final ResolveFlagsResponse response = resolveFlags(requestFlagName, false).get();
+      final ResolveFlagsResponse response =
+          resolveFlags(requestFlagName, "SDK_ID_JAVA_CONFIDENCE").get();
       if (response.getResolvedFlagsList().isEmpty()) {
         final String errorMessage =
             String.format("No active flag '%s' was found", flagPath.getFlag());
@@ -176,17 +177,23 @@ public abstract class Confidence implements EventSender, Closeable {
     }
   }
 
-  CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName, Boolean isProvider) {
-    return client().resolveFlags(flagName, getContext(), isProvider);
+  public CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName, String providerId) {
+    return client().resolveFlags(flagName, getContext(), providerId);
   }
 
   @VisibleForTesting
-  static Confidence create(
+  protected static ConfidenceInstance create(
       EventSenderEngine eventSenderEngine, FlagResolverClient flagResolverClient) {
     final Closer closer = Closer.create();
     closer.register(eventSenderEngine);
     closer.register(flagResolverClient);
     return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
+  }
+
+  @VisibleForTesting
+  protected static FlagReaderForProvider createForProvider(
+      EventSenderEngine eventSenderEngine, FlagResolverClient flagResolverClient) {
+    return (FlagReaderForProvider) create(eventSenderEngine, flagResolverClient);
   }
 
   public static Confidence.Builder builder(String clientSecret) {
@@ -220,8 +227,8 @@ public abstract class Confidence implements EventSender, Closeable {
 
     @Override
     public CompletableFuture<ResolveFlagsResponse> resolveFlags(
-        String flag, ConfidenceValue.Struct context, Boolean isProvider) {
-      return flagResolverClient.resolveFlags(flag, context, isProvider);
+        String flag, Struct context, String providerId) {
+      return flagResolverClient.resolveFlags(flag, context, providerId);
     }
 
     @Override
@@ -301,6 +308,7 @@ public abstract class Confidence implements EventSender, Closeable {
             .keepAliveTime(Duration.ofMinutes(5).getSeconds(), TimeUnit.SECONDS)
             .build();
     private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
+    private ConfidenceMetadata metadata = new ConfidenceMetadata("SDK_ID_JAVA_CONFIDENCE");
 
     public Builder(@Nonnull String clientSecret) {
       this.clientSecret = clientSecret;
@@ -319,15 +327,19 @@ public abstract class Confidence implements EventSender, Closeable {
       return this;
     }
 
-    public Confidence build() {
+    public ConfidenceInstance build() {
       final FlagResolverClient flagResolverClient =
           new FlagResolverClientImpl(
-              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel));
+              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel, metadata));
       final EventSenderEngine eventSenderEngine =
-          new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);
+          new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now, metadata);
       closer.register(flagResolverClient);
       closer.register(eventSenderEngine);
       return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
+    }
+
+    public FlagReaderForProvider buildForProvider() {
+      return (FlagReaderForProvider) build();
     }
 
     private void registerChannelForShutdown(ManagedChannel channel) {
@@ -341,6 +353,16 @@ public abstract class Confidence implements EventSender, Closeable {
               channel.shutdownNow();
             }
           });
+    }
+  }
+
+  public static class ConfidenceMetadata {
+    String sdkId;
+    String sdkVersion;
+
+    public ConfidenceMetadata(String sdkId) {
+      this.sdkId = sdkId;
+      this.sdkVersion = ConfidenceUtils.getSdkVersion();
     }
   }
 }

@@ -8,5 +8,5 @@ interface FlagResolver {
   void close();
 
   public CompletableFuture<ResolveFlagsResponse> resolve(
-      String flag, Struct context, Boolean isProvider);
+      String flag, Struct context, String providerId);
 }

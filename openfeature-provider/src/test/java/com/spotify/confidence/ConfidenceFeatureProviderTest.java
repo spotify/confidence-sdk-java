@@ -1,6 +1,6 @@
 package com.spotify.confidence;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import dev.openfeature.sdk.ErrorCode;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 class ConfidenceFeatureProviderTest {
 
-  private Confidence root;
+  private FlagReaderForProvider root;
   private FakeEventSenderEngine fakeEngine;
   private ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient;
 
@@ -24,12 +24,13 @@ class ConfidenceFeatureProviderTest {
   public void setup() {
     fakeEngine = new FakeEventSenderEngine(new FakeClock());
     fakeFlagResolverClient = new ResolverClientTestUtils.FakeFlagResolverClient();
-    root = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    root = Confidence.createForProvider(fakeEngine, fakeFlagResolverClient);
   }
 
   @Test
   public void testCloseChildShouldReturnDefaultsFromOpenFeatureApi() throws IOException {
-    final Confidence child = root.withContext(Map.of("child-key", ConfidenceValue.of("child")));
+    final FlagReaderForProvider child =
+        root.withContext(Map.of("child-key", ConfidenceValue.of("child")));
     OpenFeatureAPI.getInstance().setProvider(new ConfidenceFeatureProvider(child));
     child.close();
     final boolean defaultValue = false;

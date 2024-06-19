@@ -14,7 +14,7 @@ class FlagResolverClientImpl implements FlagResolverClient {
   }
 
   public CompletableFuture<ResolveFlagsResponse> resolveFlags(
-      String flagName, ConfidenceValue.Struct context, Boolean isProvider) {
+      String flagName, ConfidenceValue.Struct context, String providerId) {
     final Struct.Builder evaluationContextBuilder = context.toProto().getStructValue().toBuilder();
     if (context.asMap().containsKey(OPEN_FEATURE_RESOLVE_CONTEXT_KEY)) {
       final Value openFeatureEvaluationContext =
@@ -25,7 +25,7 @@ class FlagResolverClientImpl implements FlagResolverClient {
       evaluationContextBuilder.removeFields(OPEN_FEATURE_RESOLVE_CONTEXT_KEY);
     }
 
-    return this.grpcFlagResolver.resolve(flagName, evaluationContextBuilder.build(), isProvider);
+    return this.grpcFlagResolver.resolve(flagName, evaluationContextBuilder.build(), providerId);
   }
 
   @Override

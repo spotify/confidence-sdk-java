@@ -15,7 +15,7 @@ public class ConfidenceContextTest {
 
   @Test
   public void testThrowInvalidContextInMessage() {
-    final Confidence root = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final ConfidenceInstance root = Confidence.create(fakeEngine, fakeFlagResolverClient);
     assertThrows(
         Exceptions.InvalidContextInMessaageError.class,
         () ->
@@ -24,7 +24,7 @@ public class ConfidenceContextTest {
 
   @Test
   public void getContextContainsParentContextValues() {
-    final Confidence root = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final ConfidenceInstance root = Confidence.create(fakeEngine, fakeFlagResolverClient);
     root.updateContextEntry("page", ConfidenceValue.of("http://.."));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("pants", ConfidenceValue.of("yellow")));
@@ -41,7 +41,7 @@ public class ConfidenceContextTest {
 
   @Test
   public void setContextOverwritesContext() {
-    final Confidence root = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final ConfidenceInstance root = Confidence.create(fakeEngine, fakeFlagResolverClient);
     root.updateContextEntry("page", ConfidenceValue.of("http://.."));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("pants", ConfidenceValue.of("yellow")));
@@ -65,7 +65,7 @@ public class ConfidenceContextTest {
 
   @Test
   public void parentContextFieldCanBeOverridden() {
-    final Confidence root = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final ConfidenceInstance root = Confidence.create(fakeEngine, fakeFlagResolverClient);
     root.updateContextEntry("pants-color", ConfidenceValue.of("yellow"));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("pants-color", ConfidenceValue.of("blue")));
@@ -83,7 +83,7 @@ public class ConfidenceContextTest {
 
   @Test
   public void parentContextFieldCanBeOverriddenOrRemoved() {
-    final Confidence root = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final ConfidenceInstance root = Confidence.create(fakeEngine, fakeFlagResolverClient);
     root.updateContextEntry("pants-color", ConfidenceValue.of("yellow"));
     final EventSender confidence =
         root.withContext(ImmutableMap.of("shirt-color", ConfidenceValue.of("blue")));
@@ -98,9 +98,9 @@ public class ConfidenceContextTest {
 
   @Test
   public void multiLevelContexts() {
-    final Confidence root = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    final ConfidenceInstance root = Confidence.create(fakeEngine, fakeFlagResolverClient);
     final int numberOfLevels = 9;
-    Confidence last = root;
+    EventSender last = root;
     for (int i = 0; i < numberOfLevels; i++) {
       last =
           last.withContext(

@@ -1,10 +1,11 @@
 package com.spotify.confidence;
 
 import com.google.common.annotations.Beta;
+import java.io.Closeable;
 import java.util.Map;
 
 @Beta
-public interface EventSender extends Contextual {
+public interface EventSender extends Contextual, Closeable {
   public void track(String eventName, ConfidenceValue.Struct data);
 
   public void track(String eventName);

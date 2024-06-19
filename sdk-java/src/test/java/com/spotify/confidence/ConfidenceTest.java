@@ -22,7 +22,7 @@ final class ConfidenceTest {
   private final FakeEventSenderEngine fakeEngine = new FakeEventSenderEngine(new FakeClock());
   private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
       new ResolverClientTestUtils.FakeFlagResolverClient();
-  private static Confidence confidence;
+  private static ConfidenceInstance confidence;
 
   @BeforeEach
   void beforeEach() {
@@ -244,7 +244,8 @@ final class ConfidenceTest {
 
   @Test
   void internalError() {
-    final Confidence confidence = Confidence.create(fakeEngine, new FailingFlagResolverClient());
+    final ConfidenceInstance confidence =
+        Confidence.create(fakeEngine, new FailingFlagResolverClient());
     final Integer value = confidence.getValue("no-match-flag", 20);
     assertEquals(20, value);
 
@@ -262,7 +263,7 @@ final class ConfidenceTest {
 
     @Override
     public CompletableFuture<ResolveFlagsResponse> resolveFlags(
-        String flag, Struct context, Boolean isProvider) {
+        String flag, Struct context, String providerId) {
       throw new RuntimeException("Crashing while performing network call");
     }
 

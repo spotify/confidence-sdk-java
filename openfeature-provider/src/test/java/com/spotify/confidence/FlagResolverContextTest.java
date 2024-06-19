@@ -13,14 +13,14 @@ import org.junit.jupiter.api.Test;
 public class FlagResolverContextTest {
   private FakeFlagResolver fakeFlagResolver;
   private Client client;
-  private Confidence confidence;
+  private FlagReaderForProvider confidence;
 
   @BeforeEach
   void beforeEach() {
     final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
     this.fakeFlagResolver = new FakeFlagResolver();
     final FlagResolverClientImpl flagResolver = new FlagResolverClientImpl(fakeFlagResolver);
-    this.confidence = Confidence.create(fakeEventSender, flagResolver);
+    this.confidence = Confidence.createForProvider(fakeEventSender, flagResolver);
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 
     final OpenFeatureAPI openFeatureAPI = OpenFeatureAPI.getInstance();
@@ -50,7 +50,7 @@ class FakeFlagResolver implements FlagResolver {
 
   @Override
   public CompletableFuture<ResolveFlagsResponse> resolve(
-      String flag, Struct context, Boolean isProvider) {
+      String flag, Struct context, String providerId) {
     this.context = context;
     return null;
   }
