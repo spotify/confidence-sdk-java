@@ -261,8 +261,7 @@ final class ConfidenceTest {
   public static class FailingFlagResolverClient implements FlagResolverClient {
 
     @Override
-    public CompletableFuture<ResolveFlagsResponse> resolveFlags(
-        String flag, Struct context, Boolean isProvider) {
+    public CompletableFuture<ResolveFlagsResponse> resolveFlags(String flag, Struct context) {
       throw new RuntimeException("Crashing while performing network call");
     }
 

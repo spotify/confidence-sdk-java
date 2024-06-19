@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
+import com.spotify.confidence.Confidence.ConfidenceMetadata;
 import com.spotify.confidence.ResolverClientTestUtils.ValueSchemaHolder;
 import com.spotify.confidence.shaded.flags.resolver.v1.FlagResolverServiceGrpc.FlagResolverServiceImplBase;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
@@ -70,7 +71,8 @@ final class FeatureProviderTest {
     final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
     final FlagResolverClientImpl flagResolver =
-        new FlagResolverClientImpl(new GrpcFlagResolver("fake-secret", channel));
+        new FlagResolverClientImpl(
+            new GrpcFlagResolver("fake-secret", channel, new ConfidenceMetadata("")));
     final Confidence confidence = Confidence.create(fakeEventSender, flagResolver);
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 

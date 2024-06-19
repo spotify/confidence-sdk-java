@@ -1,6 +1,7 @@
 package com.spotify.confidence;
 
 import com.google.common.collect.ImmutableSet;
+import com.spotify.confidence.Confidence.ConfidenceMetadata;
 import com.spotify.confidence.events.v1.Event;
 import com.spotify.confidence.events.v1.EventsServiceGrpc;
 import com.spotify.confidence.events.v1.PublishEventsRequest;
@@ -16,7 +17,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 
 class GrpcEventUploader implements EventUploader {
-
   private final Set<Status.Code> RETRYABLE_STATUS_CODES =
       ImmutableSet.of(
           Status.Code.UNKNOWN,
@@ -26,6 +26,8 @@ class GrpcEventUploader implements EventUploader {
           Status.Code.ABORTED,
           Status.Code.INTERNAL,
           Status.Code.DATA_LOSS);
+  private final Sdk.Builder sdkBuilder =
+      Sdk.newBuilder().setVersion(ConfidenceUtils.getSdkVersion());
   private final String clientSecret;
   private final Sdk sdk;
   private final ManagedChannel managedChannel;
@@ -34,16 +36,25 @@ class GrpcEventUploader implements EventUploader {
 
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(GrpcEventUploader.class);
 
-  GrpcEventUploader(String clientSecret, Clock clock, ManagedChannel managedChannel) {
+  GrpcEventUploader(
+      String clientSecret,
+      Clock clock,
+      ManagedChannel managedChannel,
+      ConfidenceMetadata metadata) {
     this.clientSecret = clientSecret;
     this.managedChannel = managedChannel;
     this.stub = EventsServiceGrpc.newFutureStub(managedChannel);
     this.clock = clock;
-    this.sdk =
-        Sdk.newBuilder()
-            .setId(SdkId.SDK_ID_JAVA_CONFIDENCE)
-            .setVersion(ConfidenceUtils.getSdkVersion())
-            .build();
+    this.sdk = getSdkId(metadata);
+  }
+
+  private Sdk getSdkId(ConfidenceMetadata metadata) {
+    try {
+      sdkBuilder.setId(SdkId.valueOf(metadata.sdkId));
+    } catch (IllegalArgumentException e) {
+      sdkBuilder.setCustomId(metadata.sdkId);
+    }
+    return sdkBuilder.build();
   }
 
   @Override

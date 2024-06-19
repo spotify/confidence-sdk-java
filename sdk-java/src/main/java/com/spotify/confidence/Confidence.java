@@ -120,7 +120,7 @@ public abstract class Confidence implements EventSender, Closeable {
     try {
       final FlagPath flagPath = getPath(key);
       final String requestFlagName = "flags/" + flagPath.getFlag();
-      final ResolveFlagsResponse response = resolveFlags(requestFlagName, false).get();
+      final ResolveFlagsResponse response = resolveFlags(requestFlagName).get();
       if (response.getResolvedFlagsList().isEmpty()) {
         final String errorMessage =
             String.format("No active flag '%s' was found", flagPath.getFlag());
@@ -176,8 +176,8 @@ public abstract class Confidence implements EventSender, Closeable {
     }
   }
 
-  CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName, Boolean isProvider) {
-    return client().resolveFlags(flagName, getContext(), isProvider);
+  CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName) {
+    return client().resolveFlags(flagName, getContext());
   }
 
   @VisibleForTesting
@@ -220,8 +220,8 @@ public abstract class Confidence implements EventSender, Closeable {
 
     @Override
     public CompletableFuture<ResolveFlagsResponse> resolveFlags(
-        String flag, ConfidenceValue.Struct context, Boolean isProvider) {
-      return flagResolverClient.resolveFlags(flag, context, isProvider);
+        String flag, ConfidenceValue.Struct context) {
+      return flagResolverClient.resolveFlags(flag, context);
     }
 
     @Override
@@ -301,6 +301,7 @@ public abstract class Confidence implements EventSender, Closeable {
             .keepAliveTime(Duration.ofMinutes(5).getSeconds(), TimeUnit.SECONDS)
             .build();
     private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
+    private ConfidenceMetadata metadata = new ConfidenceMetadata("SDK_ID_JAVA_CONFIDENCE");
 
     public Builder(@Nonnull String clientSecret) {
       this.clientSecret = clientSecret;
@@ -314,6 +315,16 @@ public abstract class Confidence implements EventSender, Closeable {
       return this;
     }
 
+    /**
+     * NOTE: internal metadata, not meant to be overridden
+     *
+     * @param sdkId identifier of the sdk integration in use
+     */
+    public Builder metadata(String sdkId) {
+      this.metadata = new ConfidenceMetadata(sdkId);
+      return this;
+    }
+
     public Builder flagResolverManagedChannel(ManagedChannel managedChannel) {
       this.flagResolverManagedChannel = managedChannel;
       return this;
@@ -322,9 +333,9 @@ public abstract class Confidence implements EventSender, Closeable {
     public Confidence build() {
       final FlagResolverClient flagResolverClient =
           new FlagResolverClientImpl(
-              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel));
+              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel, metadata));
       final EventSenderEngine eventSenderEngine =
-          new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);
+          new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now, metadata);
       closer.register(flagResolverClient);
       closer.register(eventSenderEngine);
       return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
@@ -341,6 +352,16 @@ public abstract class Confidence implements EventSender, Closeable {
               channel.shutdownNow();
             }
           });
+    }
+  }
+
+  public static class ConfidenceMetadata {
+    String sdkId;
+    String sdkVersion;
+
+    public ConfidenceMetadata(String sdkId) {
+      this.sdkId = sdkId;
+      this.sdkVersion = ConfidenceUtils.getSdkVersion();
     }
   }
 }

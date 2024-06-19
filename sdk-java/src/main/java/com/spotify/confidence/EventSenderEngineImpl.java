@@ -1,6 +1,7 @@
 package com.spotify.confidence;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.spotify.confidence.Confidence.ConfidenceMetadata;
 import com.spotify.confidence.events.v1.Event;
 import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeExecutor;
@@ -17,7 +18,6 @@ import java.util.concurrent.locks.LockSupport;
 import org.slf4j.Logger;
 
 class EventSenderEngineImpl implements EventSenderEngine {
-
   static final String EVENT_NAME_PREFIX = "eventDefinitions/";
   static final int DEFAULT_BATCH_SIZE = 25;
   static final Duration DEFAULT_MAX_FLUSH_INTERVAL = Duration.ofSeconds(60);
@@ -64,10 +64,11 @@ class EventSenderEngineImpl implements EventSenderEngine {
     pollingThread.start();
   }
 
-  EventSenderEngineImpl(String clientSecret, ManagedChannel channel, Clock clock) {
+  EventSenderEngineImpl(
+      String clientSecret, ManagedChannel channel, Clock clock, ConfidenceMetadata metadata) {
     this(
         DEFAULT_BATCH_SIZE,
-        new GrpcEventUploader(clientSecret, clock, channel),
+        new GrpcEventUploader(clientSecret, clock, channel, metadata),
         clock,
         DEFAULT_MAX_FLUSH_INTERVAL,
         DEFAULT_MAX_MEMORY_CONSUMPTION);
