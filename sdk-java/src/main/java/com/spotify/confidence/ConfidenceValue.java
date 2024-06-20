@@ -530,7 +530,7 @@ public abstract class ConfidenceValue {
         return set(key, value.build());
       }
 
-      Struct build() {
+      public Struct build() {
         return new Struct(builder.build());
       }
     }
