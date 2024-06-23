@@ -4,19 +4,21 @@
   <parent>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>confidence-sdk-java</artifactId>
+    <!-- x-release-please-start-version -->
     <version>0.1.1-SNAPSHOT</version>
+    <!---x-release-please-end-->
   </parent>
 
   <artifactId>openfeature-provider</artifactId>
 
   <dependencies>
-    <!-- x-release-please-start-version -->
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>sdk-java</artifactId>
+    <!-- x-release-please-start-version -->
       <version>0.1.1-SNAPSHOT</version>
-    </dependency>
     <!---x-release-please-end-->
+    </dependency>
     <dependency>
       <groupId>dev.openfeature</groupId>
       <artifactId>sdk</artifactId>

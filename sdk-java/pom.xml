@@ -4,7 +4,9 @@
   <parent>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>confidence-sdk-java</artifactId>
+    <!-- x-release-please-start-version -->
     <version>0.1.1-SNAPSHOT</version>
+    <!-- x-release-please-end-version -->
   </parent>
 
   <artifactId>sdk-java</artifactId>
