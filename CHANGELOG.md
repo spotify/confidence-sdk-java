@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.1](https://github.com/spotify/confidence-sdk-java/compare/v0.1.0...v0.1.1) (2024-06-24)
+
+
+### 🐛 Bug Fixes
+
+* ConfidenceValue Struct build is public ([#148](https://github.com/spotify/confidence-sdk-java/issues/148)) ([e409393](https://github.com/spotify/confidence-sdk-java/commit/e40939308bc9c46396ad34f478bb56603d5389bd))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.1-SNAPSHOT ([#145](https://github.com/spotify/confidence-sdk-java/issues/145)) ([fc51bc0](https://github.com/spotify/confidence-sdk-java/commit/fc51bc036274afcded56378a39829ed59d7ff827))
+
 ## [0.1.0](https://github.com/spotify/confidence-sdk-java/compare/v0.0.15...v0.1.0) (2024-06-07)
 
 
