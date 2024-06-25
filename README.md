@@ -16,7 +16,7 @@ Java library for [Confidence](https://confidence.spotify.com/). This library is 
 ```
 <!---x-release-please-end-->
 
-_Note: we strongly recommend to adopt the latest non-SNAPSHOT release._
+_Note: we strongly recommend to adopt the latest non-SNAPSHOT release [available here](https://github.com/spotify/confidence-sdk-java/releases/)._
 
 #### Depending on a development snapshot
 We deploy snapshots from the `main` branch to [Sonatype OSSRH](https://oss.sonatype.org/content/repositories/snapshots/com/spotify/confidence/sdk-java/).
