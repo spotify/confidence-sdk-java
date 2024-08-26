@@ -309,7 +309,10 @@ public abstract class Confidence implements EventSender, Closeable {
 
     public Builder flagResolverManagedChannel(String host, int port) {
       this.flagResolverManagedChannel =
-          ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+          ManagedChannelBuilder.forAddress(host, port)
+              .keepAliveTime(Duration.ofMinutes(5).getSeconds(), TimeUnit.SECONDS)
+              .usePlaintext()
+              .build();
       registerChannelForShutdown(this.flagResolverManagedChannel);
       return this;
     }
