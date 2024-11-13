@@ -26,6 +26,11 @@ public abstract class ConfidenceValue {
         public com.google.protobuf.Value toProto() {
           return com.google.protobuf.Value.newBuilder().setNullValue(NullValue.NULL_VALUE).build();
         }
+
+        @Override
+        public String toString() {
+          return "NULL";
+        }
       };
 
   private ConfidenceValue() {}

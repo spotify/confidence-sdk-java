@@ -16,8 +16,11 @@ import com.spotify.confidence.Exceptions.IncompatibleValueType;
 import com.spotify.confidence.Exceptions.ValueNotFound;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
+import com.spotify.confidence.telemetry.Telemetry;
+import com.spotify.confidence.telemetry.TelemetryClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Duration;
@@ -168,8 +171,17 @@ public abstract class Confidence implements EventSender, Closeable {
       log.warn(e.getMessage());
       return new FlagEvaluation<>(
           defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_TYPE, e.getMessage());
+    } catch (StatusRuntimeException e) {
+      log.warn(e.getMessage());
+      return new FlagEvaluation<>(
+          defaultValue, "", "ERROR", ErrorType.NETWORK_ERROR, e.getMessage());
     } catch (Exception e) {
       // catch all for any runtime exception
+      if (e.getCause() instanceof StatusRuntimeException) {
+        log.warn(e.getMessage());
+        return new FlagEvaluation<>(
+            defaultValue, "", "ERROR", ErrorType.NETWORK_ERROR, e.getMessage());
+      }
       log.warn(e.getMessage());
       return new FlagEvaluation<>(
           defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
@@ -320,9 +332,13 @@ public abstract class Confidence implements EventSender, Closeable {
     }
 
     public Confidence build() {
+      final Telemetry telemetry = new Telemetry();
+      final TelemetryClientInterceptor telemetryInterceptor =
+          new TelemetryClientInterceptor(telemetry);
       final FlagResolverClient flagResolverClient =
           new FlagResolverClientImpl(
-              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel));
+              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel, telemetryInterceptor),
+              telemetry);
       final EventSenderEngine eventSenderEngine =
           new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);
       closer.register(flagResolverClient);

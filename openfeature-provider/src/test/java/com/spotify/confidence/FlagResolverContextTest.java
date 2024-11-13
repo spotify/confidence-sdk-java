@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.Struct;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.telemetry.Telemetry;
 import dev.openfeature.sdk.*;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -14,12 +15,15 @@ public class FlagResolverContextTest {
   private FakeFlagResolver fakeFlagResolver;
   private Client client;
   private Confidence confidence;
+  private Telemetry telemetry;
 
   @BeforeEach
   void beforeEach() {
     final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
     this.fakeFlagResolver = new FakeFlagResolver();
-    final FlagResolverClientImpl flagResolver = new FlagResolverClientImpl(fakeFlagResolver);
+    this.telemetry = new Telemetry();
+    final FlagResolverClientImpl flagResolver =
+        new FlagResolverClientImpl(fakeFlagResolver, telemetry);
     this.confidence = Confidence.create(fakeEventSender, flagResolver);
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 

@@ -30,7 +30,8 @@ class ConfidenceTypeMapper {
             if (intVal != value.getNumberValue()) {
               throw new ParseError(
                   String.format(
-                      "%s %s should be an int, but it is a double/long", mismatchPrefix, value));
+                      "%s %s should be an int, but it is a double/long",
+                      mismatchPrefix, value.getNumberValue()));
             }
             return ConfidenceValue.of(intVal);
           case DOUBLE_SCHEMA:
