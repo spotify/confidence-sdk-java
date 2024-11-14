@@ -1,12 +1,13 @@
 package com.spotify.confidence.telemetry;
 
 import io.grpc.*;
+import javax.annotation.Nullable;
 
 public class FakeTelemetryClientInterceptor extends TelemetryClientInterceptor {
 
   private Metadata storedHeaders;
 
-  public FakeTelemetryClientInterceptor(Telemetry telemetry) {
+  public FakeTelemetryClientInterceptor(@Nullable Telemetry telemetry) {
     super(telemetry);
   }
 

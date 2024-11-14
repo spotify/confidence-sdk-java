@@ -4,7 +4,8 @@ import static com.spotify.confidence.ErrorType.*;
 import static com.spotify.confidence.ResolverClientTestUtils.generateSampleResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
@@ -467,6 +468,28 @@ final class ConfidenceIntegrationTest {
     // verify that the grpc request contains telemetry data in the header
     final Metadata storedHeaders = telemetryInterceptor.getStoredHeaders();
     assertThat(storedHeaders.containsKey(TelemetryClientInterceptor.HEADER_KEY)).isTrue();
+  }
+
+  @Test
+  public void resolveDoesNotContainHeaderWithTelemetryDataWhenDisabled() {
+    final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
+    channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
+    // telemetry is null
+    final FakeTelemetryClientInterceptor nullTelemetryInterceptor =
+        new FakeTelemetryClientInterceptor(null);
+    final FlagResolverClientImpl flagResolver =
+        new FlagResolverClientImpl(
+            new GrpcFlagResolver("fake-secret", channel, nullTelemetryInterceptor), null);
+    confidence = Confidence.create(fakeEventSender, flagResolver);
+
+    mockSampleResponse();
+
+    confidence.withContext(SAMPLE_CONTEXT).getEvaluation("flag.prop-E", 1000);
+    confidence.withContext(SAMPLE_CONTEXT).getEvaluation("flag.prop-E", 1000);
+
+    // verify that the grpc request does not contain telemetry data in the header
+    final Metadata storedHeaders = nullTelemetryInterceptor.getStoredHeaders();
+    assertThat(storedHeaders.containsKey(TelemetryClientInterceptor.HEADER_KEY)).isFalse();
   }
 
   //////

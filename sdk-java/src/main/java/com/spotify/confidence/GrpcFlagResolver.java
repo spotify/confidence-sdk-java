@@ -9,7 +9,6 @@ import io.grpc.ManagedChannel;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 public class GrpcFlagResolver implements FlagResolver {
   private final ManagedChannel managedChannel;
@@ -21,23 +20,15 @@ public class GrpcFlagResolver implements FlagResolver {
   public GrpcFlagResolver(
       String clientSecret,
       ManagedChannel managedChannel,
-      @Nullable TelemetryClientInterceptor telemetryInterceptor) {
+      TelemetryClientInterceptor telemetryInterceptor) {
     if (Strings.isNullOrEmpty(clientSecret)) {
       throw new IllegalArgumentException("clientSecret must be a non-empty string.");
     }
     this.clientSecret = clientSecret;
     this.managedChannel = managedChannel;
-    if (telemetryInterceptor != null) {
-      this.stub =
-          FlagResolverServiceGrpc.newFutureStub(managedChannel)
-              .withInterceptors(telemetryInterceptor);
-    } else {
-      this.stub = FlagResolverServiceGrpc.newFutureStub(managedChannel);
-    }
-  }
-
-  public GrpcFlagResolver(String clientSecret, ManagedChannel managedChannel) {
-    this(clientSecret, managedChannel, null);
+    this.stub =
+        FlagResolverServiceGrpc.newFutureStub(managedChannel)
+            .withInterceptors(telemetryInterceptor);
   }
 
   public CompletableFuture<ResolveFlagsResponse> resolve(

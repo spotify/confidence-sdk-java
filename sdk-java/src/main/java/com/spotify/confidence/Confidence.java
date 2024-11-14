@@ -339,21 +339,13 @@ public abstract class Confidence implements EventSender, Closeable {
 
     public Confidence build() {
       final FlagResolverClient flagResolverClient;
-      final Telemetry telemetry;
-      if (disableTelemetry) {
-        flagResolverClient =
-            new FlagResolverClientImpl(
-                new GrpcFlagResolver(clientSecret, flagResolverManagedChannel));
-      } else {
-        telemetry = new Telemetry();
-        final TelemetryClientInterceptor telemetryInterceptor =
-            new TelemetryClientInterceptor(telemetry);
-        flagResolverClient =
-            new FlagResolverClientImpl(
-                new GrpcFlagResolver(
-                    clientSecret, flagResolverManagedChannel, telemetryInterceptor),
-                telemetry);
-      }
+      final Telemetry telemetry = disableTelemetry ? null : new Telemetry();
+      final TelemetryClientInterceptor telemetryInterceptor =
+          new TelemetryClientInterceptor(telemetry);
+      final GrpcFlagResolver flagResolver =
+          new GrpcFlagResolver(clientSecret, flagResolverManagedChannel, telemetryInterceptor);
+
+      flagResolverClient = new FlagResolverClientImpl(flagResolver, telemetry);
 
       final EventSenderEngine eventSenderEngine =
           new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);

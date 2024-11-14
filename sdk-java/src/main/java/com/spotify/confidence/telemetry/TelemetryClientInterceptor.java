@@ -3,13 +3,14 @@ package com.spotify.confidence.telemetry;
 import com.spotify.telemetry.v1.Monitoring;
 import io.grpc.*;
 import java.util.Base64;
+import javax.annotation.Nullable;
 
 public class TelemetryClientInterceptor implements ClientInterceptor {
   public static final Metadata.Key<String> HEADER_KEY =
       Metadata.Key.of("X-CONFIDENCE-TELEMETRY", Metadata.ASCII_STRING_MARSHALLER);
-  private final Telemetry telemetry;
+  private final @Nullable Telemetry telemetry;
 
-  public TelemetryClientInterceptor(Telemetry telemetry) {
+  public TelemetryClientInterceptor(@Nullable Telemetry telemetry) {
     this.telemetry = telemetry;
   }
 
@@ -20,10 +21,12 @@ public class TelemetryClientInterceptor implements ClientInterceptor {
         next.newCall(method, callOptions)) {
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
-        final Monitoring telemetrySnapshot = telemetry.getSnapshot();
-        final String base64Telemetry =
-            Base64.getEncoder().encodeToString(telemetrySnapshot.toByteArray());
-        headers.put(HEADER_KEY, base64Telemetry);
+        if (telemetry != null) {
+          final Monitoring telemetrySnapshot = telemetry.getSnapshot();
+          final String base64Telemetry =
+              Base64.getEncoder().encodeToString(telemetrySnapshot.toByteArray());
+          headers.put(HEADER_KEY, base64Telemetry);
+        }
         super.start(responseListener, headers);
       }
     };
