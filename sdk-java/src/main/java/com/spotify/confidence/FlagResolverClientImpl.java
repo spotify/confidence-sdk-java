@@ -19,6 +19,10 @@ class FlagResolverClientImpl implements FlagResolverClient {
     this.telemetry = telemetry;
   }
 
+  public FlagResolverClientImpl(FlagResolver grpcFlagResolver) {
+    this(grpcFlagResolver, null);
+  }
+
   public CompletableFuture<ResolveFlagsResponse> resolveFlags(
       String flagName, ConfidenceValue.Struct context, Boolean isProvider) {
     final Instant start = Instant.now();
