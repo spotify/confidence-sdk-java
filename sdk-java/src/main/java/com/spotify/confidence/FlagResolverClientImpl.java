@@ -7,15 +7,21 @@ import com.spotify.confidence.telemetry.Telemetry;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 
 class FlagResolverClientImpl implements FlagResolverClient {
   public static final String OPEN_FEATURE_RESOLVE_CONTEXT_KEY = "open-feature";
   private final FlagResolver grpcFlagResolver;
   private final Telemetry telemetry;
 
-  public FlagResolverClientImpl(FlagResolver grpcFlagResolver, Telemetry telemetry) {
+  public FlagResolverClientImpl(FlagResolver grpcFlagResolver, @Nullable Telemetry telemetry) {
     this.grpcFlagResolver = grpcFlagResolver;
     this.telemetry = telemetry;
+  }
+
+  public FlagResolverClientImpl(FlagResolver grpcFlagResolver) {
+    this.grpcFlagResolver = grpcFlagResolver;
+    this.telemetry = null;
   }
 
   public CompletableFuture<ResolveFlagsResponse> resolveFlags(
@@ -31,13 +37,18 @@ class FlagResolverClientImpl implements FlagResolverClient {
           openFeatureEvaluationContext.getStructValue().getFieldsMap());
       evaluationContextBuilder.removeFields(OPEN_FEATURE_RESOLVE_CONTEXT_KEY);
     }
-    telemetry.setIsProvider(isProvider);
+    if (telemetry != null) {
+      telemetry.setIsProvider(isProvider);
+    }
+
     return this.grpcFlagResolver
         .resolve(flagName, evaluationContextBuilder.build(), isProvider)
         .thenApply(
             response -> {
-              final Instant end = Instant.now();
-              telemetry.appendLatency(Duration.between(start, end).toMillis());
+              if (telemetry != null) {
+                final Instant end = Instant.now();
+                telemetry.appendLatency(Duration.between(start, end).toMillis());
+              }
               return response;
             });
   }

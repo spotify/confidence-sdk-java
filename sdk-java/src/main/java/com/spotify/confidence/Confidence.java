@@ -313,6 +313,7 @@ public abstract class Confidence implements EventSender, Closeable {
             .keepAliveTime(Duration.ofMinutes(5).getSeconds(), TimeUnit.SECONDS)
             .build();
     private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
+    private boolean disableTelemetry = true;
 
     public Builder(@Nonnull String clientSecret) {
       this.clientSecret = clientSecret;
@@ -331,14 +332,29 @@ public abstract class Confidence implements EventSender, Closeable {
       return this;
     }
 
+    public Builder disableTelemetry(boolean disableTelemetry) {
+      this.disableTelemetry = disableTelemetry;
+      return this;
+    }
+
     public Confidence build() {
-      final Telemetry telemetry = new Telemetry();
-      final TelemetryClientInterceptor telemetryInterceptor =
-          new TelemetryClientInterceptor(telemetry);
-      final FlagResolverClient flagResolverClient =
-          new FlagResolverClientImpl(
-              new GrpcFlagResolver(clientSecret, flagResolverManagedChannel, telemetryInterceptor),
-              telemetry);
+      final FlagResolverClient flagResolverClient;
+      final Telemetry telemetry;
+      if (disableTelemetry) {
+        flagResolverClient =
+            new FlagResolverClientImpl(
+                new GrpcFlagResolver(clientSecret, flagResolverManagedChannel));
+      } else {
+        telemetry = new Telemetry();
+        final TelemetryClientInterceptor telemetryInterceptor =
+            new TelemetryClientInterceptor(telemetry);
+        flagResolverClient =
+            new FlagResolverClientImpl(
+                new GrpcFlagResolver(
+                    clientSecret, flagResolverManagedChannel, telemetryInterceptor),
+                telemetry);
+      }
+
       final EventSenderEngine eventSenderEngine =
           new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);
       closer.register(flagResolverClient);
