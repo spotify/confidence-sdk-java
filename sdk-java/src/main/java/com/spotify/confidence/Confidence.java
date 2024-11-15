@@ -313,7 +313,7 @@ public abstract class Confidence implements EventSender, Closeable {
             .keepAliveTime(Duration.ofMinutes(5).getSeconds(), TimeUnit.SECONDS)
             .build();
     private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
-    private boolean disableTelemetry = true;
+    private boolean disableTelemetry = false;
 
     public Builder(@Nonnull String clientSecret) {
       this.clientSecret = clientSecret;
