@@ -12,7 +12,7 @@ import javax.annotation.Nullable;
 class FlagResolverClientImpl implements FlagResolverClient {
   public static final String OPEN_FEATURE_RESOLVE_CONTEXT_KEY = "open-feature";
   private final FlagResolver grpcFlagResolver;
-  private final Telemetry telemetry;
+  private final @Nullable Telemetry telemetry;
 
   public FlagResolverClientImpl(FlagResolver grpcFlagResolver, @Nullable Telemetry telemetry) {
     this.grpcFlagResolver = grpcFlagResolver;
@@ -35,9 +35,6 @@ class FlagResolverClientImpl implements FlagResolverClient {
       evaluationContextBuilder.putAllFields(
           openFeatureEvaluationContext.getStructValue().getFieldsMap());
       evaluationContextBuilder.removeFields(OPEN_FEATURE_RESOLVE_CONTEXT_KEY);
-    }
-    if (telemetry != null) {
-      telemetry.setIsProvider(isProvider);
     }
 
     return this.grpcFlagResolver

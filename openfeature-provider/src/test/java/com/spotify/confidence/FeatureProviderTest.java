@@ -73,7 +73,7 @@ final class FeatureProviderTest {
   void beforeEach() {
     final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
-    telemetry = new Telemetry();
+    telemetry = new Telemetry(true);
     final TelemetryClientInterceptor telemetryInterceptor =
         new TelemetryClientInterceptor(telemetry);
     final FlagResolverClientImpl flagResolver =
@@ -522,7 +522,7 @@ final class FeatureProviderTest {
 
     client.getIntegerDetails("flag.prop-E", 1000, SAMPLE_CONTEXT);
 
-    final Monitoring telemetrySnapshot = telemetry.peekSnapshot();
+    final Monitoring telemetrySnapshot = telemetry.getSnapshotInternal();
     final List<LibraryTraces> libraryTracesList = telemetrySnapshot.getLibraryTracesList();
     assertThat(libraryTracesList).hasSize(1);
     final LibraryTraces traces = libraryTracesList.get(0);

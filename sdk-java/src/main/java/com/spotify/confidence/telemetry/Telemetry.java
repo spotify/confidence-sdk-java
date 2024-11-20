@@ -4,12 +4,19 @@ import com.google.common.annotations.VisibleForTesting;
 import com.spotify.telemetry.v1.LibraryTraces;
 import com.spotify.telemetry.v1.Monitoring;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Telemetry {
   private final ConcurrentLinkedQueue<LibraryTraces.Trace> latencyTraces =
       new ConcurrentLinkedQueue<>();
-  private final AtomicBoolean isProvider = new AtomicBoolean(false);
+  private final boolean isProvider;
+
+  public Telemetry() {
+    this.isProvider = false;
+  }
+
+  public Telemetry(boolean isProvider) {
+    this.isProvider = isProvider;
+  }
 
   public void appendLatency(long latency) {
     latencyTraces.add(
@@ -25,11 +32,12 @@ public class Telemetry {
     return snapshot;
   }
 
-  private Monitoring getSnapshotInternal() {
+  @VisibleForTesting
+  public Monitoring getSnapshotInternal() {
     final LibraryTraces libraryTraces =
         LibraryTraces.newBuilder()
             .setLibrary(
-                isProvider.get()
+                isProvider
                     ? LibraryTraces.Library.LIBRARY_OPEN_FEATURE
                     : LibraryTraces.Library.LIBRARY_CONFIDENCE)
             .addAllTraces(latencyTraces)
@@ -38,16 +46,7 @@ public class Telemetry {
     return Monitoring.newBuilder().addLibraryTraces(libraryTraces).build();
   }
 
-  @VisibleForTesting
-  public synchronized Monitoring peekSnapshot() {
-    return getSnapshotInternal();
-  }
-
   private void clear() {
     latencyTraces.clear();
-  }
-
-  public void setIsProvider(Boolean isProvider) {
-    this.isProvider.set(isProvider);
   }
 }

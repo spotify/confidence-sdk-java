@@ -60,6 +60,10 @@ The library includes a `Provider` for
 the [OpenFeature Java SDK](https://openfeature.dev/docs/tutorials/getting-started/java), that can be
 used to resolve feature flag values from the Confidence platform.
 
+The constructor for creating an OpenFeature `ConfidenceProvider` takes a `Confidence` instance as a parameter.
+We kindly ask you to use the `Confidence.Builder.buildForProvider()` function when creating a `Confidence` instance that 
+will be used with OpenFeature.
+
 To learn more about the basic concepts (flags, targeting key, evaluation contexts),
 the [OpenFeature reference documentation](https://openfeature.dev/docs/reference/intro) can be
 useful.

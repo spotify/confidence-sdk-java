@@ -453,7 +453,7 @@ final class ConfidenceIntegrationTest {
 
     confidence.withContext(SAMPLE_CONTEXT).getEvaluation("flag.prop-E", 1000);
 
-    final Monitoring telemetrySnapshot = telemetry.peekSnapshot();
+    final Monitoring telemetrySnapshot = telemetry.getSnapshotInternal();
     final List<LibraryTraces> libraryTracesList = telemetrySnapshot.getLibraryTracesList();
     assertThat(libraryTracesList).hasSize(1);
     final LibraryTraces traces = libraryTracesList.get(0);

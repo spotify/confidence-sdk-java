@@ -314,6 +314,7 @@ public abstract class Confidence implements EventSender, Closeable {
             .build();
     private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
     private boolean disableTelemetry = false;
+    private boolean isProvider = false;
 
     public Builder(@Nonnull String clientSecret) {
       this.clientSecret = clientSecret;
@@ -337,9 +338,14 @@ public abstract class Confidence implements EventSender, Closeable {
       return this;
     }
 
+    public Confidence buildForProvider() {
+      this.isProvider = true;
+      return build();
+    }
+
     public Confidence build() {
       final FlagResolverClient flagResolverClient;
-      final Telemetry telemetry = disableTelemetry ? null : new Telemetry();
+      final Telemetry telemetry = disableTelemetry ? null : new Telemetry(isProvider);
       final TelemetryClientInterceptor telemetryInterceptor =
           new TelemetryClientInterceptor(telemetry);
       final GrpcFlagResolver flagResolver =
