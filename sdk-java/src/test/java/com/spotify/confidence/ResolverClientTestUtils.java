@@ -24,7 +24,7 @@ public class ResolverClientTestUtils {
 
     @Override
     public CompletableFuture<ResolveFlagsResponse> resolveFlags(
-        String flag, ConfidenceValue.Struct context, Boolean isProvider) {
+        String flag, ConfidenceValue.Struct context) {
       resolves.put(flag, context);
       return CompletableFuture.completedFuture(response);
     }
