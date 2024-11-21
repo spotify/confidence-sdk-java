@@ -4,8 +4,7 @@ import static com.spotify.confidence.ResolverClientTestUtils.generateSampleRespo
 import static dev.openfeature.sdk.ErrorCode.GENERAL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
@@ -15,6 +14,10 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
+import com.spotify.confidence.telemetry.Telemetry;
+import com.spotify.confidence.telemetry.TelemetryClientInterceptor;
+import com.spotify.telemetry.v1.LibraryTraces;
+import com.spotify.telemetry.v1.Monitoring;
 import dev.openfeature.sdk.*;
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
@@ -53,6 +56,7 @@ final class FeatureProviderTest {
       new MutableContext("my-targeting-key", Map.of("my-key", new Value(true)));
 
   static final String serverName = InProcessServerBuilder.generateName();
+  private Telemetry telemetry;
 
   @BeforeAll
   static void before() throws IOException {
@@ -69,8 +73,12 @@ final class FeatureProviderTest {
   void beforeEach() {
     final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
     channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
+    telemetry = new Telemetry(true);
+    final TelemetryClientInterceptor telemetryInterceptor =
+        new TelemetryClientInterceptor(telemetry);
     final FlagResolverClientImpl flagResolver =
-        new FlagResolverClientImpl(new GrpcFlagResolver("fake-secret", channel));
+        new FlagResolverClientImpl(
+            new GrpcFlagResolver("fake-secret", channel, telemetryInterceptor), telemetry);
     final Confidence confidence = Confidence.create(fakeEventSender, flagResolver);
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 
@@ -506,6 +514,25 @@ final class FeatureProviderTest {
 
     assertThat(state).isEqualTo(ProviderState.NOT_READY);
     assertThat(evaluationDetails.getValue()).isEqualTo(defaultValue);
+  }
+
+  @Test
+  public void resolvesContainHeaderWithTelemetryData() {
+    mockSampleResponse();
+
+    client.getIntegerDetails("flag.prop-E", 1000, SAMPLE_CONTEXT);
+
+    final Monitoring telemetrySnapshot = telemetry.getSnapshotInternal();
+    final List<LibraryTraces> libraryTracesList = telemetrySnapshot.getLibraryTracesList();
+    assertThat(libraryTracesList).hasSize(1);
+    final LibraryTraces traces = libraryTracesList.get(0);
+    assertThat(traces.getLibrary()).isEqualTo(LibraryTraces.Library.LIBRARY_OPEN_FEATURE);
+    assertThat(traces.getTracesList()).hasSize(1);
+    final LibraryTraces.Trace trace = traces.getTraces(0);
+    assertThat(trace.getId()).isEqualTo(LibraryTraces.TraceId.TRACE_ID_RESOLVE_LATENCY);
+    assertThat(trace.getMillisecondDuration()).isNotNegative();
+
+    client.getIntegerDetails("flag.prop-Y", 1000, SAMPLE_CONTEXT);
   }
 
   //////

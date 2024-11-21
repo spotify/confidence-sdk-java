@@ -60,6 +60,26 @@ The library includes a `Provider` for
 the [OpenFeature Java SDK](https://openfeature.dev/docs/tutorials/getting-started/java), that can be
 used to resolve feature flag values from the Confidence platform.
 
+The constructor for creating an OpenFeature `ConfidenceProvider` takes a `Confidence` instance as a parameter.
+We kindly ask you to use the `Confidence.Builder.buildForProvider()` function when creating a `Confidence` instance that 
+will be used with OpenFeature.
+
 To learn more about the basic concepts (flags, targeting key, evaluation contexts),
 the [OpenFeature reference documentation](https://openfeature.dev/docs/reference/intro) can be
 useful.
+
+## Telemetry
+
+In order to improve the services provided by Confidence, the SDK collects a very limited amount of telemetry data. 
+This data is sent in the form of an additional gRPC header with each resolve request. The data does not contain any 
+information that can be used to link the data to a specific end user.
+
+Please refer to the [Telemetry class](sdk-java/src/main/java/com/spotify/confidence/telemetry/Telemetry.java) to understand the data that is collected.
+
+To opt out of this behavior, you can disable telemetry by setting the `disableTelemetry` flag to `true` when building the `Confidence` instance.
+
+```java
+final Confidence confidence = Confidence.Builder("<CLIENT_SECRET>")
+        .disableTelemetry(true)
+        .build();
+```
