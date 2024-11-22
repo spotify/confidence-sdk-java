@@ -49,4 +49,8 @@ public class Telemetry {
   private void clear() {
     latencyTraces.clear();
   }
+
+  public boolean isProvider() {
+    return isProvider;
+  }
 }

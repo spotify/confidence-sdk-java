@@ -163,7 +163,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
                   Map.of(
                       OPEN_FEATURE_RESOLVE_CONTEXT_KEY,
                       ConfidenceValue.Struct.fromProto(evaluationContext)))
-              .resolveFlags(requestFlagName, true)
+              .resolveFlags(requestFlagName)
               .get();
 
       if (resolveFlagResponse.getResolvedFlagsList().isEmpty()) {
