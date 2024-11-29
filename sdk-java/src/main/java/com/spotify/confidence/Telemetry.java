@@ -1,4 +1,4 @@
-package com.spotify.confidence.telemetry;
+package com.spotify.confidence;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.spotify.telemetry.v1.LibraryTraces;
@@ -40,6 +40,7 @@ public class Telemetry {
                 isProvider
                     ? LibraryTraces.Library.LIBRARY_OPEN_FEATURE
                     : LibraryTraces.Library.LIBRARY_CONFIDENCE)
+            .setLibraryVersion(ConfidenceUtils.getSdkVersion())
             .addAllTraces(latencyTraces)
             .build();
 
