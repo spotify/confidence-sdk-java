@@ -3,7 +3,6 @@ package com.spotify.confidence;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
-import com.spotify.confidence.telemetry.Telemetry;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;

@@ -16,8 +16,6 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import com.spotify.confidence.telemetry.FakeTelemetryClientInterceptor;
-import com.spotify.confidence.telemetry.Telemetry;
-import com.spotify.confidence.telemetry.TelemetryClientInterceptor;
 import com.spotify.telemetry.v1.LibraryTraces;
 import com.spotify.telemetry.v1.Monitoring;
 import io.grpc.ManagedChannel;

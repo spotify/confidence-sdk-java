@@ -1,5 +1,7 @@
 package com.spotify.confidence.telemetry;
 
+import com.spotify.confidence.Telemetry;
+import com.spotify.confidence.TelemetryClientInterceptor;
 import io.grpc.*;
 import javax.annotation.Nullable;
 

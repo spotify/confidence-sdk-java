@@ -1,4 +1,4 @@
-package com.spotify.confidence.telemetry;
+package com.spotify.confidence;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.spotify.telemetry.v1.LibraryTraces;
