@@ -40,6 +40,7 @@ public class Telemetry {
                 isProvider
                     ? LibraryTraces.Library.LIBRARY_OPEN_FEATURE
                     : LibraryTraces.Library.LIBRARY_CONFIDENCE)
+            .setLibraryVersion(ConfidenceUtils.getSdkVersion())
             .addAllTraces(latencyTraces)
             .build();
 
