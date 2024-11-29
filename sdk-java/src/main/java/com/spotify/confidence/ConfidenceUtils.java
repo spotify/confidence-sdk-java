@@ -3,13 +3,13 @@ package com.spotify.confidence;
 import com.spotify.confidence.ConfidenceValue.Struct;
 import com.spotify.confidence.Exceptions.IllegalValuePath;
 import com.spotify.confidence.Exceptions.ValueNotFound;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
+// Be careful if you intend moving this file. The version returned by `getSdkVersion()` is set by
+// Release Please by defining its path as an "extra file" in release-please-config.json
 final class ConfidenceUtils {
 
   private ConfidenceUtils() {}
@@ -85,12 +85,6 @@ final class ConfidenceUtils {
   }
 
   static String getSdkVersion() {
-    try {
-      final Properties prop = new Properties();
-      prop.load(ConfidenceUtils.class.getResourceAsStream("/version.properties"));
-      return prop.getProperty("version");
-    } catch (IOException e) {
-      throw new RuntimeException("Can't determine version of the SDK", e);
-    }
+    return "0.1.3-SNAPSHOT"; // x-release-please-version
   }
 }
