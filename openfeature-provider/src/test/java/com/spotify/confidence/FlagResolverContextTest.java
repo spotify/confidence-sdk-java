@@ -20,7 +20,7 @@ public class FlagResolverContextTest {
     final FakeEventSenderEngine fakeEventSender = new FakeEventSenderEngine(new FakeClock());
     this.fakeFlagResolver = new FakeFlagResolver();
     final FlagResolverClientImpl flagResolver = new FlagResolverClientImpl(fakeFlagResolver);
-    this.confidence = Confidence.create(fakeEventSender, flagResolver);
+    this.confidence = Confidence.create(fakeEventSender, flagResolver, "");
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 
     final OpenFeatureAPI openFeatureAPI = OpenFeatureAPI.getInstance();
