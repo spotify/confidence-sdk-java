@@ -3,6 +3,7 @@ package com.spotify.confidence;
 import com.google.common.annotations.VisibleForTesting;
 import com.spotify.telemetry.v1.LibraryTraces;
 import com.spotify.telemetry.v1.Monitoring;
+import com.spotify.telemetry.v1.Platform;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Telemetry {
@@ -44,7 +45,10 @@ public class Telemetry {
             .addAllTraces(latencyTraces)
             .build();
 
-    return Monitoring.newBuilder().addLibraryTraces(libraryTraces).build();
+    return Monitoring.newBuilder()
+        .setPlatform(Platform.PLATFORM_JAVA)
+        .addLibraryTraces(libraryTraces)
+        .build();
   }
 
   private void clear() {
