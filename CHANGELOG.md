@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.3](https://github.com/spotify/confidence-sdk-java/compare/v0.1.2...v0.1.3) (2024-12-02)
+
+
+### 🐛 Bug Fixes
+
+* add platform to telemetry ([#160](https://github.com/spotify/confidence-sdk-java/issues/160)) ([b85663f](https://github.com/spotify/confidence-sdk-java/commit/b85663ffe23eb840fd666be08078edaa1c007e90))
+* send version in telemetry ([#161](https://github.com/spotify/confidence-sdk-java/issues/161)) ([eeaa25b](https://github.com/spotify/confidence-sdk-java/commit/eeaa25bc417e9bd804c84dd69710d53354770c1d))
+
+
+### ✨ New Features
+
+* add telemetry on resolve latency ([#158](https://github.com/spotify/confidence-sdk-java/issues/158)) ([4c4cd76](https://github.com/spotify/confidence-sdk-java/commit/4c4cd764d7080ee1162fe4d84a5caa9f3ea4d3ca))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.3-SNAPSHOT ([#153](https://github.com/spotify/confidence-sdk-java/issues/153)) ([790b6ac](https://github.com/spotify/confidence-sdk-java/commit/790b6acb2c652dfb2bc9eb0aeaaad7dc224c79b2))
+
+
+### 📚 Documentation
+
+* Update README.md ([#155](https://github.com/spotify/confidence-sdk-java/issues/155)) ([f67e451](https://github.com/spotify/confidence-sdk-java/commit/f67e4517b07f652e9be7ceb04fc2201dc6be64fa))
+
+
+### 🔄 Refactoring
+
+* align on a single way to define isProvider ([#159](https://github.com/spotify/confidence-sdk-java/issues/159)) ([8a452c1](https://github.com/spotify/confidence-sdk-java/commit/8a452c153cb954ab364eadb9e7344c97d6521fa5))
+
 ## [0.1.2](https://github.com/spotify/confidence-sdk-java/compare/v0.1.1...v0.1.2) (2024-06-24)
 
 
