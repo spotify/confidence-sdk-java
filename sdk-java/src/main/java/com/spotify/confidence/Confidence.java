@@ -39,8 +39,11 @@ public abstract class Confidence implements EventSender, Closeable {
 
   protected Map<String, ConfidenceValue> context = Maps.newHashMap();
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(Confidence.class);
+  private final String clientKey;
 
-  private Confidence() {}
+  private Confidence(String clientKey) {
+    this.clientKey = clientKey;
+  }
 
   protected abstract ClientDelegate client();
 
@@ -131,6 +134,14 @@ public abstract class Confidence implements EventSender, Closeable {
       }
 
       final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
+      final String flag = resolvedFlag.getFlag();
+      final String context = getContext().toString();
+      final String logMessage =
+          String.format(
+              "See resolves for '%s' in Confidence: "
+                  + "https://app.confidence.spotify.com/flags/resolver-test?client-key=%s&flag=flags/%s&context=%s",
+              flag, clientKey, flag, context);
+      log.debug(logMessage);
       if (!requestFlagName.equals(resolvedFlag.getFlag())) {
         final String errorMessage =
             String.format(
@@ -141,12 +152,12 @@ public abstract class Confidence implements EventSender, Closeable {
             defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
       }
       if (resolvedFlag.getVariant().isEmpty()) {
-        final String errorMessage =
+        final String variantEmpty =
             String.format(
                 "The server returned no assignment for the flag '%s'. Typically, this happens "
                     + "if no configured rules matches the given evaluation context.",
                 flagPath.getFlag());
-        log.debug(errorMessage);
+        log.debug(variantEmpty);
         return new FlagEvaluation<>(defaultValue, "", resolvedFlag.getReason().toString());
       } else {
         final ConfidenceValue confidenceValue;
@@ -192,11 +203,14 @@ public abstract class Confidence implements EventSender, Closeable {
 
   @VisibleForTesting
   static Confidence create(
-      EventSenderEngine eventSenderEngine, FlagResolverClient flagResolverClient) {
+      EventSenderEngine eventSenderEngine,
+      FlagResolverClient flagResolverClient,
+      String clientSecret) {
     final Closer closer = Closer.create();
     closer.register(eventSenderEngine);
     closer.register(flagResolverClient);
-    return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
+    return new RootInstance(
+        new ClientDelegate(closer, flagResolverClient, eventSenderEngine), clientSecret);
   }
 
   public static Confidence.Builder builder(String clientSecret) {
@@ -246,6 +260,7 @@ public abstract class Confidence implements EventSender, Closeable {
     private boolean closed = false;
 
     private ChildInstance(Confidence parent) {
+      super(parent.clientKey);
       this.parent = parent;
     }
 
@@ -277,7 +292,8 @@ public abstract class Confidence implements EventSender, Closeable {
   private static class RootInstance extends Confidence {
     @Nullable private ClientDelegate client;
 
-    private RootInstance(ClientDelegate client) {
+    private RootInstance(ClientDelegate client, String clientKey) {
+      super(clientKey);
       this.client = client;
     }
 
@@ -355,7 +371,8 @@ public abstract class Confidence implements EventSender, Closeable {
           new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);
       closer.register(flagResolverClient);
       closer.register(eventSenderEngine);
-      return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
+      return new RootInstance(
+          new ClientDelegate(closer, flagResolverClient, eventSenderEngine), clientSecret);
     }
 
     private void registerChannelForShutdown(ManagedChannel channel) {

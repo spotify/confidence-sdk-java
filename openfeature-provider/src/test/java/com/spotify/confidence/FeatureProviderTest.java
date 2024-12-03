@@ -77,7 +77,7 @@ final class FeatureProviderTest {
     final FlagResolverClientImpl flagResolver =
         new FlagResolverClientImpl(
             new GrpcFlagResolver("fake-secret", channel, telemetryInterceptor), telemetry);
-    final Confidence confidence = Confidence.create(fakeEventSender, flagResolver);
+    final Confidence confidence = Confidence.create(fakeEventSender, flagResolver, "clientKey");
     final FeatureProvider featureProvider = new ConfidenceFeatureProvider(confidence);
 
     openFeatureAPI = OpenFeatureAPI.getInstance();

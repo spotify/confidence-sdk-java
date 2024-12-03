@@ -18,7 +18,7 @@ public class ConfidenceResourceManagementTest {
   public void setup() {
     fakeEngine = new FakeEventSenderEngine(new FakeClock());
     fakeFlagResolverClient = new ResolverClientTestUtils.FakeFlagResolverClient();
-    root = Confidence.create(fakeEngine, fakeFlagResolverClient);
+    root = Confidence.create(fakeEngine, fakeFlagResolverClient, "clientKey");
   }
 
   @Test
