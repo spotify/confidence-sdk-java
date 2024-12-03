@@ -26,7 +26,7 @@ final class ConfidenceTest {
 
   @BeforeEach
   void beforeEach() {
-    confidence = Confidence.create(fakeEngine, fakeFlagResolverClient, "");
+    confidence = Confidence.create(fakeEngine, fakeFlagResolverClient, "secret");
   }
 
   @Test
@@ -244,7 +244,8 @@ final class ConfidenceTest {
 
   @Test
   void internalError() {
-    final Confidence confidence = Confidence.create(fakeEngine, new FailingFlagResolverClient(), "");
+    final Confidence confidence =
+        Confidence.create(fakeEngine, new FailingFlagResolverClient(), "secret");
     final Integer value = confidence.getValue("no-match-flag", 20);
     assertEquals(20, value);
 
