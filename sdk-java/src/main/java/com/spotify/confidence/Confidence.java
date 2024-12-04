@@ -21,6 +21,8 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -131,6 +133,15 @@ public abstract class Confidence implements EventSender, Closeable {
       }
 
       final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
+      final String clientKey = client().clientSecret;
+      final String flag = resolvedFlag.getFlag();
+      final String context = URLEncoder.encode(getContext().toString(), StandardCharsets.UTF_8);
+      final String logMessage =
+          String.format(
+              "See resolves for '%s' in Confidence: "
+                  + "https://app.confidence.spotify.com/flags/resolver-test?client-key=%s&flag=flags/%s&context=%s",
+              flag, clientKey, flag, context);
+      log.debug(logMessage);
       if (!requestFlagName.equals(resolvedFlag.getFlag())) {
         final String errorMessage =
             String.format(
@@ -192,11 +203,14 @@ public abstract class Confidence implements EventSender, Closeable {
 
   @VisibleForTesting
   static Confidence create(
-      EventSenderEngine eventSenderEngine, FlagResolverClient flagResolverClient) {
+      EventSenderEngine eventSenderEngine,
+      FlagResolverClient flagResolverClient,
+      String clientSecret) {
     final Closer closer = Closer.create();
     closer.register(eventSenderEngine);
     closer.register(flagResolverClient);
-    return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
+    return new RootInstance(
+        new ClientDelegate(closer, flagResolverClient, eventSenderEngine, clientSecret));
   }
 
   public static Confidence.Builder builder(String clientSecret) {
@@ -207,14 +221,17 @@ public abstract class Confidence implements EventSender, Closeable {
     private final Closeable closeable;
     private final FlagResolverClient flagResolverClient;
     private final EventSenderEngine eventSenderEngine;
+    private String clientSecret;
 
     private ClientDelegate(
         Closeable closeable,
         FlagResolverClient flagResolverClient,
-        EventSenderEngine eventSenderEngine) {
+        EventSenderEngine eventSenderEngine,
+        String clientSecret) {
       this.closeable = closeable;
       this.flagResolverClient = flagResolverClient;
       this.eventSenderEngine = eventSenderEngine;
+      this.clientSecret = clientSecret;
     }
 
     @Override
@@ -355,7 +372,8 @@ public abstract class Confidence implements EventSender, Closeable {
           new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);
       closer.register(flagResolverClient);
       closer.register(eventSenderEngine);
-      return new RootInstance(new ClientDelegate(closer, flagResolverClient, eventSenderEngine));
+      return new RootInstance(
+          new ClientDelegate(closer, flagResolverClient, eventSenderEngine, clientSecret));
     }
 
     private void registerChannelForShutdown(ManagedChannel channel) {
