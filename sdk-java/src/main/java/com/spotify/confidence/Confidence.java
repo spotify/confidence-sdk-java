@@ -23,6 +23,8 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -135,7 +137,7 @@ public abstract class Confidence implements EventSender, Closeable {
       final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
       final String clientKey = client().clientSecret;
       final String flag = resolvedFlag.getFlag();
-      final String context = getContext().toString();
+      final String context = URLEncoder.encode(getContext().toString(), StandardCharsets.UTF_8);
       final String logMessage =
           String.format(
               "See resolves for '%s' in Confidence: "
