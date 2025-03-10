@@ -32,7 +32,7 @@ public class ConfidenceStub extends Confidence {
   public <T> T getValue(String key, T defaultValue) {
     // Check if a configured value exists
     if (valueMap.containsKey(key)) {
-      Object value = valueMap.get(key);
+      final Object value = valueMap.get(key);
       if (defaultValue != null && defaultValue.getClass().isInstance(value)) {
         return (T) value;
       } else {
@@ -47,9 +47,9 @@ public class ConfidenceStub extends Confidence {
   @Override
   public <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue) {
     // Use getValue to retrieve the configured value or default
-    T value = getValue(key, defaultValue);
+    final T value = getValue(key, defaultValue);
     // Retrieve additional configuration for FlagEvaluation
-    FlagEvaluationConfig config =
+    final FlagEvaluationConfig config =
         evaluationConfigMap.getOrDefault(key, new FlagEvaluationConfig("stub", "MOCK", null, null));
     // Return a FlagEvaluation with the retrieved value and additional fields
     return new FlagEvaluation<>(
@@ -90,7 +90,7 @@ public class ConfidenceStub extends Confidence {
 
   // Method to log calls
   private void logCall(String methodName, Object... args) {
-    StringBuilder logEntry = new StringBuilder(methodName + "(");
+    final StringBuilder logEntry = new StringBuilder(methodName + "(");
     for (Object arg : args) {
       logEntry.append(arg).append(", ");
     }
