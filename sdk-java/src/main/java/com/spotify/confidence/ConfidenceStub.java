@@ -1,7 +1,9 @@
 package com.spotify.confidence;
 
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -13,10 +15,9 @@ public class ConfidenceStub extends Confidence {
   private final Map<String, Object> valueMap = new HashMap<>();
   private final Map<String, FlagEvaluationConfig> evaluationConfigMap = new HashMap<>();
   private static final Logger log = LoggerFactory.getLogger(ConfidenceStub.class);
+  private final List<String> callHistory = new ArrayList<>();
 
-  private ConfidenceStub() {
-    // Private constructor to prevent direct instantiation
-  }
+  private ConfidenceStub() {}
 
   public static ConfidenceStub createStub() {
     return new ConfidenceStub();
@@ -24,7 +25,6 @@ public class ConfidenceStub extends Confidence {
 
   @Override
   protected ClientDelegate client() {
-    // Return a mock or no-op client delegate
     return new MockClientDelegate();
   }
 
@@ -57,29 +57,23 @@ public class ConfidenceStub extends Confidence {
   }
 
   @Override
-  public CompletableFuture<ResolveFlagsResponse> resolveFlags(String flagName) {
-    // Return a completed future with a mock response
-    return CompletableFuture.completedFuture(ResolveFlagsResponse.getDefaultInstance());
-  }
-
-  @Override
   public void track(String eventName) {
-    // No-op for tracking
+    logCall("track", eventName);
   }
 
   @Override
   public void track(String eventName, ConfidenceValue.Struct data) {
-    // No-op for tracking with data
+    logCall("track", eventName, data);
   }
 
   @Override
   public void close() {
-    // No-op for close
+    logCall("close");
   }
 
   @Override
   public void flush() {
-    // No-op for flush
+    logCall("flush");
   }
 
   // Method to configure return values
@@ -92,6 +86,25 @@ public class ConfidenceStub extends Confidence {
       String key, String variant, String reason, ErrorType errorType, String errorMessage) {
     evaluationConfigMap.put(
         key, new FlagEvaluationConfig(variant, reason, errorType, errorMessage));
+  }
+
+  // Method to log calls
+  private void logCall(String methodName, Object... args) {
+    StringBuilder logEntry = new StringBuilder(methodName + "(");
+    for (Object arg : args) {
+      logEntry.append(arg).append(", ");
+    }
+    if (args.length > 0) {
+      logEntry.setLength(logEntry.length() - 2); // Remove trailing comma and space
+    }
+    logEntry.append(")");
+    callHistory.add(logEntry.toString());
+    log.debug(logEntry.toString());
+  }
+
+  // Method to retrieve call history
+  public List<String> getCallHistory() {
+    return new ArrayList<>(callHistory);
   }
 
   // Mock implementation of ClientDelegate
