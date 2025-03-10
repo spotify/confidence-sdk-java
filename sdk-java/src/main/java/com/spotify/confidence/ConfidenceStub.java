@@ -1,10 +1,18 @@
 package com.spotify.confidence;
 
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConfidenceStub extends Confidence {
+
+  private final Map<String, Object> valueMap = new HashMap<>();
+  private final Map<String, FlagEvaluationConfig> evaluationConfigMap = new HashMap<>();
+  private static final Logger log = LoggerFactory.getLogger(ConfidenceStub.class);
 
   private ConfidenceStub() {
     // Private constructor to prevent direct instantiation
@@ -22,14 +30,30 @@ public class ConfidenceStub extends Confidence {
 
   @Override
   public <T> T getValue(String key, T defaultValue) {
-    // Return a default or mock value
+    // Check if a configured value exists
+    if (valueMap.containsKey(key)) {
+      Object value = valueMap.get(key);
+      if (defaultValue != null && defaultValue.getClass().isInstance(value)) {
+        return (T) value;
+      } else {
+        // Log a warning or throw an exception if the type doesn't match
+        log.warn("Type mismatch for key: " + key);
+      }
+    }
+    // Return the default value if not configured or type mismatch
     return defaultValue;
   }
 
   @Override
   public <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue) {
-    // Return a mock FlagEvaluation
-    return new FlagEvaluation<>(defaultValue, "", "MOCK");
+    // Use getValue to retrieve the configured value or default
+    T value = getValue(key, defaultValue);
+    // Retrieve additional configuration for FlagEvaluation
+    FlagEvaluationConfig config =
+        evaluationConfigMap.getOrDefault(key, new FlagEvaluationConfig("stub", "MOCK", null, null));
+    // Return a FlagEvaluation with the retrieved value and additional fields
+    return new FlagEvaluation<>(
+        value, config.variant, config.reason, config.errorType, config.errorMessage);
   }
 
   @Override
@@ -58,6 +82,18 @@ public class ConfidenceStub extends Confidence {
     // No-op for flush
   }
 
+  // Method to configure return values
+  public <T> void configureValue(String key, T value) {
+    valueMap.put(key, value);
+  }
+
+  // Method to configure FlagEvaluation fields
+  public void configureEvaluationFields(
+      String key, String variant, String reason, ErrorType errorType, String errorMessage) {
+    evaluationConfigMap.put(
+        key, new FlagEvaluationConfig(variant, reason, errorType, errorMessage));
+  }
+
   // Mock implementation of ClientDelegate
   private static class MockClientDelegate extends ClientDelegate {
     private MockClientDelegate() {
@@ -84,6 +120,21 @@ public class ConfidenceStub extends Confidence {
     @Override
     public void close() {
       // No-op
+    }
+  }
+
+  // Inner class to hold FlagEvaluation configuration
+  private static class FlagEvaluationConfig {
+    String variant;
+    String reason;
+    ErrorType errorType;
+    String errorMessage;
+
+    FlagEvaluationConfig(String variant, String reason, ErrorType errorType, String errorMessage) {
+      this.variant = variant;
+      this.reason = reason;
+      this.errorType = errorType;
+      this.errorMessage = errorMessage;
     }
   }
 
