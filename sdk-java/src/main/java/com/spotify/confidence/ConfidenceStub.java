@@ -10,6 +10,32 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A stub implementation of the Confidence class for testing purposes.
+ *
+ * <p>This class allows configuring predefined values and evaluation results for flags, making it
+ * useful for unit testing code that depends on Confidence feature flags. It tracks method calls and
+ * provides access to the call history for verification.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * ConfidenceStub stub = ConfidenceStub.createStub();
+ * stub.setValue("my-flag.boolean", true);
+ * boolean value = stub.getValue("my-flag.boolean", false); // Returns true
+ * }</pre>
+ *
+ * <p>The stub can also be configured with specific evaluation results:
+ *
+ * <pre>{@code
+ * stub.setEvaluationConfig("my-flag.boolean", "variant-a", "RULE_MATCH");
+ * FlagEvaluation<Boolean> eval = stub.getEvaluation("my-flag.boolean", false);
+ * // eval contains the configured value, variant and reason
+ * }</pre>
+ *
+ * @see Confidence
+ * @see FlagEvaluation
+ */
 public class ConfidenceStub extends Confidence {
 
   private final Map<String, Object> valueMap = new HashMap<>();
