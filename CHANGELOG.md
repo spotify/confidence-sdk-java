@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.4](https://github.com/spotify/confidence-sdk-java/compare/v0.1.3...v0.1.4) (2025-03-11)
+
+
+### ✨ New Features
+
+* add ConfidenceStub for testing ([#167](https://github.com/spotify/confidence-sdk-java/issues/167)) ([993f348](https://github.com/spotify/confidence-sdk-java/commit/993f348c425f1b6f9bc4953545288a58cd7cb051))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.4-SNAPSHOT ([#165](https://github.com/spotify/confidence-sdk-java/issues/165)) ([86c7589](https://github.com/spotify/confidence-sdk-java/commit/86c75896b1faea3dc96004202610239a62de0268))
+
 ## [0.1.3](https://github.com/spotify/confidence-sdk-java/compare/v0.1.2...v0.1.3) (2024-12-04)
 
 
