@@ -42,7 +42,9 @@ public abstract class Confidence implements EventSender, Closeable {
   protected Map<String, ConfidenceValue> context = Maps.newHashMap();
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(Confidence.class);
 
-  private Confidence() {}
+  protected Confidence() {
+    // Protected constructor to allow subclassing
+  }
 
   protected abstract ClientDelegate client();
 
@@ -217,13 +219,13 @@ public abstract class Confidence implements EventSender, Closeable {
     return new Confidence.Builder(clientSecret);
   }
 
-  private static class ClientDelegate implements FlagResolverClient, EventSenderEngine {
+  static class ClientDelegate implements FlagResolverClient, EventSenderEngine {
     private final Closeable closeable;
     private final FlagResolverClient flagResolverClient;
     private final EventSenderEngine eventSenderEngine;
     private String clientSecret;
 
-    private ClientDelegate(
+    ClientDelegate(
         Closeable closeable,
         FlagResolverClient flagResolverClient,
         EventSenderEngine eventSenderEngine,

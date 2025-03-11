@@ -54,6 +54,27 @@ Events are emitted to the Confidence backend:
 ```java
 confidence.track("my-event", ConfidenceValue.of(Map.of("field", ConfidenceValue.of("data"))));
 ```
+### Testing with ConfidenceStub
+
+For testing code that uses Confidence, we provide `ConfidenceStub` - a stub implementation that allows configuring predefined values and evaluation results for flags. It also tracks method calls and provides access to the call history for verification.
+
+Basic usage with predefined values:
+
+```java
+// Create a ConfidenceStub instance
+ConfidenceStub stub = ConfidenceStub.createStub();
+
+// Configure a predefined value for a flag
+stub.configureValue("flag-name.property-name", "predefinedValue");
+
+// Retrieve the value using the stub
+String value = stub.getValue("flag-name.property-name", "defaultValue");
+System.out.println("Retrieved value: " + value);
+
+// Verify the call history
+List<String> callHistory = stub.getCallHistory();
+System.out.println("Call history: " + callHistory);
+```
 
 ## OpenFeature
 The library includes a `Provider` for
