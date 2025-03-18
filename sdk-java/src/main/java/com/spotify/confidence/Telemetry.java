@@ -1,9 +1,9 @@
 package com.spotify.confidence;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.spotify.telemetry.v1.LibraryTraces;
-import com.spotify.telemetry.v1.Monitoring;
-import com.spotify.telemetry.v1.Platform;
+import com.spotify.telemetry.v1.Types.LibraryTraces;
+import com.spotify.telemetry.v1.Types.Monitoring;
+import com.spotify.telemetry.v1.Types.Platform;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Telemetry {

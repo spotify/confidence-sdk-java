@@ -2,8 +2,17 @@ syntax = "proto3";
 
 package confidence.telemetry.v1;
 option java_package = "com.spotify.telemetry.v1";
-option java_multiple_files = true;
-option java_outer_classname = "TelemetryProto";
+
+import "google/protobuf/descriptor.proto";
+
+message MetricAnnotation {
+  string name = 1;
+  string unit = 2;
+}
+
+extend google.protobuf.EnumValueOptions {
+  MetricAnnotation metric = 50641;
+}
 
 enum Platform {
   PLATFORM_UNSPECIFIED = 0;
@@ -37,17 +46,15 @@ message LibraryTraces {
   }
 
   enum Library {
-    LIBRARY_UNSPECIFIED = 0;
+    LIBRARY_UNKNOWN = 0;
     LIBRARY_CONFIDENCE = 1;
     LIBRARY_OPEN_FEATURE = 2;
     LIBRARY_REACT = 3;
   }
 
   enum TraceId {
-    TRACE_ID_UNSPECIFIED = 0;
-    TRACE_ID_RESOLVE_LATENCY = 1;
-    TRACE_ID_STALE_FLAG = 2;
-    TRACE_ID_FLAG_TYPE_MISMATCH = 3;
-    TRACE_ID_WITH_CONTEXT = 4;
+    TRACE_ID_UNKNOWN = 0;
+    TRACE_ID_RESOLVE_LATENCY = 1 [(metric) = {name: "resolve_latency", unit: "ms"}];
+    TRACE_ID_STALE_FLAG = 2 [(metric) = {name: "stale_flag"}];
   }
 }

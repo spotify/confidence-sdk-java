@@ -1,6 +1,6 @@
 package com.spotify.confidence;
 
-import com.spotify.telemetry.v1.Monitoring;
+import com.spotify.telemetry.v1.Types.Monitoring;
 import io.grpc.*;
 import java.util.Base64;
 import javax.annotation.Nullable;
