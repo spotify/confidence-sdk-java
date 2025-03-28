@@ -71,6 +71,18 @@ public class ConfidenceStub extends Confidence {
   }
 
   @Override
+  public Confidence withContext(ConfidenceValue.Struct context) {
+    // No-op
+    return this;
+  }
+
+  @Override
+  public Confidence withContext(Map<String, ConfidenceValue> context) {
+    // No-op
+    return this;
+  }
+
+  @Override
   public <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue) {
     // Use getValue to retrieve the configured value or default
     final T value = getValue(key, defaultValue);
@@ -78,6 +90,9 @@ public class ConfidenceStub extends Confidence {
     final FlagEvaluationConfig config =
         evaluationConfigMap.getOrDefault(key, new FlagEvaluationConfig("stub", "MOCK", null, null));
     // Return a FlagEvaluation with the retrieved value and additional fields
+    if (config.errorType == null && config.errorMessage == null) {
+      return new FlagEvaluation<>(value, config.variant, config.reason);
+    }
     return new FlagEvaluation<>(
         value, config.variant, config.reason, config.errorType, config.errorMessage);
   }
