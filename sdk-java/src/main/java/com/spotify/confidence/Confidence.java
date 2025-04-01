@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 
 @Beta
-public abstract class Confidence implements EventSender, Closeable {
+public abstract class Confidence implements FlagEvaluator, EventSender, Closeable {
 
   protected Map<String, ConfidenceValue> context = Maps.newHashMap();
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(Confidence.class);
@@ -117,10 +117,12 @@ public abstract class Confidence implements EventSender, Closeable {
     }
   }
 
+  @Override
   public <T> T getValue(String key, T defaultValue) {
     return getEvaluation(key, defaultValue).getValue();
   }
 
+  @Override
   public <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue) {
     try {
       final FlagPath flagPath = getPath(key);
