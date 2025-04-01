@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.6](https://github.com/spotify/confidence-sdk-java/compare/v0.1.5...v0.1.6) (2025-04-01)
+
+
+### ✨ New Features
+
+* have Confidence.java implement the FlagEvaluator interface ([#174](https://github.com/spotify/confidence-sdk-java/issues/174)) ([bdc150c](https://github.com/spotify/confidence-sdk-java/commit/bdc150c6b6b4e3700749390b792e73b1edeec0b3))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.6-SNAPSHOT ([#172](https://github.com/spotify/confidence-sdk-java/issues/172)) ([92396f2](https://github.com/spotify/confidence-sdk-java/commit/92396f2725e05b3beafd55458355a345c7e68e72))
+
 ## [0.1.5](https://github.com/spotify/confidence-sdk-java/compare/v0.1.4...v0.1.5) (2025-03-28)
 
 
