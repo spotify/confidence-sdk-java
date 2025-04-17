@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.7](https://github.com/spotify/confidence-sdk-java/compare/v0.1.6...v0.1.7) (2025-04-17)
+
+
+### ✨ New Features
+
+* allow configuring grpc deadline ([#178](https://github.com/spotify/confidence-sdk-java/issues/178)) ([4a7ce14](https://github.com/spotify/confidence-sdk-java/commit/4a7ce1485169100226bea6849dc6f459f007f6d5))
+* allow setting deadline ([4a7ce14](https://github.com/spotify/confidence-sdk-java/commit/4a7ce1485169100226bea6849dc6f459f007f6d5))
+
+
+### 🧹 Chore
+
+* correct the app version ([#180](https://github.com/spotify/confidence-sdk-java/issues/180)) ([14cf469](https://github.com/spotify/confidence-sdk-java/commit/14cf46942d2b59b82136411956111e11094332d1))
+* **main:** release 0.1.7-SNAPSHOT ([#175](https://github.com/spotify/confidence-sdk-java/issues/175)) ([f504f64](https://github.com/spotify/confidence-sdk-java/commit/f504f649ccc41b14b592059453cb679f7c50eb21))
+
+
+### 🔄 Refactoring
+
+* hard coded version string updated by release-please ([#162](https://github.com/spotify/confidence-sdk-java/issues/162)) ([33886c6](https://github.com/spotify/confidence-sdk-java/commit/33886c6afd2d9d18566dc8e026a3662d06a627bf))
+
 ## [0.1.6](https://github.com/spotify/confidence-sdk-java/compare/v0.1.5...v0.1.6) (2025-04-01)
 
 
