@@ -334,7 +334,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
     private boolean disableTelemetry = false;
     private boolean isProvider = false;
-    private int resolveDeadlineMs = 10_000;
+    private int resolveDeadlineMs = 1_000;
     private int eventSenderDeadlineMs = 5_000;
 
     public Builder(@Nonnull String clientSecret) {
