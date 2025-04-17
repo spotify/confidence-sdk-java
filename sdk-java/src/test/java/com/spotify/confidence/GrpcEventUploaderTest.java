@@ -54,7 +54,7 @@ class GrpcEventUploaderTest {
     fakeClock.setCurrentTimeSeconds(1337);
 
     // Create a client that uses the channel
-    uploader = new GrpcEventUploader("my-client-secret", fakeClock, channel);
+    uploader = new GrpcEventUploader("my-client-secret", fakeClock, channel, 5_000);
   }
 
   @AfterEach

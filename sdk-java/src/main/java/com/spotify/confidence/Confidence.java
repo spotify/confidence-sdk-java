@@ -334,10 +334,22 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
     private boolean disableTelemetry = false;
     private boolean isProvider = false;
+    private int resolveDeadlineMs = 10_000;
+    private int eventSenderDeadlineMs = 5_000;
 
     public Builder(@Nonnull String clientSecret) {
       this.clientSecret = clientSecret;
       registerChannelForShutdown(DEFAULT_CHANNEL);
+    }
+
+    public Builder resolveDeadlineMs(int resolveDeadlineMs) {
+      this.resolveDeadlineMs = resolveDeadlineMs;
+      return this;
+    }
+
+    public Builder eventSenderDeadlineMs(int eventSenderDeadlineMs) {
+      this.eventSenderDeadlineMs = eventSenderDeadlineMs;
+      return this;
     }
 
     public Builder flagResolverManagedChannel(String host, int port) {
@@ -368,12 +380,14 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       final TelemetryClientInterceptor telemetryInterceptor =
           new TelemetryClientInterceptor(telemetry);
       final GrpcFlagResolver flagResolver =
-          new GrpcFlagResolver(clientSecret, flagResolverManagedChannel, telemetryInterceptor);
+          new GrpcFlagResolver(
+              clientSecret, flagResolverManagedChannel, telemetryInterceptor, resolveDeadlineMs);
 
       flagResolverClient = new FlagResolverClientImpl(flagResolver, telemetry);
 
       final EventSenderEngine eventSenderEngine =
-          new EventSenderEngineImpl(clientSecret, DEFAULT_CHANNEL, Instant::now);
+          new EventSenderEngineImpl(
+              clientSecret, DEFAULT_CHANNEL, Instant::now, eventSenderDeadlineMs);
       closer.register(flagResolverClient);
       closer.register(eventSenderEngine);
       return new RootInstance(

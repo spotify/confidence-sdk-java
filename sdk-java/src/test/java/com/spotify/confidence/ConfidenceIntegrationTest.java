@@ -78,7 +78,7 @@ final class ConfidenceIntegrationTest {
     telemetryInterceptor = new FakeTelemetryClientInterceptor(telemetry);
     final FlagResolverClientImpl flagResolver =
         new FlagResolverClientImpl(
-            new GrpcFlagResolver("fake-secret", channel, telemetryInterceptor), telemetry);
+            new GrpcFlagResolver("fake-secret", channel, telemetryInterceptor, 1_000), telemetry);
     confidence = Confidence.create(fakeEventSender, flagResolver, "");
   }
 
@@ -477,7 +477,7 @@ final class ConfidenceIntegrationTest {
         new FakeTelemetryClientInterceptor(null);
     final FlagResolverClientImpl flagResolver =
         new FlagResolverClientImpl(
-            new GrpcFlagResolver("fake-secret", channel, nullTelemetryInterceptor));
+            new GrpcFlagResolver("fake-secret", channel, nullTelemetryInterceptor, 1_000));
     confidence = Confidence.create(fakeEventSender, flagResolver, "clientKey");
 
     mockSampleResponse();

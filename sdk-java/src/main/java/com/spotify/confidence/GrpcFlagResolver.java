@@ -15,16 +15,19 @@ public class GrpcFlagResolver implements FlagResolver {
   private final Builder sdkBuilder = Sdk.newBuilder().setVersion(ConfidenceUtils.getSdkVersion());
 
   private final FlagResolverServiceGrpc.FlagResolverServiceFutureStub stub;
+  private final int deadlineMillis;
 
   public GrpcFlagResolver(
       String clientSecret,
       ManagedChannel managedChannel,
-      TelemetryClientInterceptor telemetryInterceptor) {
+      TelemetryClientInterceptor telemetryInterceptor,
+      int deadlineMillis) {
     if (Strings.isNullOrEmpty(clientSecret)) {
       throw new IllegalArgumentException("clientSecret must be a non-empty string.");
     }
     this.clientSecret = clientSecret;
     this.managedChannel = managedChannel;
+    this.deadlineMillis = deadlineMillis;
     this.stub =
         FlagResolverServiceGrpc.newFutureStub(managedChannel)
             .withInterceptors(telemetryInterceptor);
@@ -33,7 +36,7 @@ public class GrpcFlagResolver implements FlagResolver {
   public CompletableFuture<ResolveFlagsResponse> resolve(
       String flag, Struct context, Boolean isProvider) {
     return GrpcUtil.toCompletableFuture(
-        stub.withDeadlineAfter(10, TimeUnit.SECONDS)
+        stub.withDeadlineAfter(deadlineMillis, TimeUnit.MILLISECONDS)
             .resolveFlags(
                 ResolveFlagsRequest.newBuilder()
                     .setClientSecret(this.clientSecret)

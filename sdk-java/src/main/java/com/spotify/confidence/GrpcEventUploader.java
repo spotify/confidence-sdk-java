@@ -31,14 +31,17 @@ class GrpcEventUploader implements EventUploader {
   private final ManagedChannel managedChannel;
   private final EventsServiceGrpc.EventsServiceFutureStub stub;
   private final Clock clock;
+  private final int deadlineMillis;
 
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(GrpcEventUploader.class);
 
-  GrpcEventUploader(String clientSecret, Clock clock, ManagedChannel managedChannel) {
+  GrpcEventUploader(
+      String clientSecret, Clock clock, ManagedChannel managedChannel, int deadlineMillis) {
     this.clientSecret = clientSecret;
     this.managedChannel = managedChannel;
     this.stub = EventsServiceGrpc.newFutureStub(managedChannel);
     this.clock = clock;
+    this.deadlineMillis = deadlineMillis;
     this.sdk =
         Sdk.newBuilder()
             .setId(SdkId.SDK_ID_JAVA_CONFIDENCE)
@@ -57,7 +60,7 @@ class GrpcEventUploader implements EventUploader {
             .build();
 
     return GrpcUtil.toCompletableFuture(
-            stub.withDeadlineAfter(5, TimeUnit.SECONDS).publishEvents(request))
+            stub.withDeadlineAfter(deadlineMillis, TimeUnit.MILLISECONDS).publishEvents(request))
         .thenApply(
             publishEventsResponse -> {
               final List<Event> eventsInRequest = request.getEventsList();
