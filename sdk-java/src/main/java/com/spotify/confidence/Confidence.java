@@ -9,6 +9,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import com.spotify.confidence.ConfidenceUtils.FlagPath;
 import com.spotify.confidence.Exceptions.IllegalValuePath;
 import com.spotify.confidence.Exceptions.IllegalValueType;
@@ -16,15 +18,15 @@ import com.spotify.confidence.Exceptions.IncompatibleValueType;
 import com.spotify.confidence.Exceptions.ValueNotFound;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
+import com.spotify.internal.v1.ResolveTesterLogging;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -41,6 +43,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
 
   protected Map<String, ConfidenceValue> context = Maps.newHashMap();
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(Confidence.class);
+  private static final JsonFormat.Printer jsonPrinter = JsonFormat.printer();
 
   protected Confidence() {
     // Protected constructor to allow subclassing
@@ -137,15 +140,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       }
 
       final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
-      final String clientKey = client().clientSecret;
-      final String flag = resolvedFlag.getFlag();
-      final String context = URLEncoder.encode(getContext().toString(), StandardCharsets.UTF_8);
-      final String logMessage =
-          String.format(
-              "See resolves for '%s' in Confidence: "
-                  + "https://app.confidence.spotify.com/flags/resolver-test?client-key=%s&flag=flags/%s&context=%s",
-              flag, clientKey, flag, context);
-      log.debug(logMessage);
+      logResolveTesterHint(resolvedFlag);
       if (!requestFlagName.equals(resolvedFlag.getFlag())) {
         final String errorMessage =
             String.format(
@@ -198,6 +193,31 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       log.warn(e.getMessage());
       return new FlagEvaluation<>(
           defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
+    }
+  }
+
+  @VisibleForTesting
+  public void logResolveTesterHint(ResolvedFlag resolvedFlag) {
+    final String clientKey = client().clientSecret;
+    final String flag = resolvedFlag.getFlag();
+    try {
+
+      final ResolveTesterLogging resolveTesterLogging =
+          ResolveTesterLogging.newBuilder()
+              .setClientKey(clientKey)
+              .setFlag(flag)
+              .setContext(getContext().toProto())
+              .build();
+      final String base64 =
+          Base64.getEncoder().encodeToString(jsonPrinter.print(resolveTesterLogging).getBytes());
+      final String logMessage =
+          String.format(
+              "Check your flag evaluation for '%s' by copy pasting the payload to the Resolve tester '%s'",
+              flag, base64);
+      log.debug(logMessage);
+    } catch (InvalidProtocolBufferException e) {
+      log.warn("Failed to produce correct resolve tester content", e);
+      // warn and ignore is enough
     }
   }
 
