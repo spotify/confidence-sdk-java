@@ -2,6 +2,10 @@ package com.spotify.confidence;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.Value;
 import com.spotify.confidence.ConfidenceValue.Struct;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
@@ -15,18 +19,33 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 final class ConfidenceTest {
   private final FakeEventSenderEngine fakeEngine = new FakeEventSenderEngine(new FakeClock());
   private final ResolverClientTestUtils.FakeFlagResolverClient fakeFlagResolverClient =
       new ResolverClientTestUtils.FakeFlagResolverClient();
   private static Confidence confidence;
+  private ListAppender<ILoggingEvent> listAppender;
+  private Logger confidenceLogger;
 
   @BeforeEach
   void beforeEach() {
     confidence = Confidence.create(fakeEngine, fakeFlagResolverClient, "clientKey");
+    confidenceLogger = (Logger) LoggerFactory.getLogger(Confidence.class);
+
+    listAppender = new ListAppender<>();
+    listAppender.start();
+    // Add the appender to the logger
+    confidenceLogger.addAppender(listAppender);
+  }
+
+  @AfterEach
+  void afterEach() {
+    confidenceLogger.detachAppender(listAppender);
   }
 
   @Test
@@ -257,6 +276,22 @@ final class ConfidenceTest {
     assertEquals(ErrorType.INTERNAL_ERROR, evaluation.getErrorType().get());
     assertTrue(
         evaluation.getErrorMessage().get().startsWith("Crashing while performing network call"));
+  }
+
+  @Test
+  void shouldLogResolverHint() {
+    confidence
+        .withContext(Map.of("my_context_value", ConfidenceValue.of(42)))
+        .logResolveTesterHint(ResolvedFlag.newBuilder().setFlag("FlagName").build());
+    final List<ILoggingEvent> loggingEvents = listAppender.list;
+    assertTrue(loggingEvents.size() > 0, "No log message was captured.");
+    final ILoggingEvent lastLogEvent = loggingEvents.get(loggingEvents.size() - 1);
+    assertEquals(Level.DEBUG, lastLogEvent.getLevel()); // Or whatever level you expect
+    assertEquals(
+        "Check your flag evaluation for 'FlagName' by copy pasting the payload to the Resolve tester "
+            + "'ewogICJjbGllbnRLZXkiOiAiY2xpZW50S2V5IiwKICAiZmxhZyI6ICJGbGFnTmFtZSIsCiAgImN"
+            + "vbnRleHQiOiB7CiAgICAibXlfY29udGV4dF92YWx1ZSI6IDQyLjAKICB9Cn0='",
+        lastLogEvent.getFormattedMessage());
   }
 
   public static class FailingFlagResolverClient implements FlagResolverClient {

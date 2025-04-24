@@ -201,7 +201,6 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     final String clientKey = client().clientSecret;
     final String flag = resolvedFlag.getFlag();
     try {
-
       final ResolveTesterLogging resolveTesterLogging =
           ResolveTesterLogging.newBuilder()
               .setClientKey(clientKey)
