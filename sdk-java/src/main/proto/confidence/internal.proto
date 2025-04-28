@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+package confidence.internal.v1;
+option java_package = "com.spotify.internal.v1";
+option java_multiple_files = true;
+option java_outer_classname = "SdkLogging";
+
+message ResolveTesterLogging {
+    string client_key = 1;
+    string flag = 2;
+    google.protobuf.Value context = 3;
+}
