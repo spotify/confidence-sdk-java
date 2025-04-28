@@ -11,7 +11,7 @@ Java library for [Confidence](https://confidence.spotify.com/). This library is 
 <dependency>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>sdk-java</artifactId>
-    <version>0.1.8</version>
+    <version>0.1.9-SNAPSHOT</version>
 </dependency>
 ```
 <!---x-release-please-end-->
