@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.8](https://github.com/spotify/confidence-sdk-java/compare/v0.1.7...v0.1.8) (2025-04-28)
+
+
+### 🐛 Bug Fixes
+
+* change how we log resolve tester hints ([#177](https://github.com/spotify/confidence-sdk-java/issues/177)) ([00a8a90](https://github.com/spotify/confidence-sdk-java/commit/00a8a9008802dc2fd435faa04b2f5fe199fefddb))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.8-SNAPSHOT ([#181](https://github.com/spotify/confidence-sdk-java/issues/181)) ([b1a6353](https://github.com/spotify/confidence-sdk-java/commit/b1a635372d3938865c571258d69693b8bce93eec))
+
 ## [0.1.7](https://github.com/spotify/confidence-sdk-java/compare/v0.1.6...v0.1.7) (2025-04-17)
 
 
