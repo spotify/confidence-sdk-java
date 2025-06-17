@@ -3,6 +3,7 @@ package com.spotify.confidence;
 import static com.spotify.confidence.ConfidenceTypeMapper.getTyped;
 import static com.spotify.confidence.ConfidenceUtils.FlagPath.getPath;
 import static com.spotify.confidence.ConfidenceUtils.getValueForPath;
+import static com.spotify.confidence.ConfidenceUtils.handleFlagEvaluationError;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
@@ -21,7 +22,6 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import com.spotify.internal.v1.ResolveTesterLogging;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Duration;
@@ -128,71 +128,83 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
   @Override
   public <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue) {
     try {
-      final FlagPath flagPath = getPath(key);
-      final String requestFlagName = "flags/" + flagPath.getFlag();
-      final ResolveFlagsResponse response = resolveFlags(requestFlagName).get();
-      if (response.getResolvedFlagsList().isEmpty()) {
-        final String errorMessage =
-            String.format("No active flag '%s' was found", flagPath.getFlag());
-        log.warn(errorMessage);
-        return new FlagEvaluation<>(
-            defaultValue, "", "ERROR", ErrorType.FLAG_NOT_FOUND, errorMessage);
-      }
-
-      final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
-      logResolveTesterHint(resolvedFlag);
-      if (!requestFlagName.equals(resolvedFlag.getFlag())) {
-        final String errorMessage =
-            String.format(
-                "Unexpected flag '%s' from remote",
-                resolvedFlag.getFlag().replaceFirst("^flags/", ""));
-        log.warn(errorMessage);
-        return new FlagEvaluation<>(
-            defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
-      }
-      if (resolvedFlag.getVariant().isEmpty()) {
-        final String errorMessage =
-            String.format(
-                "The server returned no assignment for the flag '%s'. Typically, this happens "
-                    + "if no configured rules matches the given evaluation context.",
-                flagPath.getFlag());
-        log.debug(errorMessage);
-        return new FlagEvaluation<>(defaultValue, "", resolvedFlag.getReason().toString());
-      } else {
-        final ConfidenceValue confidenceValue;
-        confidenceValue =
-            getValueForPath(
-                flagPath.getPath(),
-                ConfidenceTypeMapper.from(resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
-
-        // regular resolve was successful
-        return new FlagEvaluation<>(
-            getTyped(confidenceValue, defaultValue),
-            resolvedFlag.getVariant(),
-            resolvedFlag.getReason().toString());
-      }
-    } catch (IllegalValuePath | ValueNotFound e) {
-      log.warn(e.getMessage());
-      return new FlagEvaluation<>(
-          defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
-    } catch (IncompatibleValueType | IllegalValueType e) {
-      log.warn(e.getMessage());
-      return new FlagEvaluation<>(
-          defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_TYPE, e.getMessage());
-    } catch (StatusRuntimeException e) {
-      log.warn(e.getMessage());
-      return new FlagEvaluation<>(
-          defaultValue, "", "ERROR", ErrorType.NETWORK_ERROR, e.getMessage());
+      return getEvaluationFuture(key, defaultValue).get();
     } catch (Exception e) {
-      // catch all for any runtime exception
-      if (e.getCause() instanceof StatusRuntimeException) {
-        log.warn(e.getMessage());
-        return new FlagEvaluation<>(
-            defaultValue, "", "ERROR", ErrorType.NETWORK_ERROR, e.getMessage());
-      }
       log.warn(e.getMessage());
       return new FlagEvaluation<>(
           defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
+    }
+  }
+
+  public <T> CompletableFuture<T> getValueFuture(String key, T defaultValue) {
+    return getEvaluationFuture(key, defaultValue).thenApply(FlagEvaluation::getValue);
+  }
+
+  public <T> CompletableFuture<FlagEvaluation<T>> getEvaluationFuture(String key, T defaultValue) {
+    try {
+      final FlagPath flagPath = getPath(key);
+      final String requestFlagName = "flags/" + flagPath.getFlag();
+
+      return resolveFlags(requestFlagName)
+          .thenApply(
+              response -> {
+                if (response.getResolvedFlagsList().isEmpty()) {
+                  final String errorMessage =
+                      String.format("No active flag '%s' was found", flagPath.getFlag());
+                  log.warn(errorMessage);
+                  return new FlagEvaluation<>(
+                      defaultValue, "", "ERROR", ErrorType.FLAG_NOT_FOUND, errorMessage);
+                }
+                final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
+                logResolveTesterHint(resolvedFlag);
+                if (!requestFlagName.equals(resolvedFlag.getFlag())) {
+                  final String errorMessage =
+                      String.format(
+                          "Unexpected flag '%s' from remote",
+                          resolvedFlag.getFlag().replaceFirst("^flags/", ""));
+                  log.warn(errorMessage);
+                  return new FlagEvaluation<>(
+                      defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
+                }
+                if (resolvedFlag.getVariant().isEmpty()) {
+                  final String errorMessage =
+                      String.format(
+                          "The server returned no assignment for the flag '%s'. Typically, this happens "
+                              + "if no configured rules matches the given evaluation context.",
+                          flagPath.getFlag());
+                  log.debug(errorMessage);
+                  return new FlagEvaluation<>(
+                      defaultValue, "", resolvedFlag.getReason().toString());
+                } else {
+                  final ConfidenceValue confidenceValue;
+                  try {
+                    confidenceValue =
+                        getValueForPath(
+                            flagPath.getPath(),
+                            ConfidenceTypeMapper.from(
+                                resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
+
+                    // regular resolve was successful
+                    return new FlagEvaluation<>(
+                        getTyped(confidenceValue, defaultValue),
+                        resolvedFlag.getVariant(),
+                        resolvedFlag.getReason().toString());
+                  } catch (ValueNotFound e) {
+                    return new FlagEvaluation<>(
+                        defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
+                  } catch (IllegalValueType | IncompatibleValueType e) {
+                    log.warn(e.getMessage());
+                    return new FlagEvaluation<>(
+                        defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_TYPE, e.getMessage());
+                  }
+                }
+              })
+          .exceptionally(handleFlagEvaluationError(defaultValue));
+
+    } catch (IllegalValuePath e) {
+      return CompletableFuture.completedFuture(
+          new FlagEvaluation<>(
+              defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage()));
     }
   }
 

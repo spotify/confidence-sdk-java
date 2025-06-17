@@ -144,8 +144,7 @@ final class ConfidenceIntegrationTest {
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
     assertThat(evaluationDetails.getErrorType().get()).isEqualTo(ErrorType.NETWORK_ERROR);
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
-    assertThat(evaluationDetails.getErrorMessage().get())
-        .isEqualTo("io.grpc.StatusRuntimeException: UNAVAILABLE");
+    assertThat(evaluationDetails.getErrorMessage().get()).isEqualTo("UNAVAILABLE");
     assertThat(evaluationDetails.getVariant()).isEmpty();
   }
 
@@ -160,8 +159,7 @@ final class ConfidenceIntegrationTest {
     assertThat(evaluationDetails.getValue()).isEqualTo(DEFAULT_VALUE);
     assertThat(evaluationDetails.getErrorType().get()).isEqualTo(NETWORK_ERROR);
     assertThat(evaluationDetails.getReason()).isEqualTo("ERROR");
-    assertThat(evaluationDetails.getErrorMessage().get())
-        .isEqualTo("io.grpc.StatusRuntimeException: UNAUTHENTICATED");
+    assertThat(evaluationDetails.getErrorMessage().get()).isEqualTo("UNAUTHENTICATED");
     assertThat(evaluationDetails.getVariant()).isEmpty();
   }
 
