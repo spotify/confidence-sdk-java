@@ -83,6 +83,16 @@ public class ConfidenceStub extends Confidence {
   }
 
   @Override
+  public <T> CompletableFuture<T> getValueFuture(String key, T defaultValue) {
+    return CompletableFuture.completedFuture(getValue(key, defaultValue));
+  }
+
+  @Override
+  public <T> CompletableFuture<FlagEvaluation<T>> getEvaluationFuture(String key, T defaultValue) {
+    return CompletableFuture.completedFuture(getEvaluation(key, defaultValue));
+  }
+
+  @Override
   public <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue) {
     // Use getValue to retrieve the configured value or default
     final T value = getValue(key, defaultValue);
