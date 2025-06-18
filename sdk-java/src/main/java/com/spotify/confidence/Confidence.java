@@ -130,7 +130,6 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     try {
       return getEvaluationFuture(key, defaultValue).get();
     } catch (Exception e) {
-      log.warn(e.getMessage());
       return new FlagEvaluation<>(
           defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
     }
@@ -201,10 +200,16 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
               })
           .exceptionally(handleFlagEvaluationError(defaultValue));
 
-    } catch (IllegalValuePath e) {
+    } catch (Exception e) {
+      ErrorType errorType = ErrorType.INTERNAL_ERROR;
+      if (e instanceof IllegalValueType || e instanceof IncompatibleValueType) {
+        errorType = ErrorType.INVALID_VALUE_TYPE;
+      } else if (e instanceof IllegalValuePath) {
+        errorType = ErrorType.INVALID_VALUE_PATH;
+      }
+      log.warn(e.getMessage());
       return CompletableFuture.completedFuture(
-          new FlagEvaluation<>(
-              defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage()));
+          new FlagEvaluation<>(defaultValue, "", "ERROR", errorType, e.getMessage()));
     }
   }
 
