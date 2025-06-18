@@ -13,7 +13,6 @@ import com.google.common.io.Closer;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.spotify.confidence.ConfidenceUtils.FlagPath;
-import com.spotify.confidence.Exceptions.IllegalValuePath;
 import com.spotify.confidence.Exceptions.IllegalValueType;
 import com.spotify.confidence.Exceptions.IncompatibleValueType;
 import com.spotify.confidence.Exceptions.ValueNotFound;
@@ -201,15 +200,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
           .exceptionally(handleFlagEvaluationError(defaultValue));
 
     } catch (Exception e) {
-      ErrorType errorType = ErrorType.INTERNAL_ERROR;
-      if (e instanceof IllegalValueType || e instanceof IncompatibleValueType) {
-        errorType = ErrorType.INVALID_VALUE_TYPE;
-      } else if (e instanceof IllegalValuePath) {
-        errorType = ErrorType.INVALID_VALUE_PATH;
-      }
-      log.warn(e.getMessage());
-      return CompletableFuture.completedFuture(
-          new FlagEvaluation<>(defaultValue, "", "ERROR", errorType, e.getMessage()));
+      return CompletableFuture.completedFuture(handleFlagEvaluationError(defaultValue).apply(e));
     }
   }
 
