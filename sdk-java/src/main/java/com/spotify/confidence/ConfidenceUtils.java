@@ -3,8 +3,11 @@ package com.spotify.confidence;
 import com.spotify.confidence.ConfidenceValue.Struct;
 import com.spotify.confidence.Exceptions.IllegalValuePath;
 import com.spotify.confidence.Exceptions.ValueNotFound;
+import io.grpc.StatusRuntimeException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletionException;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
@@ -48,6 +51,34 @@ final class ConfidenceUtils {
     }
 
     return value;
+  }
+
+  public static <T> Function<Throwable, ? extends FlagEvaluation<T>> handleFlagEvaluationError(
+      T defaultValue) {
+    return (Function<Throwable, FlagEvaluation<T>>)
+        e -> {
+          {
+            if (e instanceof CompletionException) {
+              e = e.getCause();
+            }
+            log.warn(e.getMessage());
+            if (e instanceof IllegalValuePath || e instanceof ValueNotFound) {
+              return new FlagEvaluation<>(
+                  defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
+            } else if (e instanceof Exceptions.IncompatibleValueType
+                || e instanceof Exceptions.IllegalValueType) {
+              return new FlagEvaluation<>(
+                  defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_TYPE, e.getMessage());
+            } else if (e instanceof StatusRuntimeException
+                || e.getCause() instanceof StatusRuntimeException) {
+              return new FlagEvaluation<>(
+                  defaultValue, "", "ERROR", ErrorType.NETWORK_ERROR, e.getMessage());
+            } else {
+              return new FlagEvaluation<>(
+                  defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
+            }
+          }
+        };
   }
 
   static class FlagPath {
