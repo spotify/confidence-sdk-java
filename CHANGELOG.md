@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.9](https://github.com/spotify/confidence-sdk-java/compare/v0.1.8...v0.1.9) (2025-06-19)
+
+
+### ✨ New Features
+
+* add an async flag evaluation api ([#185](https://github.com/spotify/confidence-sdk-java/issues/185)) ([25bce7b](https://github.com/spotify/confidence-sdk-java/commit/25bce7bb3e412d0c477577990ccc9b6fe2d26c5c))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.9-SNAPSHOT ([#183](https://github.com/spotify/confidence-sdk-java/issues/183)) ([82c9630](https://github.com/spotify/confidence-sdk-java/commit/82c96302410e94768fd42afa84dcf8acaf1cc2e1))
+
 ## [0.1.8](https://github.com/spotify/confidence-sdk-java/compare/v0.1.7...v0.1.8) (2025-04-28)
 
 
