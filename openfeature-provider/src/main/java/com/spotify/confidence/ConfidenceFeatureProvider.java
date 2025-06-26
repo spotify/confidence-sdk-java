@@ -51,7 +51,14 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    */
   @Deprecated()
   public ConfidenceFeatureProvider(String clientSecret, ManagedChannel managedChannel) {
-    this(Confidence.builder(clientSecret).flagResolverManagedChannel(managedChannel).build());
+    this(
+        Confidence.builder(
+                clientSecret,
+                RemoteResolve.builder()
+                    .flagResolverManagedChannel(managedChannel)
+                    .setClientSecret(clientSecret)
+                    .build())
+            .build());
   }
 
   /**
