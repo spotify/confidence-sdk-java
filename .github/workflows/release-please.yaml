@@ -62,11 +62,11 @@ jobs:
 
       - name: Debug - Test OSSRH connection
         run: |
-          echo "Testing connection to OSSRH..."
+          echo "Testing connection to Central Publisher Portal..."
           curl -u "${{ secrets.OSSRH_USERNAME }}:${{ secrets.OSSRH_TOKEN }}" \
                -H "Accept: application/json" \
-               https://ossrh-staging-api.central.sonatype.com/service/local/user/profile \
-               || echo "Failed to connect to OSSRH"
+               https://ossrh-staging-api.central.sonatype.com/api/v1/user \
+               || echo "Failed to connect to Central Publisher Portal"
 
       - name: Deploy with Maven
         run: mvn --batch-mode clean deploy -X
@@ -117,11 +117,11 @@ jobs:
 
       - name: Debug - Test OSSRH connection
         run: |
-          echo "Testing connection to OSSRH..."
+          echo "Testing connection to Central Publisher Portal..."
           curl -u "${{ secrets.OSSRH_USERNAME }}:${{ secrets.OSSRH_TOKEN }}" \
                -H "Accept: application/json" \
-               https://ossrh-staging-api.central.sonatype.com/service/local/user/profile \
-               || echo "Failed to connect to OSSRH"
+               https://ossrh-staging-api.central.sonatype.com/api/v1/user \
+               || echo "Failed to connect to Central Publisher Portal"
 
       - name: Deploy with Maven
         run: mvn --batch-mode clean deploy -X
