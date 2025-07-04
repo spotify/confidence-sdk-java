@@ -1,0 +1,65 @@
+name: Test OSSRH Token Validity
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/test-osrh-token.yaml'
+
+jobs:
+  test-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test OSSRH Token
+        run: |
+          echo "Testing OSSRH token validity..."
+          
+          # Test basic authentication
+          echo "1. Testing basic authentication..."
+          auth_response=$(curl -s -w "%{http_code}" -u "${{ secrets.OSSRH_USERNAME }}:${{ secrets.OSSRH_TOKEN }}" \
+               -H "Accept: application/json" \
+               https://oss.sonatype.org/service/local/user/profile)
+          
+          auth_http_code="${auth_response: -3}"
+          auth_body="${auth_response%???}"
+          
+          echo "Authentication HTTP Status: $auth_http_code"
+          
+          if [ "$auth_http_code" = "200" ]; then
+            echo "✅ Token is valid - authentication successful"
+            echo "User profile: $auth_body"
+          elif [ "$auth_http_code" = "401" ]; then
+            echo "❌ Token is invalid or expired (401 Unauthorized)"
+            echo "Please regenerate your OSSRH token"
+            exit 1
+          elif [ "$auth_http_code" = "403" ]; then
+            echo "❌ Token is valid but lacks permissions (403 Forbidden)"
+            echo "Check your OSSRH account permissions"
+            exit 1
+          else
+            echo "❌ Unexpected response: HTTP $auth_http_code"
+            echo "Response: $auth_body"
+            exit 1
+          fi
+          
+          # Test staging access
+          echo ""
+          echo "2. Testing staging repository access..."
+          staging_response=$(curl -s -w "%{http_code}" -u "${{ secrets.OSSRH_USERNAME }}:${{ secrets.OSSRH_TOKEN }}" \
+               -H "Accept: application/json" \
+               https://oss.sonatype.org/service/local/staging/profile_repositories)
+          
+          staging_http_code="${staging_response: -3}"
+          staging_body="${staging_response%???}"
+          
+          echo "Staging HTTP Status: $staging_http_code"
+          
+          if [ "$staging_http_code" = "200" ]; then
+            echo "✅ Staging repository access successful"
+          else
+            echo "❌ Staging repository access failed: HTTP $staging_http_code"
+            echo "Response: $staging_body"
+          fi
+          
+          echo ""
+          echo "Token validation complete!" 
