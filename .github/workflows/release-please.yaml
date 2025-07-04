@@ -30,6 +30,25 @@ jobs:
       - name: Check out src from Git
         uses: actions/checkout@v4
 
+      - name: Debug - Check environment variables
+        run: |
+          echo "Checking if OSSRH credentials are set:"
+          if [ -n "${{ secrets.OSSRH_USERNAME }}" ]; then
+            echo "OSSRH_USERNAME is set (length: ${#OSSRH_USERNAME})"
+          else
+            echo "OSSRH_USERNAME is NOT set"
+          fi
+          if [ -n "${{ secrets.OSSRH_TOKEN }}" ]; then
+            echo "OSSRH_TOKEN is set (length: ${#OSSRH_TOKEN})"
+          else
+            echo "OSSRH_TOKEN is NOT set"
+          fi
+          if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+            echo "GPG_PRIVATE_KEY is set (length: ${#GPG_PRIVATE_KEY})"
+          else
+            echo "GPG_PRIVATE_KEY is NOT set"
+          fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -41,8 +60,16 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Full private key blob
           gpg-passphrase: GPG_PASS
 
+      - name: Debug - Test OSSRH connection
+        run: |
+          echo "Testing connection to OSSRH..."
+          curl -u "${{ secrets.OSSRH_USERNAME }}:${{ secrets.OSSRH_TOKEN }}" \
+               -H "Accept: application/json" \
+               https://ossrh-staging-api.central.sonatype.com/service/local/user/profile \
+               || echo "Failed to connect to OSSRH"
+
       - name: Deploy with Maven
-        run: mvn --batch-mode clean deploy
+        run: mvn --batch-mode clean deploy -X
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
@@ -58,6 +85,25 @@ jobs:
         with:
           ref: ${{ needs.release-please.outputs.release_tag_name }}
 
+      - name: Debug - Check environment variables
+        run: |
+          echo "Checking if OSSRH credentials are set:"
+          if [ -n "${{ secrets.OSSRH_USERNAME }}" ]; then
+            echo "OSSRH_USERNAME is set (length: ${#OSSRH_USERNAME})"
+          else
+            echo "OSSRH_USERNAME is NOT set"
+          fi
+          if [ -n "${{ secrets.OSSRH_TOKEN }}" ]; then
+            echo "OSSRH_TOKEN is set (length: ${#OSSRH_TOKEN})"
+          else
+            echo "OSSRH_TOKEN is NOT set"
+          fi
+          if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+            echo "GPG_PRIVATE_KEY is set (length: ${#GPG_PRIVATE_KEY})"
+          else
+            echo "GPG_PRIVATE_KEY is NOT set"
+          fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -69,8 +115,16 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Full private key blob
           gpg-passphrase: GPG_PASS
 
+      - name: Debug - Test OSSRH connection
+        run: |
+          echo "Testing connection to OSSRH..."
+          curl -u "${{ secrets.OSSRH_USERNAME }}:${{ secrets.OSSRH_TOKEN }}" \
+               -H "Accept: application/json" \
+               https://ossrh-staging-api.central.sonatype.com/service/local/user/profile \
+               || echo "Failed to connect to OSSRH"
+
       - name: Deploy with Maven
-        run: mvn --batch-mode clean deploy
+        run: mvn --batch-mode clean deploy -X
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}

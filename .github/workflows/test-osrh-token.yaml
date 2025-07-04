@@ -18,7 +18,7 @@ jobs:
           echo "1. Testing basic authentication..."
           auth_response=$(curl -s -w "%{http_code}" -u "${{ secrets.OSSRH_USERNAME_2 }}:${{ secrets.OSSRH_TOKEN_2 }}" \
                -H "Accept: application/json" \
-               https://oss.sonatype.org/service/local/user/profile)
+               https://ossrh-staging-api.central.sonatype.com/service/local/user/profile)
           
           auth_http_code="${auth_response: -3}"
           auth_body="${auth_response%???}"
@@ -47,7 +47,7 @@ jobs:
           echo "2. Testing staging repository access..."
           staging_response=$(curl -s -w "%{http_code}" -u "${{ secrets.OSSRH_USERNAME_2 }}:${{ secrets.OSSRH_TOKEN_2 }}" \
                -H "Accept: application/json" \
-               https://oss.sonatype.org/service/local/staging/profile_repositories)
+               https://ossrh-staging-api.central.sonatype.com/service/local/staging/profile_repositories)
           
           staging_http_code="${staging_response: -3}"
           staging_body="${staging_response%???}"
