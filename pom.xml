@@ -5,6 +5,7 @@
   <modules>
     <module>sdk-java</module>
     <module>openfeature-provider</module>
+    <module>openfeature-provider-local</module>
   </modules>
 
   <distributionManagement>
