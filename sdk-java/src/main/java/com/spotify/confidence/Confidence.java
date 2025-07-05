@@ -244,8 +244,14 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
         new ClientDelegate(closer, flagResolverClient, eventSenderEngine, clientSecret));
   }
 
+  public static Confidence.Builder builder(String clientSecret, ResolveMode resolveMode) {
+    return new Confidence.Builder(clientSecret, resolveMode);
+  }
+
   public static Confidence.Builder builder(String clientSecret) {
-    return new Confidence.Builder(clientSecret);
+    final var remoteResolve =
+        RemoteResolve.builder().setClientSecret(clientSecret).setResolveDeadlineMs(10_000).build();
+    return new Confidence.Builder(clientSecret, remoteResolve);
   }
 
   static class ClientDelegate implements FlagResolverClient, EventSenderEngine {
@@ -352,26 +358,13 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
 
   public static class Builder {
     private final String clientSecret;
+    private final ResolveMode resolveMode;
     private final Closer closer = Closer.create();
-
-    private final ManagedChannel DEFAULT_CHANNEL =
-        ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443)
-            .keepAliveTime(Duration.ofMinutes(5).getSeconds(), TimeUnit.SECONDS)
-            .build();
-    private ManagedChannel flagResolverManagedChannel = DEFAULT_CHANNEL;
-    private boolean disableTelemetry = false;
-    private boolean isProvider = false;
-    private int resolveDeadlineMs = 10_000;
     private int eventSenderDeadlineMs = 5_000;
 
-    public Builder(@Nonnull String clientSecret) {
+    public Builder(@Nonnull String clientSecret, ResolveMode resolveMode) {
       this.clientSecret = clientSecret;
-      registerChannelForShutdown(DEFAULT_CHANNEL);
-    }
-
-    public Builder resolveDeadlineMs(int resolveDeadlineMs) {
-      this.resolveDeadlineMs = resolveDeadlineMs;
-      return this;
+      this.resolveMode = resolveMode;
     }
 
     public Builder eventSenderDeadlineMs(int eventSenderDeadlineMs) {
@@ -379,59 +372,18 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       return this;
     }
 
-    public Builder flagResolverManagedChannel(String host, int port) {
-      this.flagResolverManagedChannel =
-          ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
-      registerChannelForShutdown(this.flagResolverManagedChannel);
-      return this;
-    }
-
-    public Builder flagResolverManagedChannel(ManagedChannel managedChannel) {
-      this.flagResolverManagedChannel = managedChannel;
-      return this;
-    }
-
-    public Builder disableTelemetry(boolean disableTelemetry) {
-      this.disableTelemetry = disableTelemetry;
-      return this;
-    }
-
-    public Confidence buildForProvider() {
-      this.isProvider = true;
-      return build();
-    }
-
     public Confidence build() {
-      final FlagResolverClient flagResolverClient;
-      final Telemetry telemetry = disableTelemetry ? null : new Telemetry(isProvider);
-      final TelemetryClientInterceptor telemetryInterceptor =
-          new TelemetryClientInterceptor(telemetry);
-      final GrpcFlagResolver flagResolver =
-          new GrpcFlagResolver(
-              clientSecret, flagResolverManagedChannel, telemetryInterceptor, resolveDeadlineMs);
-
-      flagResolverClient = new FlagResolverClientImpl(flagResolver, telemetry);
+      final ManagedChannel DEFAULT_CHANNEL =
+          ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443)
+              .keepAliveTime(Duration.ofMinutes(5).getSeconds(), TimeUnit.SECONDS)
+              .build();
 
       final EventSenderEngine eventSenderEngine =
           new EventSenderEngineImpl(
               clientSecret, DEFAULT_CHANNEL, Instant::now, eventSenderDeadlineMs);
-      closer.register(flagResolverClient);
       closer.register(eventSenderEngine);
       return new RootInstance(
-          new ClientDelegate(closer, flagResolverClient, eventSenderEngine, clientSecret));
-    }
-
-    private void registerChannelForShutdown(ManagedChannel channel) {
-      this.closer.register(
-          () -> {
-            channel.shutdown();
-            try {
-              channel.awaitTermination(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              channel.shutdownNow();
-            }
-          });
+          new ClientDelegate(closer, resolveMode, eventSenderEngine, clientSecret));
     }
   }
 }
