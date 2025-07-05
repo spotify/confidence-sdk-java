@@ -1,0 +1,66 @@
+name: Test OSSRH Token Validity
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/test-osrh-token.yaml'
+
+jobs:
+  test-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test OSSRH Token
+        run: |
+          echo "Testing Central Publisher Portal token validity..."
+          
+          # Test basic authentication with Central Portal API
+          echo "1. Testing basic authentication..."
+          auth_response=$(curl -s -w "%{http_code}" -u "${{ secrets.OSSRH_USERNAME_2 }}:${{ secrets.OSSRH_TOKEN_2 }}" \
+               -H "Accept: application/json" \
+               https://ossrh-staging-api.central.sonatype.com/api/v1/user)
+          
+          auth_http_code="${auth_response: -3}"
+          auth_body="${auth_response%???}"
+          
+          echo "Authentication HTTP Status: $auth_http_code"
+          
+          if [ "$auth_http_code" = "200" ]; then
+            echo "✅ Token is valid - authentication successful"
+            echo "User profile: $auth_body"
+          elif [ "$auth_http_code" = "401" ]; then
+            echo "❌ Token is invalid or expired (401 Unauthorized)"
+            echo "Please regenerate your Central Portal token"
+            exit 1
+          elif [ "$auth_http_code" = "403" ]; then
+            echo "❌ Token is valid but lacks permissions (403 Forbidden)"
+            echo "Check your Central Portal account permissions"
+            exit 1
+          else
+            echo "❌ Unexpected response: HTTP $auth_http_code"
+            echo "Response: $auth_body"
+            exit 1
+          fi
+          
+          # Test staging access with Central Portal API
+          echo ""
+          echo "2. Testing staging repository access..."
+          staging_response=$(curl -s -w "%{http_code}" -u "${{ secrets.OSSRH_USERNAME_2 }}:${{ secrets.OSSRH_TOKEN_2 }}" \
+               -H "Accept: application/json" \
+               https://ossrh-staging-api.central.sonatype.com/api/v1/staging/profiles)
+          
+          staging_http_code="${staging_response: -3}"
+          staging_body="${staging_response%???}"
+          
+          echo "Staging HTTP Status: $staging_http_code"
+          
+          if [ "$staging_http_code" = "200" ]; then
+            echo "✅ Staging repository access successful"
+            echo "Available profiles: $staging_body"
+          else
+            echo "❌ Staging repository access failed: HTTP $staging_http_code"
+            echo "Response: $staging_body"
+          fi
+          
+          echo ""
+          echo "Token validation complete!" 
