@@ -27,8 +27,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private final FlagResolverService flagResolverService;
 
   public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
-    this.flagResolverService =
-        SidecarResolverServiceFactory.from(apiSecret.clientId(), apiSecret.clientSecret());
+    this.flagResolverService = SidecarResolverServiceFactory.from(apiSecret, clientSecret);
     this.clientSecret = clientSecret;
   }
 

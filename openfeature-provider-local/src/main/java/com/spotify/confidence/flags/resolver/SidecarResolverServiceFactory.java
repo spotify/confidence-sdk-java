@@ -3,6 +3,7 @@ package com.spotify.confidence.flags.resolver;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Struct;
+import com.spotify.confidence.ApiSecret;
 import com.spotify.confidence.UnauthenticatedException;
 import com.spotify.confidence.flags.admin.v1.FlagAdminServiceGrpc;
 import com.spotify.confidence.flags.resolver.domain.AccountClient;
@@ -65,11 +66,12 @@ public class SidecarResolverServiceFactory implements ResolverServiceFactory {
     return builder.intercept(new DefaultDeadlineClientInterceptor(Duration.ofMinutes(1))).build();
   }
 
-  public static FlagResolverService from(String clientId, String clientSecret) {
+  public static FlagResolverService from(ApiSecret apiSecret, String clientSecret) {
     final var channel = createConfidenceChannel();
     final AuthServiceGrpc.AuthServiceBlockingStub authService =
         AuthServiceGrpc.newBlockingStub(channel);
-    final TokenHolder tokenHolder = new TokenHolder(clientId, clientSecret, authService);
+    final TokenHolder tokenHolder =
+        new TokenHolder(apiSecret.clientId(), apiSecret.clientSecret(), authService);
     final TokenHolder.Token token = tokenHolder.getToken();
     final Channel authenticatedChannel =
         ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
