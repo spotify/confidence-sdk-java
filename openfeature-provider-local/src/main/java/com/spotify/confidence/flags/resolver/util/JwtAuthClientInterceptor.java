@@ -1,7 +1,7 @@
 package com.spotify.confidence.flags.resolver.util;
 
-import static com.spotify.confidence.flags.resolver.sidecar.util.JwtUtils.AUTHORIZATION_METADATA_KEY;
-import static com.spotify.confidence.flags.resolver.sidecar.util.JwtUtils.getTokenAsHeader;
+import static com.spotify.confidence.flags.resolver.util.JwtUtils.AUTHORIZATION_METADATA_KEY;
+import static com.spotify.confidence.flags.resolver.util.JwtUtils.getTokenAsHeader;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;

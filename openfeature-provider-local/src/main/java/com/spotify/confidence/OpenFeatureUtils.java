@@ -16,13 +16,6 @@ public class OpenFeatureUtils {
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(OpenFeatureUtils.class);
 
   /*
-  OpenFeature Evaluation Context -> Confidence Struct
-   */
-  static ConfidenceValue.Struct convert(EvaluationContext evaluationContext) {
-    return ConfidenceValue.Struct.fromProto(convertToProto(evaluationContext));
-  }
-
-  /*
   OpenFeature Evaluation Context -> Proto
    */
   static Struct convertToProto(EvaluationContext evaluationContext) {

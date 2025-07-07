@@ -92,9 +92,12 @@ public class SidecarResolverServiceFactory implements ResolverServiceFactory {
             .orElse(Duration.ofMinutes(5).toSeconds());
 
     final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
-
+    sidecarFlagsAdminFetcher.reload();
     flagsFetcherExecutor.scheduleWithFixedDelay(
-        sidecarFlagsAdminFetcher::reload, 0, pollIntervalSeconds, TimeUnit.SECONDS);
+        sidecarFlagsAdminFetcher::reload,
+        pollIntervalSeconds,
+        pollIntervalSeconds,
+        TimeUnit.SECONDS);
     final AssignLogger assignLogger =
         AssignLogger.createStarted(
             flagLoggerStub, ASSIGN_LOG_INTERVAL, metricRegistry, assignLogCapacity);

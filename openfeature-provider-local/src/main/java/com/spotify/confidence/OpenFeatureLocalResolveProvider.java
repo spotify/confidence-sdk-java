@@ -93,9 +93,9 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   public ProviderEvaluation<Value> getObjectEvaluation(
       String key, Value defaultValue, EvaluationContext ctx) {
 
-    final ConfidenceUtils.FlagPath flagPath;
+    final FlagPath flagPath;
     try {
-      flagPath = ConfidenceUtils.FlagPath.getPath(key);
+      flagPath = FlagPath.getPath(key);
     } catch (Exceptions.IllegalValuePath e) {
       log.warn(e.getMessage());
       throw new RuntimeException(e);
