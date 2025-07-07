@@ -1,11 +1,10 @@
 package com.spotify.confidence.flags.resolver;
 
-import static com.spotify.confidence.flags.types.v1.Targeting.Value.ValueCase.BOOL_VALUE;
-import static com.spotify.confidence.flags.types.v1.Targeting.Value.ValueCase.LIST_VALUE;
-import static com.spotify.confidence.target.Targetings.boolValue;
-import static com.spotify.confidence.target.Targetings.numberValue;
-import static com.spotify.confidence.target.Targetings.semverValue;
-import static com.spotify.confidence.target.Targetings.stringValue;
+import static com.spotify.confidence.shaded.flags.types.v1.Targeting.Value.ValueCase.BOOL_VALUE;
+import static com.spotify.confidence.targeting.Targetings.boolValue;
+import static com.spotify.confidence.targeting.Targetings.numberValue;
+import static com.spotify.confidence.targeting.Targetings.semverValue;
+import static com.spotify.confidence.targeting.Targetings.stringValue;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Double.parseDouble;
 
@@ -13,11 +12,11 @@ import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.google.protobuf.util.Timestamps;
 import com.google.protobuf.util.Values;
-import com.spotify.confidence.flags.types.v1.FlagSchema;
-import com.spotify.confidence.flags.types.v1.Targeting;
-import com.spotify.confidence.flags.types.v1.Targeting.ListValue;
-import com.spotify.confidence.flags.types.v1.Targeting.Value.ValueCase;
-import com.spotify.confidence.target.Util;
+import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
+import com.spotify.confidence.shaded.flags.types.v1.Targeting;
+import com.spotify.confidence.shaded.flags.types.v1.Targeting.ListValue;
+import com.spotify.confidence.shaded.flags.types.v1.Targeting.Value.ValueCase;
+import com.spotify.confidence.targeting.Util;
 import io.grpc.Status;
 import java.time.Instant;
 import java.time.LocalDate;

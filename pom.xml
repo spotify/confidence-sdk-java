@@ -4,6 +4,7 @@
   <packaging>pom</packaging>
   <modules>
     <module>sdk-java</module>
+    <module>confidence-proto</module>
     <module>openfeature-provider</module>
     <module>openfeature-provider-local</module>
   </modules>

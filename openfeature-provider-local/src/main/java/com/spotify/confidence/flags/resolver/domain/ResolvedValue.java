@@ -1,11 +1,11 @@
 package com.spotify.confidence.flags.resolver.domain;
 
 import com.google.protobuf.Struct;
-import com.spotify.confidence.flags.admin.v1.Flag;
-import com.spotify.confidence.flags.admin.v1.Segment;
-import com.spotify.confidence.flags.resolver.v1.ResolveReason;
-import com.spotify.confidence.flags.resolver.v1.events.FallthroughAssignment;
-import com.spotify.confidence.flags.resolver.v1.events.FlagAssigned.DefaultAssignment.DefaultAssignmentReason;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag;
+import com.spotify.confidence.shaded.flags.admin.v1.Segment;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
+import com.spotify.confidence.shaded.flags.resolver.v1.events.FallthroughAssignment;
+import com.spotify.confidence.shaded.flags.resolver.v1.events.FlagAssigned.DefaultAssignment.DefaultAssignmentReason;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

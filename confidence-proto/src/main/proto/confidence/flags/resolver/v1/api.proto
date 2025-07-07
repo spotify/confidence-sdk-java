@@ -7,6 +7,7 @@ import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "confidence/flags/resolver/v1/events/events.proto";
 
 import "confidence/flags/resolver/v1/types.proto";
 import "confidence/flags/types/v1/types.proto";
@@ -164,4 +165,49 @@ message ResolvedFlag {
 
   // The reason to why the flag could be resolved or not.
   ResolveReason reason = 5;
+}
+
+
+message ResolveToken {
+  oneof resolve_token {
+    ResolveTokenV1 token_v1 = 1;
+  }
+}
+
+message ResolveTokenV1 {
+  google.protobuf.Struct evaluation_context = 1;
+
+  map<string, AssignedFlag> assignments = 2;
+
+  string resolve_id = 3;
+
+  // The account that the resolve was made for
+  string account = 4;
+
+  message AssignedFlag {
+    string flag = 1 [
+      (google.api.resource_reference).type = "flags.confidence.dev/Flag"
+    ];
+
+    string targeting_key = 2;
+    string targeting_key_selector = 10;
+
+    string segment = 3 [
+      (google.api.resource_reference).type = "flags.confidence.dev/Segment"
+    ];
+
+    string variant = 4 [
+      (google.api.resource_reference).type = "flags.confidence.dev/Variant"
+    ];
+
+    string rule = 5 [
+      (google.api.resource_reference).type = "flags.confidence.dev/Rule"
+    ];
+
+    ResolveReason reason = 6;
+
+    repeated events.FallthroughAssignment fallthrough_assignments = 9;
+
+    string assignment_id = 8;
+  }
 }

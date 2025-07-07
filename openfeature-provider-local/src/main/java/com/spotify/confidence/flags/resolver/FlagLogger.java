@@ -7,10 +7,10 @@ import com.google.protobuf.Timestamp;
 import com.spotify.confidence.flags.resolver.domain.AccountClient;
 import com.spotify.confidence.flags.resolver.domain.FlagToApply;
 import com.spotify.confidence.flags.resolver.domain.ResolvedValue;
-import com.spotify.confidence.flags.resolver.v1.Sdk;
-import com.spotify.confidence.flags.resolver.v1.events.ClientInfo;
-import com.spotify.confidence.flags.resolver.v1.events.FallthroughAssignment;
-import com.spotify.confidence.flags.resolver.v1.events.FlagAssigned;
+import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
+import com.spotify.confidence.shaded.flags.resolver.v1.events.ClientInfo;
+import com.spotify.confidence.shaded.flags.resolver.v1.events.FallthroughAssignment;
+import com.spotify.confidence.shaded.flags.resolver.v1.events.FlagAssigned;
 import java.util.ArrayList;
 import java.util.List;
 

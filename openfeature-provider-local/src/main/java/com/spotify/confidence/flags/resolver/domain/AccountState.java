@@ -2,11 +2,11 @@ package com.spotify.confidence.flags.resolver.domain;
 
 import static com.spotify.confidence.flags.resolver.Randomizer.MEGA_SALT;
 
-import com.spotify.confidence.flags.admin.v1.Flag;
-import com.spotify.confidence.flags.admin.v1.Segment;
 import com.spotify.confidence.flags.resolver.EvalUtil;
-import com.spotify.confidence.iam.v1.ClientCredential.ClientSecret;
-import com.spotify.confidence.target.TargetingExpr;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag;
+import com.spotify.confidence.shaded.flags.admin.v1.Segment;
+import com.spotify.confidence.shaded.iam.v1.ClientCredential.ClientSecret;
+import com.spotify.confidence.targeting.TargetingExpr;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.stream.Collectors;

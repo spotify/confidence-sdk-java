@@ -2,31 +2,28 @@ package com.spotify.confidence.flags.resolver;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
-import com.spotify.confidence.flags.admin.v1.Flag;
-import com.spotify.confidence.flags.admin.v1.Flag.Rule;
-import com.spotify.confidence.flags.admin.v1.Flag.Rule.Assignment;
-import com.spotify.confidence.flags.admin.v1.Flag.Rule.Assignment.AssignmentCase;
-import com.spotify.confidence.flags.admin.v1.Flag.Rule.AssignmentSpec;
-import com.spotify.confidence.flags.admin.v1.Flag.State;
-import com.spotify.confidence.flags.admin.v1.Flag.Variant;
-import com.spotify.confidence.flags.admin.v1.Segment;
-import com.spotify.confidence.flags.resolver.ResolveFlagListener.RuleEvaluationReason;
-import com.spotify.confidence.flags.resolver.ResolveFlagListener.SegmentEvaluationReason;
 import com.spotify.confidence.flags.resolver.domain.AccountClient;
 import com.spotify.confidence.flags.resolver.domain.AccountState;
 import com.spotify.confidence.flags.resolver.domain.ResolvedValue;
 import com.spotify.confidence.flags.resolver.exceptions.BadRequestException;
 import com.spotify.confidence.flags.resolver.exceptions.InternalServerException;
-import com.spotify.confidence.flags.resolver.materialization.MaterializationInfo;
 import com.spotify.confidence.flags.resolver.materialization.MaterializationStore;
-import com.spotify.confidence.flags.resolver.v1.ResolveReason;
-import com.spotify.confidence.flags.types.v1.Targeting;
-import com.spotify.confidence.flags.types.v1.Targeting.Criterion;
-import com.spotify.confidence.flags.types.v1.Targeting.Criterion.AttributeCriterion;
-import com.spotify.confidence.flags.types.v1.Targeting.InnerRule;
-import com.spotify.confidence.flags.types.v1.Targeting.ListValue;
-import com.spotify.confidence.flags.types.v1.Targeting.Value.ValueCase;
-import com.spotify.confidence.target.TargetingExpr;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule.Assignment;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule.Assignment.AssignmentCase;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule.AssignmentSpec;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag.State;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag.Variant;
+import com.spotify.confidence.shaded.flags.admin.v1.Segment;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
+import com.spotify.confidence.shaded.flags.types.v1.Targeting;
+import com.spotify.confidence.shaded.flags.types.v1.Targeting.Criterion;
+import com.spotify.confidence.shaded.flags.types.v1.Targeting.Criterion.AttributeCriterion;
+import com.spotify.confidence.shaded.flags.types.v1.Targeting.InnerRule;
+import com.spotify.confidence.shaded.flags.types.v1.Targeting.ListValue;
+import com.spotify.confidence.shaded.flags.types.v1.Targeting.Value.ValueCase;
+import com.spotify.confidence.targeting.TargetingExpr;
 import com.spotify.futures.CompletableFutures;
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,12 +39,10 @@ import org.slf4j.Logger;
 public class AccountResolver {
   public static final String TARGETING_KEY = "targeting_key";
   private static final int MAX_NO_OF_FLAGS_TO_BATCH_RESOLVE = 200;
-  private final MaterializationStore materializationStore;
   private final AccountClient client;
   private final AccountState state;
   private final Struct evaluationContext;
   private final Logger logger;
-  private final Metrics metrics;
 
   private static final ResolveFlagListener NO_OP_RESOLVE_FLAG_LISTENER =
       new ResolveFlagListener() {};
@@ -59,12 +54,10 @@ public class AccountResolver {
       Struct evaluationContext,
       Logger logger,
       Metrics metrics) {
-    this.materializationStore = materializationStore;
     this.client = client;
     this.state = state;
     this.evaluationContext = evaluationContext;
     this.logger = logger;
-    this.metrics = metrics;
   }
 
   public AccountClient getClient() {
@@ -104,8 +97,6 @@ public class AccountResolver {
           "Max %d flags allowed in a single resolve request, this request would return %d flags."
               .formatted(MAX_NO_OF_FLAGS_TO_BATCH_RESOLVE, flagsToResolve.size()));
     }
-    final MaterializationsHelper materializations =
-        new MaterializationsHelper(flagsToResolve, materializationStore, metrics);
     final ConcurrentMap<ConvertValueCacheKey, ListValue> convertValueCache =
         new ConcurrentHashMap<>();
 
@@ -114,7 +105,7 @@ public class AccountResolver {
             .map(
                 flag -> {
                   try {
-                    return resolveFlag(flag, materializations, listener, convertValueCache);
+                    return resolveFlag(flag, listener, convertValueCache);
                   } catch (BadRequestException badRequestException) {
                     return CompletableFuture.<ResolvedValue>failedFuture(badRequestException);
                   } catch (RuntimeException error) {
@@ -124,18 +115,11 @@ public class AccountResolver {
                   }
                 })
             .toList();
-    return CompletableFutures.allAsList(futures)
-        .whenComplete(
-            (resolvedValues, throwable) -> {
-              for (var unit : materializations.materializationsToWritePerUnit().entrySet()) {
-                materializationStore.storeAssignment(unit.getKey(), unit.getValue());
-              }
-            });
+    return CompletableFutures.allAsList(futures);
   }
 
   private CompletableFuture<ResolvedValue> resolveFlag(
       final Flag flag,
-      final MaterializationsHelper materializations,
       ResolveFlagListener listener,
       ConcurrentMap<ConvertValueCacheKey, ListValue> convertValueCache) {
     ResolvedValue resolvedValue = new ResolvedValue(flag);
@@ -147,7 +131,8 @@ public class AccountResolver {
 
     for (Rule rule : flag.getRulesList()) {
       if (!rule.getEnabled()) {
-        listener.markRuleEvaluationReason(rule.getName(), RuleEvaluationReason.RULE_NOT_ENABLED);
+        listener.markRuleEvaluationReason(
+            rule.getName(), ResolveFlagListener.RuleEvaluationReason.RULE_NOT_ENABLED);
         continue;
       }
 
@@ -156,7 +141,8 @@ public class AccountResolver {
       if (segment == null) {
         logger.warn("Segment {} not found among active segments", rule.getSegment());
         listener.markRuleEvaluationReason(
-            rule.getName(), RuleEvaluationReason.SEGMENT_NOT_FOUND_OR_NOT_ACTIVE);
+            rule.getName(),
+            ResolveFlagListener.RuleEvaluationReason.SEGMENT_NOT_FOUND_OR_NOT_ACTIVE);
         continue;
       }
 
@@ -164,9 +150,12 @@ public class AccountResolver {
           rule.getTargetingKeySelector().isBlank() ? TARGETING_KEY : rule.getTargetingKeySelector();
       final Value unitValue = EvalUtil.getAttributeValue(evaluationContext, targetingKey);
       if (unitValue.hasNullValue()) {
-        listener.markRuleEvaluationReason(rule.getName(), RuleEvaluationReason.SEGMENT_NOT_MATCHED);
+        listener.markRuleEvaluationReason(
+            rule.getName(), ResolveFlagListener.RuleEvaluationReason.SEGMENT_NOT_MATCHED);
         listener.markSegmentEvaluationReason(
-            flag.getName(), segment.getName(), SegmentEvaluationReason.TARGETING_KEY_MISSING);
+            flag.getName(),
+            segment.getName(),
+            ResolveFlagListener.SegmentEvaluationReason.TARGETING_KEY_MISSING);
         continue;
       }
 
@@ -179,68 +168,17 @@ public class AccountResolver {
         throw new BadRequestException("Targeting key is too larger, max 100 characters.");
       }
 
-      final boolean materializationMatched;
-      final boolean hasReadMaterialization =
-          !rule.getMaterializationSpec().getReadMaterialization().isEmpty();
-      if (hasReadMaterialization) {
-        final var future =
-            materializations.loadMaterializationInfoForUnit(
-                unit, rule.getMaterializationSpec().getReadMaterialization());
-        if (future.isDone()) {
-          final MaterializationInfo materializationInfo = future.getNow(null);
-          if (!materializationInfo.isUnitInMaterialization()) {
-            materializationMatched = false;
-            if (rule.getMaterializationSpec().getMode().getMaterializationMustMatch()) {
-              listener.markRuleEvaluationReason(
-                  rule.getName(), RuleEvaluationReason.MATERIALIZATION_NOT_MATCHED);
-              continue;
-            }
-          } else {
-            if (rule.getMaterializationSpec().getMode().getSegmentTargetingCanBeIgnored()) {
-              materializationMatched = true;
-            } else {
-              materializationMatched =
-                  isTargetingMatch(
-                      segment, unit, new HashSet<>(), flag.getName(), listener, convertValueCache);
-            }
-            if (materializationMatched) {
-              final Optional<String> variant =
-                  materializationInfo.getVariantForRule(rule.getName());
-              if (variant.isPresent()) {
-                final Optional<Assignment> matchedAssignment =
-                    rule.getAssignmentSpec().getAssignmentsList().stream()
-                        .filter(c -> c.getVariant().getVariant().equals(variant.get()))
-                        .findAny();
-                if (matchedAssignment.isPresent()) {
-                  return CompletableFuture.completedFuture(
-                      variantMatch(
-                          resolvedValue, matchedAssignment.get(), unit, segment, rule, flag));
-                }
-              }
-            }
-          }
-
-        } else {
-          return future.thenCompose(
-              ignore -> resolveFlag(flag, materializations, listener, convertValueCache));
-        }
-      } else {
-        materializationMatched = false;
-      }
-
-      if (!materializationMatched
-          && !segmentMatches(
-              segment, segmentName, unit, flag.getName(), listener, convertValueCache)) {
+      if (!segmentMatches(
+          segment, segmentName, unit, flag.getName(), listener, convertValueCache)) {
         listener.markRuleEvaluationReason(
-            rule.getName(),
-            hasReadMaterialization
-                ? RuleEvaluationReason.MATERIALIZATION_AND_SEGMENT_NOT_MATCHED
-                : RuleEvaluationReason.SEGMENT_NOT_MATCHED);
+            rule.getName(), ResolveFlagListener.RuleEvaluationReason.SEGMENT_NOT_MATCHED);
         continue;
       }
 
       listener.markSegmentEvaluationReason(
-          flag.getName(), segment.getName(), SegmentEvaluationReason.SEGMENT_MATCHED);
+          flag.getName(),
+          segment.getName(),
+          ResolveFlagListener.SegmentEvaluationReason.SEGMENT_MATCHED);
 
       final AssignmentSpec spec = rule.getAssignmentSpec();
       final int bucketCount = spec.getBucketCount();
@@ -256,16 +194,9 @@ public class AccountResolver {
 
       if (matchedAssignmentOpt.isPresent()) {
         final Assignment matchedAssignment = matchedAssignmentOpt.get();
-        if (!rule.getMaterializationSpec().getWriteMaterialization().isEmpty()) {
-          materializations.addMaterializationToWrite(
-              unit,
-              rule.getMaterializationSpec().getWriteMaterialization(),
-              rule.getName(),
-              matchedAssignment.getVariant().getVariant());
-        }
         if (matchedAssignment.getAssignmentCase() == AssignmentCase.FALLTHROUGH) {
           listener.markRuleEvaluationReason(
-              rule.getName(), RuleEvaluationReason.RULE_MATCHED_FALLTHROUGH);
+              rule.getName(), ResolveFlagListener.RuleEvaluationReason.RULE_MATCHED_FALLTHROUGH);
           resolvedValue =
               resolvedValue.attributeFallthroughRule(
                   rule, matchedAssignment.getAssignmentId(), unit);
@@ -284,7 +215,8 @@ public class AccountResolver {
         }
       } else {
         listener.markRuleEvaluationReason(
-            rule.getName(), RuleEvaluationReason.RULE_EVALUATED_NO_VARIANT_MATCH);
+            rule.getName(),
+            ResolveFlagListener.RuleEvaluationReason.RULE_EVALUATED_NO_VARIANT_MATCH);
       }
     }
 
@@ -446,7 +378,7 @@ public class AccountResolver {
           isTargetingMatch(segment, unit, visitedSegments, flag, listener, convertValueCache);
       if (!targetingMatch) {
         listener.markSegmentEvaluationReason(
-            flag, segmentName, SegmentEvaluationReason.TARGETING_NOT_MATCHED);
+            flag, segmentName, ResolveFlagListener.SegmentEvaluationReason.TARGETING_NOT_MATCHED);
         return false;
       }
     } catch (RuntimeException error) {
@@ -458,7 +390,7 @@ public class AccountResolver {
 
     if (!inBitset) {
       listener.markSegmentEvaluationReason(
-          flag, segmentName, SegmentEvaluationReason.BITSET_NOT_MATCHED);
+          flag, segmentName, ResolveFlagListener.SegmentEvaluationReason.BITSET_NOT_MATCHED);
     }
 
     return inBitset;

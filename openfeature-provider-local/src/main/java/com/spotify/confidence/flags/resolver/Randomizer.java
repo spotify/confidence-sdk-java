@@ -6,9 +6,9 @@ import com.google.common.base.Joiner;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import com.spotify.confidence.flags.admin.v1.Flag.Rule.Assignment;
-import com.spotify.confidence.flags.admin.v1.Flag.Rule.BucketRange;
 import com.spotify.confidence.flags.resolver.domain.AccountState;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule.Assignment;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule.BucketRange;
 import java.util.BitSet;
 
 public class Randomizer {
