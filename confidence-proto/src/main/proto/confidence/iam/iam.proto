@@ -1,5 +1,5 @@
 syntax = "proto3";
-package confidence.flags.types.v1;
+package confidence.iam.types.v1;
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
