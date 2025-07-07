@@ -112,6 +112,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
               .resolveFlags(
                   ResolveFlagsRequest.newBuilder()
                       .addFlags(requestFlagName)
+                      .setApply(true)
                       .setClientSecret(clientSecret)
                       .setEvaluationContext(
                           Struct.newBuilder()
