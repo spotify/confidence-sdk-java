@@ -7,7 +7,6 @@ import com.spotify.confidence.flags.resolver.domain.AccountState;
 import com.spotify.confidence.flags.resolver.domain.ResolvedValue;
 import com.spotify.confidence.flags.resolver.exceptions.BadRequestException;
 import com.spotify.confidence.flags.resolver.exceptions.InternalServerException;
-import com.spotify.confidence.flags.resolver.materialization.MaterializationStore;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule.Assignment;
@@ -48,7 +47,6 @@ public class AccountResolver {
       new ResolveFlagListener() {};
 
   public AccountResolver(
-      MaterializationStore materializationStore,
       AccountClient client,
       AccountState state,
       Struct evaluationContext,

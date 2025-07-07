@@ -77,11 +77,6 @@
       <version>3.3.2</version>
     </dependency>
     <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>proto-google-common-protos</artifactId>
-      <version>${common.protos.version}</version>
-    </dependency>
-    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>1.4.14</version>

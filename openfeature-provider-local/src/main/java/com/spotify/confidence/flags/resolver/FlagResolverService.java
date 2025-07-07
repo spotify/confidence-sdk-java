@@ -2,7 +2,6 @@ package com.spotify.confidence.flags.resolver;
 
 import com.spotify.confidence.flags.resolver.domain.AccountClient;
 import com.spotify.confidence.flags.resolver.domain.AccountState;
-import com.spotify.confidence.flags.resolver.materialization.MaterializationStore;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.time.Instant;
@@ -22,8 +21,7 @@ public class FlagResolverService {
       ResolveTokenConverter resolveTokenConverter,
       Supplier<Instant> timeSupplier,
       Supplier<String> resolveIdSupplier,
-      Metrics metrics,
-      MaterializationStore materializationStore) {}
+      Metrics metrics) {}
 
   public CompletableFuture<ResolveFlagsResponse> resolveFlags(ResolveFlagsRequest request) {
     return null;
