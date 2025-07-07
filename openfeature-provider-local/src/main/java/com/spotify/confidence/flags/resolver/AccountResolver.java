@@ -47,11 +47,7 @@ public class AccountResolver {
       new ResolveFlagListener() {};
 
   public AccountResolver(
-      AccountClient client,
-      AccountState state,
-      Struct evaluationContext,
-      Logger logger,
-      Metrics metrics) {
+      AccountClient client, AccountState state, Struct evaluationContext, Logger logger) {
     this.client = client;
     this.state = state;
     this.evaluationContext = evaluationContext;
