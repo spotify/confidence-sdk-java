@@ -6,6 +6,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.spotify.confidence.flags.resolver.domain.AccountClient;
 import com.spotify.confidence.flags.resolver.domain.FlagToApply;
 import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
@@ -17,6 +18,7 @@ import com.spotify.confidence.shaded.flags.resolver.v1.events.FlagAssigned;
 import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -43,7 +45,7 @@ public class AssignLogger implements Closeable {
   private final Meter assigned;
 
   @VisibleForTesting
-  AssignLogger(
+  public AssignLogger(
       InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub flagLoggerStub,
       Timer timer,
       MetricRegistry metricRegistry,
@@ -89,7 +91,12 @@ public class AssignLogger implements Closeable {
   }
 
   @VisibleForTesting
-  synchronized void checkpoint() {
+  public Collection<FlagAssigned> queuedAssigns() {
+    return ImmutableList.copyOf(queue);
+  }
+
+  @VisibleForTesting
+  public synchronized void checkpoint() {
     WriteFlagAssignedRequest.Builder batch = prepareNewBatch();
     int batchSize = batch.build().getSerializedSize();
     FlagAssigned assigned = queue.peek();
@@ -137,12 +144,12 @@ public class AssignLogger implements Closeable {
   }
 
   @VisibleForTesting
-  long remainingCapacity() {
+  public long remainingCapacity() {
     return capacity.get();
   }
 
   @VisibleForTesting
-  long dropCount() {
+  public long dropCount() {
     return dropCount.sum();
   }
 

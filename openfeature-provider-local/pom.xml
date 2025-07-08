@@ -25,9 +25,44 @@
       <version>0.1.9-SNAPSHOT</version>
     </dependency>
     <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+      <version>3.24.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+      <version>${jupiter.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+      <version>${jupiter.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+      <version>${mockito.version}</version>
+    </dependency>
+    <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-services</artifactId>
       <version>1.68.1</version>
+    </dependency>
+    <dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-inline</artifactId>
+    <version>5.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+      <version>${mockito.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>

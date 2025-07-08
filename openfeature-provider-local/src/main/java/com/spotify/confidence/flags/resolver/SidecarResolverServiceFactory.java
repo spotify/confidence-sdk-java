@@ -112,7 +112,7 @@ public class SidecarResolverServiceFactory implements ResolverServiceFactory {
         .create(clientSecret);
   }
 
-  private SidecarResolverServiceFactory(
+  public SidecarResolverServiceFactory(
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       ResolveLogger resolveLogger,
