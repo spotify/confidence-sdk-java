@@ -6,7 +6,6 @@ cd "$SRC"
 copy_class() {
   rsync -R "${1//.//}.java" "$DST"
 }
-
 # copy classes from epx-flags-resolver-lib
 cd "$SCRIPT_DIR/../epx-flags-resolver/epx-flags-resolver-lib/src/main/java"
 copy_class "com.spotify.confidence.flags.resolver.AccountResolver"
