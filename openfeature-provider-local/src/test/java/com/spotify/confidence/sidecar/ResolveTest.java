@@ -171,7 +171,8 @@ public class ResolveTest extends TestBase {
                     Struct.newBuilder().build(),
                     false))
         .withMessage(
-            "java.util.concurrent.ExecutionException: com.spotify.confidence.flags.resolver.exceptions.BadRequestException:"
+            "java.util.concurrent.ExecutionException: "
+                + "com.spotify.confidence.flags.resolver.exceptions.BadRequestException:"
                 + " Targeting key is too larger, max 100 characters.");
   }
 }
