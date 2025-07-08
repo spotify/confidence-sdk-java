@@ -69,7 +69,7 @@
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>confidence-proto</artifactId>
-      <version>0.1.9-SNAPSHOT</version>
+      <version>0.1.10</version>
     </dependency>
     <dependency>
       <groupId>dev.failsafe</groupId>
