@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.10](https://github.com/spotify/confidence-sdk-java/compare/v0.1.9...v0.1.10) (2025-07-08)
+
+
+### 🐛 Bug Fixes
+
+* Fix maven central connection ([#190](https://github.com/spotify/confidence-sdk-java/issues/190)) ([124ae78](https://github.com/spotify/confidence-sdk-java/commit/124ae78ff2145d8850db33b43a06977e2a6776a2))
+* Update sonatype url ([#191](https://github.com/spotify/confidence-sdk-java/issues/191)) ([6af9299](https://github.com/spotify/confidence-sdk-java/commit/6af92995ca9edb979f1c8fff059042bd7dc3d1fe))
+
+
+### 🧹 Chore
+
+* Add name to submodule poms ([#193](https://github.com/spotify/confidence-sdk-java/issues/193)) ([2635fa5](https://github.com/spotify/confidence-sdk-java/commit/2635fa5d2a19817dc527ca561ee6d8104e21f4fd))
+* **main:** release 0.1.10-SNAPSHOT ([#187](https://github.com/spotify/confidence-sdk-java/issues/187)) ([91dd521](https://github.com/spotify/confidence-sdk-java/commit/91dd52121c978927540065631ef2b1105b7e0dfe))
+* **release:** 0.1.9 ([#194](https://github.com/spotify/confidence-sdk-java/issues/194)) ([08bd9c1](https://github.com/spotify/confidence-sdk-java/commit/08bd9c1963cc26f043f36df6562c1edb6042d1a9))
+
 ## [0.1.9](https://github.com/spotify/confidence-sdk-java/compare/v0.1.8...v0.1.9) (2025-06-19)
 
 
