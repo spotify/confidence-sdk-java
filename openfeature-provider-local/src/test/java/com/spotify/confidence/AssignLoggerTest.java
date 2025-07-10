@@ -1,4 +1,4 @@
-package com.spotify.confidence.sidecar;
+package com.spotify.confidence;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -15,7 +15,7 @@ import com.spotify.confidence.flags.resolver.AssignLogger;
 import com.spotify.confidence.flags.resolver.FlagLogger;
 import com.spotify.confidence.flags.resolver.domain.AccountClient;
 import com.spotify.confidence.flags.resolver.domain.FlagToApply;
-import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
+import com.spotify.confidence.shaded.flags.resolver.v1.FlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
 import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagAssignedRequest;
@@ -34,13 +34,13 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 public class AssignLoggerTest {
-  private InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub stub;
+  private FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub stub;
   private AssignLogger logger;
 
   @BeforeEach
   public void beforeEach() {
 
-    stub = mock(InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub.class);
+    stub = mock(FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub.class);
     logger = new AssignLogger(stub, null, new MetricRegistry(), 8 * 1024 * 1024);
   }
 

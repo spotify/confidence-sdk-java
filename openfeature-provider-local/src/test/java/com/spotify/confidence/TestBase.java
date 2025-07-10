@@ -1,4 +1,4 @@
-package com.spotify.confidence.sidecar;
+package com.spotify.confidence;
 
 import static org.mockito.Mockito.mock;
 

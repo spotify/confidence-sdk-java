@@ -16,7 +16,7 @@ option java_outer_classname = "InternalApiProto";
 // The service that allows to report flag assigned and other client-side flag
 // operations, useful when the resolve engine runs on the customer's premises
 // (e.g. side-car)
-service InternalFlagLoggerService {
+service FlagLoggerService {
   rpc WriteFlagAssigned(WriteFlagAssignedRequest) returns (WriteFlagAssignedResponse){
     option (google.api.http) = {
       post: "/v1/flagAssigned:write"

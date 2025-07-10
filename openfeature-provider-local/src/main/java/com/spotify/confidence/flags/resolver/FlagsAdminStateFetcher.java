@@ -34,9 +34,9 @@ import java.util.zip.GZIPInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SidecarFlagsAdminFetcher {
+public class FlagsAdminStateFetcher {
 
-  private static final Logger logger = LoggerFactory.getLogger(SidecarFlagsAdminFetcher.class);
+  private static final Logger logger = LoggerFactory.getLogger(FlagsAdminStateFetcher.class);
 
   private final ResolverStateServiceGrpc.ResolverStateServiceBlockingStub resolverStateService;
   private final HealthStatus healthStatus;
@@ -48,7 +48,7 @@ public class SidecarFlagsAdminFetcher {
       new AtomicReference<>();
   private final AtomicReference<Instant> refreshTimeHolder = new AtomicReference<>();
 
-  public SidecarFlagsAdminFetcher(
+  public FlagsAdminStateFetcher(
       ResolverStateServiceGrpc.ResolverStateServiceBlockingStub resolverStateService,
       HealthStatus healthStatus,
       String accountName) {

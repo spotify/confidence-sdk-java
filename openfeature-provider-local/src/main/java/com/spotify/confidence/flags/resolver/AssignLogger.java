@@ -9,7 +9,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.spotify.confidence.flags.resolver.domain.AccountClient;
 import com.spotify.confidence.flags.resolver.domain.FlagToApply;
-import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
+import com.spotify.confidence.shaded.flags.resolver.v1.FlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
 import com.spotify.confidence.shaded.flags.resolver.v1.TelemetryData;
 import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagAssignedRequest;
@@ -41,12 +41,12 @@ public class AssignLogger implements Closeable {
   private Instant lastFlagAssigned = Instant.now();
   private final Timer timer;
 
-  private final InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub flagLoggerStub;
+  private final FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub flagLoggerStub;
   private final Meter assigned;
 
   @VisibleForTesting
   public AssignLogger(
-      InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub flagLoggerStub,
+      FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub flagLoggerStub,
       Timer timer,
       MetricRegistry metricRegistry,
       long capacity) {
@@ -66,7 +66,7 @@ public class AssignLogger implements Closeable {
   }
 
   public static AssignLogger createStarted(
-      InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub flagLoggerStub,
+      FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub flagLoggerStub,
       Duration checkpointInterval,
       MetricRegistry metricRegistry,
       long capacity) {

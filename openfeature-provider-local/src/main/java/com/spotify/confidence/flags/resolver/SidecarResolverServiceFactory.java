@@ -16,7 +16,7 @@ import com.spotify.confidence.flags.resolver.util.JwtAuthClientInterceptor;
 import com.spotify.confidence.flags.resolver.util.PlainResolveTokenConverter;
 import com.spotify.confidence.flags.resolver.util.TokenHolder;
 import com.spotify.confidence.flags.shaded.admin.v1.ResolverStateServiceGrpc;
-import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
+import com.spotify.confidence.shaded.flags.resolver.v1.FlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
@@ -75,7 +75,7 @@ public class SidecarResolverServiceFactory implements ResolverServiceFactory {
     final TokenHolder.Token token = tokenHolder.getToken();
     final Channel authenticatedChannel =
         ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
-    final var flagLoggerStub = InternalFlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
+    final var flagLoggerStub = FlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
     final long assignLogCapacity =
         Optional.ofNullable(System.getenv("CONFIDENCE_ASSIGN_LOG_CAPACITY"))
             .map(Long::parseLong)
@@ -84,8 +84,8 @@ public class SidecarResolverServiceFactory implements ResolverServiceFactory {
         ResolverStateServiceGrpc.newBlockingStub(authenticatedChannel);
     final HealthStatusManager healthStatusManager = new HealthStatusManager();
     final HealthStatus healthStatus = new HealthStatus(healthStatusManager);
-    final SidecarFlagsAdminFetcher sidecarFlagsAdminFetcher =
-        new SidecarFlagsAdminFetcher(resolverStateService, healthStatus, token.account());
+    final FlagsAdminStateFetcher sidecarFlagsAdminFetcher =
+        new FlagsAdminStateFetcher(resolverStateService, healthStatus, token.account());
     final long pollIntervalSeconds =
         Optional.ofNullable(System.getenv("CONFIDENCE_RESOLVER_POLL_INTERVAL_SECONDS"))
             .map(Long::parseLong)
