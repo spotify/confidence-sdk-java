@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 
 public class SidecarFlagsAdminFetcher {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SidecarFlagsAdminFetcher.class);
+  private static final Logger logger = LoggerFactory.getLogger(SidecarFlagsAdminFetcher.class);
 
   private final ResolverStateServiceGrpc.ResolverStateServiceBlockingStub resolverStateService;
   private final HealthStatus healthStatus;
@@ -69,15 +69,23 @@ public class SidecarFlagsAdminFetcher {
 
     try {
       final AccountState newAccountState = fetchState();
+      newAccountState.flags().forEach(this::logIfSticky);
       newAccountStates.put(accountName, newAccountState);
       secrets.putAll(newAccountState.secrets());
     } catch (Exception e) {
-      LOG.warn("Failed to reload, ignoring reload", e);
+      logger.warn("Failed to reload, ignoring reload", e);
       return;
     }
 
     stateHolder.set(new ResolverState(newAccountStates, secrets));
     healthStatus.setStatus(HealthCheckResponse.ServingStatus.SERVING);
+  }
+
+  private void logIfSticky(String s, Flag flag) {
+    if (flag.getRulesList().stream().anyMatch(Flag.Rule::hasMaterializationSpec)) {
+      logger.warn(
+          "Flag {} is sticky, sticky assignments are not supported in the local resolve", s);
+    }
   }
 
   private String getResolverFileUri() {
@@ -154,7 +162,7 @@ public class SidecarFlagsAdminFetcher {
       secrets.putAll(credentialsIndex);
     }
 
-    LOG.info(
+    logger.info(
         "Loaded {} flags,  {} segments, {} clients, {} secrets for {}",
         flags.size(),
         segmentsIndex.size(),

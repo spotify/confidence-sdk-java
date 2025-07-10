@@ -124,6 +124,12 @@ public class AccountResolver {
     }
 
     for (Rule rule : flag.getRulesList()) {
+      if (rule.hasMaterializationSpec()) {
+        logger.warn(
+            "Flag {} has a sticky rule, sticky assignments are not supported in the local resolve",
+            flag.getName());
+        continue;
+      }
       if (!rule.getEnabled()) {
         listener.markRuleEvaluationReason(
             rule.getName(), ResolveFlagListener.RuleEvaluationReason.RULE_NOT_ENABLED);
