@@ -7,6 +7,7 @@ import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "confidence/flags/resolver/v1/events/events.proto";
 
 import "confidence/flags/resolver/v1/types.proto";
 import "confidence/flags/types/v1/types.proto";
