@@ -77,5 +77,8 @@
       <version>1.6.1</version>
     </dependency>
   </dependencies>
+    <properties>
+            <maven.javadoc.skip>true</maven.javadoc.skip>
+    </properties>
 
 </project> 
