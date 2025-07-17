@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.OpenFeatureUtils.convertToProto;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.common.collect.Maps;
@@ -17,7 +18,7 @@ class OpenFeatureConfidenceUtilsTest {
   @Test
   public void testConvertingEmptyEvaluationContext() {
     final EvaluationContext e = new ImmutableContext();
-    final ConfidenceValue.Struct confidenceValue = OpenFeatureUtils.convert(e);
+    final ConfidenceValue.Struct confidenceValue = convert(e);
     assertEquals(0, confidenceValue.asMap().size());
   }
 
@@ -39,7 +40,7 @@ class OpenFeatureConfidenceUtilsTest {
 
     final EvaluationContext e = new ImmutableContext("targetingKey", attributes);
 
-    final ConfidenceValue.Struct confidenceValue = OpenFeatureUtils.convert(e);
+    final ConfidenceValue.Struct confidenceValue = convert(e);
     assertEquals(6, confidenceValue.asMap().size());
     assertEquals("value1", confidenceValue.asMap().get("key1").asString());
     assertEquals(1.0, confidenceValue.asMap().get("key3").asDouble());
@@ -56,5 +57,12 @@ class OpenFeatureConfidenceUtilsTest {
         confidenceValue.asMap().get("key7").asStruct().asMap().get("subKey1").asString());
     assertEquals(
         13.37, confidenceValue.asMap().get("key7").asStruct().asMap().get("subKey2").asDouble());
+  }
+
+  /*
+  OpenFeature Evaluation Context -> Confidence Struct
+  */
+  static ConfidenceValue.Struct convert(EvaluationContext evaluationContext) {
+    return ConfidenceValue.Struct.fromProto(convertToProto(evaluationContext));
   }
 }
