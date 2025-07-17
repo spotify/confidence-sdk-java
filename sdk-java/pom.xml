@@ -66,6 +66,11 @@
   </developers>
 
   <dependencies>
+      <dependency>
+          <groupId>com.spotify.confidence</groupId>
+          <artifactId>openfeature-provider-shared</artifactId>
+          <version>0.1.10</version>
+      </dependency>
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>confidence-proto</artifactId>

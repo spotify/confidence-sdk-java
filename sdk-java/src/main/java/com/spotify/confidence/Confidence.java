@@ -1,9 +1,9 @@
 package com.spotify.confidence;
 
 import static com.spotify.confidence.ConfidenceTypeMapper.getTyped;
-import static com.spotify.confidence.ConfidenceUtils.FlagPath.getPath;
 import static com.spotify.confidence.ConfidenceUtils.getValueForPath;
 import static com.spotify.confidence.ConfidenceUtils.handleFlagEvaluationError;
+import static com.spotify.confidence.FlagPath.getPath;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
@@ -12,7 +12,6 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
-import com.spotify.confidence.ConfidenceUtils.FlagPath;
 import com.spotify.confidence.Exceptions.IllegalValueType;
 import com.spotify.confidence.Exceptions.IncompatibleValueType;
 import com.spotify.confidence.Exceptions.ValueNotFound;

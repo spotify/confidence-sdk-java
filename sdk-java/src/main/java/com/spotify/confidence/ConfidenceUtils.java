@@ -4,11 +4,9 @@ import com.spotify.confidence.ConfidenceValue.Struct;
 import com.spotify.confidence.Exceptions.IllegalValuePath;
 import com.spotify.confidence.Exceptions.ValueNotFound;
 import io.grpc.StatusRuntimeException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 // Be careful if you intend moving this file. The version returned by `getSdkVersion()` is set by
@@ -79,40 +77,6 @@ final class ConfidenceUtils {
             }
           }
         };
-  }
-
-  static class FlagPath {
-    private final String flag;
-    private final List<String> path;
-
-    public FlagPath(String flag, List<String> path) {
-      this.flag = flag;
-      this.path = path;
-    }
-
-    public String getFlag() {
-      return flag;
-    }
-
-    public List<String> getPath() {
-      return path;
-    }
-
-    public static FlagPath getPath(String str) throws IllegalValuePath {
-      final String regex = Pattern.quote(".");
-      final String[] parts = str.split(regex);
-
-      if (parts.length == 0) {
-        // this happens for malformed corner cases such as: str = "..."
-        log.warn("Illegal path string '{}'", str);
-        throw new IllegalValuePath(String.format("Illegal path string '%s'", str));
-      } else if (parts.length == 1) {
-        // str doesn't contain the delimiter
-        return new FlagPath(str, List.of());
-      } else {
-        return new FlagPath(parts[0], Arrays.asList(parts).subList(1, parts.length));
-      }
-    }
   }
 
   static String getSdkVersion() {

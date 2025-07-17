@@ -3,7 +3,6 @@ package com.spotify.confidence;
 import static com.spotify.confidence.FlagResolverClientImpl.OPEN_FEATURE_RESOLVE_CONTEXT_KEY;
 
 import com.google.protobuf.Struct;
-import com.spotify.confidence.ConfidenceUtils.FlagPath;
 import com.spotify.confidence.Exceptions.IllegalValuePath;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;

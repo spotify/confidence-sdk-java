@@ -7,10 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
-import com.spotify.confidence.flags.resolver.domain.Account;
-import com.spotify.confidence.flags.resolver.domain.AccountState;
-import com.spotify.confidence.flags.resolver.domain.Region;
-import com.spotify.confidence.flags.resolver.domain.ResolverState;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
@@ -172,7 +168,7 @@ public class ResolveTest extends TestBase {
                     false))
         .withMessage(
             "java.util.concurrent.ExecutionException: "
-                + "com.spotify.confidence.flags.resolver.exceptions.BadRequestException:"
+                + "com.spotify.confidence.BadRequestException:"
                 + " Targeting key is too larger, max 100 characters.");
   }
 }

@@ -11,10 +11,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.codahale.metrics.MetricRegistry;
-import com.spotify.confidence.flags.resolver.AssignLogger;
-import com.spotify.confidence.flags.resolver.FlagLogger;
-import com.spotify.confidence.flags.resolver.domain.AccountClient;
-import com.spotify.confidence.flags.resolver.domain.FlagToApply;
 import com.spotify.confidence.shaded.flags.resolver.v1.FlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;

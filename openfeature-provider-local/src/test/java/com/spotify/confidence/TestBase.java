@@ -5,12 +5,6 @@ import static org.mockito.Mockito.mock;
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
-import com.spotify.confidence.flags.resolver.ResolveTokenConverter;
-import com.spotify.confidence.flags.resolver.ResolverServiceFactory;
-import com.spotify.confidence.flags.resolver.SidecarResolverServiceFactory;
-import com.spotify.confidence.flags.resolver.domain.AccountClient;
-import com.spotify.confidence.flags.resolver.domain.ResolverState;
-import com.spotify.confidence.flags.resolver.util.PlainResolveTokenConverter;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.iam.v1.Client;
@@ -51,7 +45,7 @@ public class TestBase {
   public static void setup() {
     final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
     resolverServiceFactory =
-        new SidecarResolverServiceFactory(resolverState, resolveTokenConverter, mock(), mock());
+        new LocalResolverServiceFactory(resolverState, resolveTokenConverter, mock(), mock());
   }
 
   @BeforeEach

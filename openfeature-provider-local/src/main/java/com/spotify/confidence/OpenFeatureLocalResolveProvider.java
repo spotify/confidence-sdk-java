@@ -1,8 +1,6 @@
 package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
-import com.spotify.confidence.flags.resolver.FlagResolverService;
-import com.spotify.confidence.flags.resolver.SidecarResolverServiceFactory;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
@@ -22,13 +20,20 @@ import org.slf4j.Logger;
 
 public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private final String clientSecret;
+  private final ApiSecret apiSecret;
   private static final Logger log =
       org.slf4j.LoggerFactory.getLogger(OpenFeatureLocalResolveProvider.class);
-  private final FlagResolverService flagResolverService;
+  private FlagResolverService flagResolverService;
 
   public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
-    this.flagResolverService = SidecarResolverServiceFactory.from(apiSecret, clientSecret);
+    this.apiSecret = apiSecret;
     this.clientSecret = clientSecret;
+  }
+
+  @Override
+  public void initialize(EvaluationContext evaluationContext) throws Exception {
+    this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret);
+    FeatureProvider.super.initialize(evaluationContext);
   }
 
   @Override
