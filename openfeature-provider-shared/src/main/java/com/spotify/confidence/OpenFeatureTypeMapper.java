@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// For now, only package visibility to keep control on this part of the code
 class OpenFeatureTypeMapper {
 
   private static Value from(com.google.protobuf.Value value, FlagSchema schema) {

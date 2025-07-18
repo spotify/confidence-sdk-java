@@ -7,9 +7,9 @@
     <version>0.1.10</version>
   </parent>
 
-  <artifactId>openfeature-provider</artifactId>
+  <artifactId>openfeature-provider-shared</artifactId>
 
-  <name>Confidence SDK - OpenFeature Provider</name>
+  <name>OpenFeature Provider Types</name>
   <organization>
       <name>com.spotify</name>
       <url>https://github.com/spotify</url>
@@ -66,24 +66,19 @@
   </developers>
 
   <dependencies>
-    <!-- x-release-please-start-version -->
-    <dependency>
-      <groupId>com.spotify.confidence</groupId>
-      <artifactId>sdk-java</artifactId>
-      <version>0.1.10</version>
-    </dependency>
-    <!---x-release-please-end-->
-    <dependency>
-      <groupId>com.spotify.confidence</groupId>
-      <artifactId>openfeature-provider-shared</artifactId>
-      <version>0.1.10</version>
-    </dependency>
+      <dependency>
+          <groupId>com.spotify.confidence</groupId>
+          <artifactId>confidence-proto</artifactId>
+          <version>0.1.10</version>
+      </dependency>
     <dependency>
       <groupId>dev.openfeature</groupId>
       <artifactId>sdk</artifactId>
       <version>1.6.1</version>
     </dependency>
-
   </dependencies>
+    <properties>
+            <maven.javadoc.skip>true</maven.javadoc.skip>
+    </properties>
 
-</project>
+</project> 

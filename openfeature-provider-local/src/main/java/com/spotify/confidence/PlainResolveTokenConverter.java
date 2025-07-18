@@ -1,0 +1,27 @@
+package com.spotify.confidence;
+
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+class PlainResolveTokenConverter extends ResolveTokenConverter {
+
+  private static final Logger logger = LoggerFactory.getLogger(PlainResolveTokenConverter.class);
+
+  @Override
+  public ByteString convertResolveToken(ResolveToken resolveToken) {
+    return resolveToken.toByteString();
+  }
+
+  @Override
+  public ResolveToken readResolveToken(ByteString tokenBytes) {
+    try {
+      return ResolveToken.parseFrom(tokenBytes);
+    } catch (InvalidProtocolBufferException e) {
+      logger.warn("Got InvalidProtocolBufferException when reading resolve token", e);
+      throw new BadRequestException("Unable to parse resolve token");
+    }
+  }
+}

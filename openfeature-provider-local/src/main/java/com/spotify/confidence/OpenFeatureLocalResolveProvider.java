@@ -1,9 +1,7 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.FlagResolverClientImpl.OPEN_FEATURE_RESOLVE_CONTEXT_KEY;
-
 import com.google.protobuf.Struct;
-import com.spotify.confidence.Exceptions.IllegalValuePath;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import dev.openfeature.sdk.EvaluationContext;
@@ -14,75 +12,33 @@ import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.FlagNotFoundError;
 import dev.openfeature.sdk.exceptions.GeneralError;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.Status.Code;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import org.slf4j.Logger;
 
-/** OpenFeature Provider for feature flagging with the Confidence platform */
-public class ConfidenceFeatureProvider implements FeatureProvider {
-
-  private final Confidence confidence;
-
-  /**
-   * ConfidenceFeatureProvider constructor
-   *
-   * @param confidence an instance of the Confidence
-   */
-  public ConfidenceFeatureProvider(Confidence confidence) {
-    this.confidence = confidence;
-  }
-
+public class OpenFeatureLocalResolveProvider implements FeatureProvider {
+  private final String clientSecret;
+  private final ApiSecret apiSecret;
   private static final Logger log =
-      org.slf4j.LoggerFactory.getLogger(ConfidenceFeatureProvider.class);
+      org.slf4j.LoggerFactory.getLogger(OpenFeatureLocalResolveProvider.class);
+  private FlagResolverService flagResolverService;
 
-  /**
-   * ConfidenceFeatureProvider constructor
-   *
-   * @param clientSecret generated from the Confidence portal
-   * @param managedChannel gRPC channel
-   * @deprecated This constructor is deprecated. Please use {@link
-   *     #ConfidenceFeatureProvider(Confidence)} instead.
-   */
-  @Deprecated()
-  public ConfidenceFeatureProvider(String clientSecret, ManagedChannel managedChannel) {
-    this(Confidence.builder(clientSecret).flagResolverManagedChannel(managedChannel).build());
+  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+    this.apiSecret = apiSecret;
+    this.clientSecret = clientSecret;
   }
 
-  /**
-   * ConfidenceFeatureProvider constructor
-   *
-   * @param clientSecret generated from the Confidence portal
-   * @deprecated This constructor is deprecated. Please use {@link
-   *     #ConfidenceFeatureProvider(Confidence)} instead.
-   */
-  @Deprecated()
-  public ConfidenceFeatureProvider(String clientSecret) {
-    this(clientSecret, ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
-  }
-
-  /**
-   * ConfidenceFeatureProvider constructor that allows you to override the default gRPC host and
-   * port, used for local resolver.
-   *
-   * @param clientSecret generated from the Confidence portal
-   * @param host gRPC host you want to connect to.
-   * @param port port of the gRPC host that you want to use.
-   * @deprecated This constructor is deprecated. Please use {@link
-   *     #ConfidenceFeatureProvider(Confidence)} instead.
-   */
-  @Deprecated()
-  public ConfidenceFeatureProvider(String clientSecret, String host, int port) {
-    this(clientSecret, ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
+  @Override
+  public void initialize(EvaluationContext evaluationContext) throws Exception {
+    this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret);
+    FeatureProvider.super.initialize(evaluationContext);
   }
 
   @Override
   public Metadata getMetadata() {
-    return () -> "com.spotify.confidence.flags.resolver.v1.FlagResolverService";
+    return () -> "confidence-sdk-java-local";
   }
 
   @Override
@@ -145,7 +101,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
     final FlagPath flagPath;
     try {
       flagPath = FlagPath.getPath(key);
-    } catch (IllegalValuePath e) {
+    } catch (Exceptions.IllegalValuePath e) {
       log.warn(e.getMessage());
       throw new RuntimeException(e);
     }
@@ -157,12 +113,17 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
       final String requestFlagName = "flags/" + flagPath.getFlag();
 
       resolveFlagResponse =
-          confidence
-              .withContext(
-                  Map.of(
-                      OPEN_FEATURE_RESOLVE_CONTEXT_KEY,
-                      ConfidenceValue.Struct.fromProto(evaluationContext)))
-              .resolveFlags(requestFlagName)
+          flagResolverService
+              .resolveFlags(
+                  ResolveFlagsRequest.newBuilder()
+                      .addFlags(requestFlagName)
+                      .setApply(true)
+                      .setClientSecret(clientSecret)
+                      .setEvaluationContext(
+                          Struct.newBuilder()
+                              .putAllFields(evaluationContext.getFieldsMap())
+                              .build())
+                      .build())
               .get();
 
       if (resolveFlagResponse.getResolvedFlagsList().isEmpty()) {
@@ -210,27 +171,22 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
             .variant(resolvedFlag.getVariant())
             .build();
       }
-    } catch (StatusRuntimeException | InterruptedException | ExecutionException e) {
-      // If the remote API is unreachable, for now we fall back to the default value. However, we
-      // should consider maintaining a local resolve-history to avoid flickering experience in case
-      // of a temporarily unavailable backend
-      if (e instanceof StatusRuntimeException) {
-        handleStatusRuntimeException((StatusRuntimeException) e);
-      } else if (e.getCause() instanceof StatusRuntimeException) {
-        handleStatusRuntimeException((StatusRuntimeException) e.getCause());
-      }
+    } catch (StatusRuntimeException e) {
+      handleStatusRuntimeException(e);
       throw new GeneralError("Unknown error occurred when calling the provider backend");
+    } catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException(e);
     }
   }
 
   private static void handleStatusRuntimeException(StatusRuntimeException e) {
-    if (e.getStatus().getCode() == Code.DEADLINE_EXCEEDED) {
+    if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
       log.error("Deadline exceeded when calling provider backend", e);
       throw new GeneralError("Deadline exceeded when calling provider backend");
-    } else if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+    } else if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) {
       log.error("Provider backend is unavailable", e);
       throw new GeneralError("Provider backend is unavailable");
-    } else if (e.getStatus().getCode() == Code.UNAUTHENTICATED) {
+    } else if (e.getStatus().getCode() == Status.Code.UNAUTHENTICATED) {
       log.error("UNAUTHENTICATED", e);
       throw new GeneralError("UNAUTHENTICATED");
     } else {

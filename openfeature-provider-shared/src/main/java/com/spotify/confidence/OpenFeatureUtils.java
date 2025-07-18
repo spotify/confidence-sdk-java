@@ -10,17 +10,10 @@ import java.util.List;
 import org.slf4j.Logger;
 
 @Beta
-public class OpenFeatureUtils {
+class OpenFeatureUtils {
 
   static final String TARGETING_KEY = "targeting_key";
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(OpenFeatureUtils.class);
-
-  /*
-  OpenFeature Evaluation Context -> Confidence Struct
-   */
-  static ConfidenceValue.Struct convert(EvaluationContext evaluationContext) {
-    return ConfidenceValue.Struct.fromProto(convertToProto(evaluationContext));
-  }
 
   /*
   OpenFeature Evaluation Context -> Proto
