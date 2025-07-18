@@ -38,7 +38,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
 
   @Override
   public Metadata getMetadata() {
-    return () -> "com.spotify.confidence.flags.resolver.v1.FlagResolverService";
+    return () -> "confidence-sdk-java-local";
   }
 
   @Override
