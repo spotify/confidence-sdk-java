@@ -72,12 +72,12 @@
       <artifactId>sdk-java</artifactId>
       <version>0.1.10</version>
     </dependency>
-    <!---x-release-please-end-->
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>openfeature-provider-shared</artifactId>
       <version>0.1.10</version>
     </dependency>
+    <!---x-release-please-end-->
     <dependency>
       <groupId>dev.openfeature</groupId>
       <artifactId>sdk</artifactId>
