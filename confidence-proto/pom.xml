@@ -8,6 +8,7 @@
   </parent>
 
   <artifactId>confidence-proto</artifactId>
+  <name>Confidence Proto files</name>
 
   <dependencies>
     <dependency>
