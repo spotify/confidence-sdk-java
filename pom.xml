@@ -21,10 +21,11 @@
     </repository>
   </distributionManagement>
 
+  <!-- x-release-please-start-version -->
   <groupId>com.spotify.confidence</groupId>
   <artifactId>confidence-sdk-java</artifactId>
   <version>0.1.11-SNAPSHOT</version>
-
+  <!---x-release-please-end-->
   <url>https://github.com/spotify/confidence-sdk-java</url>
   <description>Confidence SDK for Java</description>
 

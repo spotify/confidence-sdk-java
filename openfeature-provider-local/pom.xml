@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <!-- x-release-please-start-version -->
   <parent>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>confidence-sdk-java</artifactId>
     <version>0.1.11-SNAPSHOT</version>
   </parent>
+  <!---x-release-please-end-->
 
   <name>Confidence local resolve provider</name>
   <artifactId>openfeature-provider-local</artifactId>
@@ -62,9 +64,22 @@
       <version>1.68.1</version>
     </dependency>
     <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>1.17.6</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
     <groupId>org.mockito</groupId>
     <artifactId>mockito-inline</artifactId>
     <version>5.2.0</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>net.bytebuddy</groupId>
+          <artifactId>byte-buddy</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
