@@ -49,6 +49,11 @@
           <name>Nicklas Lundin</name>
       </developer>
       <developer>
+          <id>vahidt</id>
+          <name>VahidTorkaman</name>
+          <email>vahidt@spotify.com</email>
+      </developer>
+      <developer>
           <id>DennisPersson</id>
           <email>dennisp@spotify.com</email>
           <name>Dennis Persson</name>
