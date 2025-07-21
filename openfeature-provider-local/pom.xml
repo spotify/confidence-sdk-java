@@ -20,6 +20,7 @@
 
 
   <dependencies>
+    <!-- x-release-please-start-version -->
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>confidence-proto</artifactId>
@@ -30,6 +31,7 @@
       <artifactId>openfeature-provider-shared</artifactId>
       <version>0.1.10</version>
     </dependency>
+    <!---x-release-please-end-->
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>

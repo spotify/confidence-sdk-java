@@ -65,11 +65,13 @@
   </developers>
 
   <dependencies>
-      <dependency>
+    <!-- x-release-please-start-version -->
+    <dependency>
           <groupId>com.spotify.confidence</groupId>
           <artifactId>confidence-proto</artifactId>
           <version>0.1.10</version>
-      </dependency>
+    </dependency>
+    <!---x-release-please-end-->
     <dependency>
       <groupId>dev.openfeature</groupId>
       <artifactId>sdk</artifactId>
