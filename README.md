@@ -24,8 +24,8 @@ To use a snapshot, add the following repository to your `pom.xml`:
 ```xml
 <distributionManagement>
     <snapshotRepository>
-        <id>oss.snapshots</id>
-        <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        <id>central-portal-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
     </snapshotRepository>
 </distributionManagement>
 ```
