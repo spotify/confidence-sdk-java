@@ -7,9 +7,8 @@
     <version>0.1.10</version>
   </parent>
 
+  <name>Confidence java resolver shared components</name>
   <artifactId>openfeature-provider-shared</artifactId>
-
-  <name>OpenFeature Provider Types</name>
   <organization>
       <name>com.spotify</name>
       <url>https://github.com/spotify</url>
