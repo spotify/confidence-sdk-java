@@ -35,7 +35,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 17
-          server-id: central
+          server-id: central-portal-snapshots
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Full private key blob
@@ -63,7 +63,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 17
-          server-id: central
+          server-id: central-portal
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Full private key blob
