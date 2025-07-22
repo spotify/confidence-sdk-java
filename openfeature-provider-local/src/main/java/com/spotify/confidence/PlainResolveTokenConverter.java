@@ -2,7 +2,7 @@ package com.spotify.confidence;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.spotify.confidence.shaded.flags.resolver.v1.ResolveToken;
+import com.spotify.confidence.flags.resolver.v1.ResolveToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
