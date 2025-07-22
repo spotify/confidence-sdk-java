@@ -44,8 +44,8 @@ jobs:
       - name: Deploy with Maven
         run: mvn --batch-mode clean deploy
         env:
-          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME_2 }}
-          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN_2 }}
+          MAVEN_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           GPG_PASS: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
 
   release-deploy:
@@ -72,6 +72,6 @@ jobs:
       - name: Deploy with Maven
         run: mvn --batch-mode clean deploy
         env:
-          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME_2 }}
-          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN_2 }}
+          MAVEN_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           GPG_PASS: ${{ secrets.SIGN_KEY_PASS }} # Password chosen when creating the GPG key
