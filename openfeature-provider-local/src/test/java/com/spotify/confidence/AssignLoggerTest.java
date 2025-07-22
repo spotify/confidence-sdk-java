@@ -11,11 +11,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.codahale.metrics.MetricRegistry;
-import com.spotify.confidence.shaded.flags.resolver.v1.FlagLoggerServiceGrpc;
-import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1;
+import com.spotify.confidence.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
+import com.spotify.confidence.flags.resolver.v1.ResolveTokenV1;
+import com.spotify.confidence.flags.resolver.v1.WriteFlagAssignedRequest;
+import com.spotify.confidence.flags.resolver.v1.WriteFlagAssignedResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
-import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagAssignedRequest;
-import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagAssignedResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.events.FlagAssigned;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
@@ -30,13 +30,13 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 public class AssignLoggerTest {
-  private FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub stub;
+  private InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub stub;
   private AssignLogger logger;
 
   @BeforeEach
   public void beforeEach() {
 
-    stub = mock(FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub.class);
+    stub = mock(InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub.class);
     logger = new AssignLogger(stub, null, new MetricRegistry(), 8 * 1024 * 1024);
   }
 

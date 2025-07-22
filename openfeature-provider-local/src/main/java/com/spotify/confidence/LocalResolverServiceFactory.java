@@ -4,8 +4,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Struct;
 import com.spotify.confidence.flags.admin.v1.FlagAdminServiceGrpc;
+import com.spotify.confidence.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
 import com.spotify.confidence.flags.shaded.admin.v1.ResolverStateServiceGrpc;
-import com.spotify.confidence.shaded.flags.resolver.v1.FlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
@@ -64,7 +64,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final TokenHolder.Token token = tokenHolder.getToken();
     final Channel authenticatedChannel =
         ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
-    final var flagLoggerStub = FlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
+    final var flagLoggerStub = InternalFlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
     final long assignLogCapacity =
         Optional.ofNullable(System.getenv("CONFIDENCE_ASSIGN_LOG_CAPACITY"))
             .map(Long::parseLong)

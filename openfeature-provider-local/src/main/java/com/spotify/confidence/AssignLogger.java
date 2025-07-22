@@ -7,11 +7,11 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.spotify.confidence.shaded.flags.resolver.v1.FlagLoggerServiceGrpc;
+import com.spotify.confidence.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
+import com.spotify.confidence.flags.resolver.v1.TelemetryData;
+import com.spotify.confidence.flags.resolver.v1.WriteFlagAssignedRequest;
+import com.spotify.confidence.flags.resolver.v1.WriteFlagAssignedResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
-import com.spotify.confidence.shaded.flags.resolver.v1.TelemetryData;
-import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagAssignedRequest;
-import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagAssignedResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.events.FlagAssigned;
 import java.io.Closeable;
 import java.time.Duration;
@@ -39,12 +39,12 @@ class AssignLogger implements Closeable {
   private Instant lastFlagAssigned = Instant.now();
   private final Timer timer;
 
-  private final FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub flagLoggerStub;
+  private final InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub flagLoggerStub;
   private final Meter assigned;
 
   @VisibleForTesting
   AssignLogger(
-      FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub flagLoggerStub,
+      InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub flagLoggerStub,
       Timer timer,
       MetricRegistry metricRegistry,
       long capacity) {
@@ -64,7 +64,7 @@ class AssignLogger implements Closeable {
   }
 
   static AssignLogger createStarted(
-      FlagLoggerServiceGrpc.FlagLoggerServiceBlockingStub flagLoggerStub,
+      InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub flagLoggerStub,
       Duration checkpointInterval,
       MetricRegistry metricRegistry,
       long capacity) {
