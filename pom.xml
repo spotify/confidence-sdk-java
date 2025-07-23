@@ -16,7 +16,7 @@
       <url>https://central.sonatype.com/repository/maven-snapshots/</url>
     </snapshotRepository>
     <repository>
-      <id>central-portal</id>
+      <id>central</id>
       <url>https://central.sonatype.com/repository/maven-releases/</url>
     </repository>
   </distributionManagement>
@@ -369,7 +369,7 @@
         <version>0.8.0</version>
         <extensions>true</extensions>
         <configuration>
-          <publishingServerId>central-portal</publishingServerId>
+          <publishingServerId>central</publishingServerId>
           <autoPublish>true</autoPublish>
           <waitUntil>published</waitUntil>
         </configuration>
