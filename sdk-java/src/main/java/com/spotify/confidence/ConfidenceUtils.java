@@ -80,6 +80,6 @@ final class ConfidenceUtils {
   }
 
   static String getSdkVersion() {
-    return "0.1.11-SNAPSHOT"; // x-release-please-version
+    return "0.1.11"; // x-release-please-version
   }
 }
