@@ -79,9 +79,6 @@
       <version>1.6.1</version>
     </dependency>
   </dependencies>
-    <properties>
-            <maven.javadoc.skip>true</maven.javadoc.skip>
-    </properties>
     <build>
         <plugins>
             <plugin>
@@ -96,6 +93,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <failOnError>false</failOnError>
                     <additionalOptions>
                         <additionalOption>-Xdoclint:none</additionalOption>
                     </additionalOptions>
