@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.14](https://github.com/spotify/confidence-sdk-java/compare/v0.1.13...v0.1.14) (2025-07-23)
+
+
+### 🐛 Bug Fixes
+
+* shade flag resolver write log resolve ([#219](https://github.com/spotify/confidence-sdk-java/issues/219)) ([93a6133](https://github.com/spotify/confidence-sdk-java/commit/93a61335f436fde41f9168cc892ace89d031ce80))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.14-SNAPSHOT ([#218](https://github.com/spotify/confidence-sdk-java/issues/218)) ([1d46cbb](https://github.com/spotify/confidence-sdk-java/commit/1d46cbb3880b77be3ca2f090815894382a81546a))
+
 ## [0.1.13](https://github.com/spotify/confidence-sdk-java/compare/v0.1.12...v0.1.13) (2025-07-23)
 
 
