@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.11](https://github.com/spotify/confidence-sdk-java/compare/v0.1.10...v0.1.11) (2025-07-23)
+
+
+### 🐛 Bug Fixes
+
+* change to central publishing ([#205](https://github.com/spotify/confidence-sdk-java/issues/205)) ([7f7670e](https://github.com/spotify/confidence-sdk-java/commit/7f7670e49fe887b5cda73a244dac14a6d7448b78))
+* change types to shaded ([#209](https://github.com/spotify/confidence-sdk-java/issues/209)) ([7f891a9](https://github.com/spotify/confidence-sdk-java/commit/7f891a9d596e9f5f6df7aa12e7d3d49fdaf08155))
+* **ci:** add release please version to the pr ([#203](https://github.com/spotify/confidence-sdk-java/issues/203)) ([fff1fe7](https://github.com/spotify/confidence-sdk-java/commit/fff1fe782eb5ed62cbf62895b1a0e66cc0d8da7f))
+* experimental using of local resolve ([#210](https://github.com/spotify/confidence-sdk-java/issues/210)) ([613f128](https://github.com/spotify/confidence-sdk-java/commit/613f128d0a659d9c077cd8f97e0afb4832204c50))
+* fix logger ([#208](https://github.com/spotify/confidence-sdk-java/issues/208)) ([ca0d68d](https://github.com/spotify/confidence-sdk-java/commit/ca0d68dac757df1fb501cb7f4158b8fc2434c1f5))
+* Fix versions ([#204](https://github.com/spotify/confidence-sdk-java/issues/204)) ([88ab816](https://github.com/spotify/confidence-sdk-java/commit/88ab81647da4c49795fcdfd4adbbe96e8bea58ed))
+* project name was missing ([#201](https://github.com/spotify/confidence-sdk-java/issues/201)) ([4e34910](https://github.com/spotify/confidence-sdk-java/commit/4e34910a6675107be1f6cbb1cec3e31c0f61264b))
+
+
+### ✨ New Features
+
+* OpenFeature provider - Local resolve ([#192](https://github.com/spotify/confidence-sdk-java/issues/192)) ([083e3fc](https://github.com/spotify/confidence-sdk-java/commit/083e3fc06ce58de2ffdeb071ea8d70bc5d6ff38f))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.11-SNAPSHOT ([#198](https://github.com/spotify/confidence-sdk-java/issues/198)) ([355e063](https://github.com/spotify/confidence-sdk-java/commit/355e0636388f18d82b2ee579b38df72091c4a695))
+
+
+### 📚 Documentation
+
+* Align CHANGELOG with recent deployments ([#199](https://github.com/spotify/confidence-sdk-java/issues/199)) ([9cfec47](https://github.com/spotify/confidence-sdk-java/commit/9cfec477926ea9d71bf019eebe9d004db6eb6a3b))
+
 ## [0.1.10](https://github.com/spotify/confidence-sdk-java/compare/v0.1.8...v0.1.10) (2025-07-08)
 
 
