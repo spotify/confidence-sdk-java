@@ -2,9 +2,9 @@ package com.spotify.confidence;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Struct;
-import com.spotify.confidence.flags.resolver.v1.ResolveToken;
-import com.spotify.confidence.flags.resolver.v1.ResolveTokenV1;
-import com.spotify.confidence.flags.resolver.v1.ResolveTokenV1.AssignedFlag;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveToken;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1.AssignedFlag;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;

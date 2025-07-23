@@ -11,11 +11,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.codahale.metrics.MetricRegistry;
-import com.spotify.confidence.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
-import com.spotify.confidence.flags.resolver.v1.ResolveTokenV1;
-import com.spotify.confidence.flags.resolver.v1.WriteFlagAssignedRequest;
-import com.spotify.confidence.flags.resolver.v1.WriteFlagAssignedResponse;
+import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
+import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagAssignedRequest;
+import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagAssignedResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.events.FlagAssigned;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
