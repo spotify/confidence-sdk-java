@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.12](https://github.com/spotify/confidence-sdk-java/compare/v0.1.11...v0.1.12) (2025-07-23)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** use central ([#214](https://github.com/spotify/confidence-sdk-java/issues/214)) ([a7125b4](https://github.com/spotify/confidence-sdk-java/commit/a7125b47d28e50f7db82acdcb2457b4b92f29956))
+* fix deployment issue with empty javadocs ([#212](https://github.com/spotify/confidence-sdk-java/issues/212)) ([de412e5](https://github.com/spotify/confidence-sdk-java/commit/de412e579cecc35ec2e8dba1a2f7a93ce361b59e))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.12-SNAPSHOT ([#211](https://github.com/spotify/confidence-sdk-java/issues/211)) ([019177b](https://github.com/spotify/confidence-sdk-java/commit/019177b5ed552a3c103273eb457c246ce24a05d6))
+
 ## [0.1.11](https://github.com/spotify/confidence-sdk-java/compare/v0.1.10...v0.1.11) (2025-07-23)
 
 
