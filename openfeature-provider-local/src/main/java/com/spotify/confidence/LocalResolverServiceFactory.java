@@ -3,7 +3,7 @@ package com.spotify.confidence;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Struct;
-import com.spotify.confidence.flags.admin.v1.FlagAdminServiceGrpc;
+import com.spotify.confidence.flags.shaded.admin.v1.FlagAdminServiceGrpc;
 import com.spotify.confidence.flags.shaded.admin.v1.ResolverStateServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;

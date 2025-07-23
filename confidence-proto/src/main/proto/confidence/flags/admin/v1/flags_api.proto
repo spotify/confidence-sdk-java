@@ -15,7 +15,7 @@ import "confidence/flags/types/v1/target.proto";
 import "confidence/flags/admin/v1/types.proto";
 import "confidence/flags/resolver/v1/events/events.proto";
 
-option java_package = "com.spotify.confidence.flags.admin.v1";
+option java_package = "com.spotify.confidence.flags.shaded.admin.v1";
 option java_multiple_files = true;
 option java_outer_classname = "ApiProto";
 

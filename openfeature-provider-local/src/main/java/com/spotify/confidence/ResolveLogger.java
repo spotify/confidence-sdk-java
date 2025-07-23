@@ -1,8 +1,8 @@
 package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
-import com.spotify.confidence.flags.admin.v1.FlagAdminServiceGrpc;
-import com.spotify.confidence.flags.admin.v1.WriteResolveInfoRequest;
+import com.spotify.confidence.flags.shaded.admin.v1.FlagAdminServiceGrpc;
+import com.spotify.confidence.flags.shaded.admin.v1.WriteResolveInfoRequest;
 import java.io.Closeable;
 import java.time.Duration;
 import java.util.List;
