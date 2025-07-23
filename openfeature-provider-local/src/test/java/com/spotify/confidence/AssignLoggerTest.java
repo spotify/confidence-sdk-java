@@ -35,7 +35,6 @@ public class AssignLoggerTest {
 
   @BeforeEach
   public void beforeEach() {
-
     stub = mock(InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub.class);
     logger = new AssignLogger(stub, null, new MetricRegistry(), 8 * 1024 * 1024);
   }

@@ -18,22 +18,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import org.slf4j.Logger;
 
+@Experimental
 public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private final String clientSecret;
-  private final ApiSecret apiSecret;
   private static final Logger log =
       org.slf4j.LoggerFactory.getLogger(OpenFeatureLocalResolveProvider.class);
-  private FlagResolverService flagResolverService;
+  private final FlagResolverService flagResolverService;
 
   public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
-    this.apiSecret = apiSecret;
-    this.clientSecret = clientSecret;
-  }
-
-  @Override
-  public void initialize(EvaluationContext evaluationContext) throws Exception {
     this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret);
-    FeatureProvider.super.initialize(evaluationContext);
+    this.clientSecret = clientSecret;
   }
 
   @Override
