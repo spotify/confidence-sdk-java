@@ -82,6 +82,7 @@
           </execution>
         </executions>
         <configuration>
+          <failOnError>false</failOnError>
           <additionalOptions>
             <additionalOption>-Xdoclint:none</additionalOption>
           </additionalOptions>
