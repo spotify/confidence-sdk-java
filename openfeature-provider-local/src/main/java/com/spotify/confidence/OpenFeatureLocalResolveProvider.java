@@ -162,6 +162,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
         // regular resolve was successful
         return ProviderEvaluation.<Value>builder()
             .value(value)
+            .reason(resolvedFlag.getReason().toString())
             .variant(resolvedFlag.getVariant())
             .build();
       }
