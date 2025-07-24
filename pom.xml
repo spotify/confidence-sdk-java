@@ -370,6 +370,7 @@
         <extensions>true</extensions>
         <configuration>
           <publishingServerId>central</publishingServerId>
+          <deploymentName>Confidence Java SDK</deploymentName>
           <autoPublish>true</autoPublish>
           <waitUntil>published</waitUntil>
         </configuration>
