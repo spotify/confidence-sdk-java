@@ -15,9 +15,13 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class FlagResolverService {
-  private static final Logger logger = LoggerFactory.getLogger(FlagResolverService.class);
-  private static final Logger LOG = LoggerFactory.getLogger(FlagResolverService.class);
+interface FlagResolverService {
+  CompletableFuture<ResolveFlagsResponse> resolveFlags(ResolveFlagsRequest request);
+}
+
+class JavaFlagResolverService implements FlagResolverService {
+  private static final Logger logger = LoggerFactory.getLogger(JavaFlagResolverService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(JavaFlagResolverService.class);
   private final Supplier<String> resolveIdSupplier;
   private final Supplier<Instant> timeSupplier;
   private final AccountState accountState;
@@ -25,7 +29,7 @@ class FlagResolverService {
   private final FlagLogger flagLogger;
   private final ResolveTokenConverter resolveTokenConverter;
 
-  FlagResolverService(
+  JavaFlagResolverService(
       AccountState accountState,
       AccountClient accountClient,
       FlagLogger flagLogger,
@@ -40,7 +44,8 @@ class FlagResolverService {
     this.resolveTokenConverter = resolveTokenConverter;
   }
 
-  CompletableFuture<ResolveFlagsResponse> resolveFlags(ResolveFlagsRequest request) {
+  @Override
+  public CompletableFuture<ResolveFlagsResponse> resolveFlags(ResolveFlagsRequest request) {
     final Instant now = timeSupplier.get();
 
     final AccountResolver resolver = getAccountResolver(request.getEvaluationContext());

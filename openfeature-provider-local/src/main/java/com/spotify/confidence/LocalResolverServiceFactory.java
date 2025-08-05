@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +56,49 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     return builder.intercept(new DefaultDeadlineClientInterceptor(Duration.ofMinutes(1))).build();
   }
 
-  static FlagResolverService from(ApiSecret apiSecret, String clientSecret) {
+  static FlagResolverService from(ApiSecret apiSecret, String clientSecret, boolean isWasm) {
+    if (isWasm) {
+      return createWasmFlagResolverService(apiSecret);
+    }
+    return createJavaFlagResolverService(apiSecret, clientSecret);
+  }
+
+  private static FlagResolverService createWasmFlagResolverService(ApiSecret apiSecret) {
+    final var channel = createConfidenceChannel();
+    final AuthServiceGrpc.AuthServiceBlockingStub authService =
+        AuthServiceGrpc.newBlockingStub(channel);
+    final TokenHolder tokenHolder =
+        new TokenHolder(apiSecret.clientId(), apiSecret.clientSecret(), authService);
+    final TokenHolder.Token token = tokenHolder.getToken();
+    final Channel authenticatedChannel =
+        ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
+    final ResolverStateServiceGrpc.ResolverStateServiceBlockingStub resolverStateService =
+        ResolverStateServiceGrpc.newBlockingStub(authenticatedChannel);
+    final HealthStatusManager healthStatusManager = new HealthStatusManager();
+    final HealthStatus healthStatus = new HealthStatus(healthStatusManager);
+    final FlagsAdminStateFetcher fetcher =
+        new FlagsAdminStateFetcher(resolverStateService, healthStatus, token.account());
+    final long pollIntervalSeconds =
+        Optional.ofNullable(System.getenv("CONFIDENCE_RESOLVER_POLL_INTERVAL_SECONDS"))
+            .map(Long::parseLong)
+            .orElse(Duration.ofMinutes(5).toSeconds());
+
+    fetcher.reload();
+    final var wasmResolverApi = new WasmResolveApi();
+    wasmResolverApi.setResolverState(fetcher.rawStateHolder().get().toByteArray());
+    flagsFetcherExecutor.scheduleWithFixedDelay(
+        () -> {
+          fetcher.reload();
+          wasmResolverApi.setResolverState(fetcher.rawStateHolder().get().toByteArray());
+        },
+        pollIntervalSeconds,
+        pollIntervalSeconds,
+        TimeUnit.SECONDS);
+    return request -> CompletableFuture.completedFuture(wasmResolverApi.resolve(request));
+  }
+
+  private static FlagResolverService createJavaFlagResolverService(
+      ApiSecret apiSecret, String clientSecret) {
     final var channel = createConfidenceChannel();
     final AuthServiceGrpc.AuthServiceBlockingStub authService =
         AuthServiceGrpc.newBlockingStub(channel);
@@ -132,6 +175,11 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
   @Override
   public FlagResolverService create(ClientCredential.ClientSecret clientSecret) {
+    return createJavaFlagResolverService(clientSecret);
+  }
+
+  private FlagResolverService createJavaFlagResolverService(
+      ClientCredential.ClientSecret clientSecret) {
     final ResolverState state = resolverStateHolder.get();
 
     final AccountClient accountClient = state.secrets().get(clientSecret);
@@ -162,7 +210,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
           }
         };
 
-    return new FlagResolverService(
+    return new JavaFlagResolverService(
         accountState,
         accountClient,
         flagLogger,

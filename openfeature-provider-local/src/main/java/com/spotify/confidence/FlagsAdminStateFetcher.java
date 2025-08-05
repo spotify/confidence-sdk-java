@@ -40,6 +40,10 @@ class FlagsAdminStateFetcher {
   // Source of truth for resolver state, shared with GrpcFlagResolverService
   private final AtomicReference<ResolverState> stateHolder =
       new AtomicReference<>(new ResolverState(Map.of(), Map.of()));
+  private final AtomicReference<com.spotify.confidence.flags.shaded.admin.v1.ResolverState>
+      rawResolverStateHolder =
+          new AtomicReference<>(
+              com.spotify.confidence.flags.shaded.admin.v1.ResolverState.newBuilder().build());
   private final AtomicReference<ResolverStateUriResponse> resolverStateUriResponse =
       new AtomicReference<>();
   private final AtomicReference<Instant> refreshTimeHolder = new AtomicReference<>();
@@ -55,6 +59,11 @@ class FlagsAdminStateFetcher {
 
   public AtomicReference<ResolverState> stateHolder() {
     return stateHolder;
+  }
+
+  public AtomicReference<com.spotify.confidence.flags.shaded.admin.v1.ResolverState>
+      rawStateHolder() {
+    return rawResolverStateHolder;
   }
 
   public void reload() {
@@ -166,6 +175,7 @@ class FlagsAdminStateFetcher {
         secrets.size(),
         accountName);
 
+    rawResolverStateHolder.set(state);
     return new AccountState(
         new Account(accountName), flagsIndex, segmentsIndex, bitsetsBySegment, secrets, etag);
   }
