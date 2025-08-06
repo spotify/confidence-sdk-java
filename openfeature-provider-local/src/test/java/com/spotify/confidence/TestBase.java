@@ -1,7 +1,5 @@
 package com.spotify.confidence;
 
-import static org.mockito.Mockito.mock;
-
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
@@ -9,12 +7,15 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
+import org.junit.jupiter.api.BeforeEach;
+
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.jupiter.api.BeforeEach;
+
+import static org.mockito.Mockito.mock;
 
 public class TestBase {
   protected static final AtomicReference<ResolverState> resolverState =
@@ -38,15 +39,23 @@ public class TestBase {
                   .setClientSecret(secret)
                   .build()));
 
-  protected TestBase(ResolverState state) {
+  protected TestBase(ResolverState state, boolean isWasm) {
     this.desiredState = state;
+    final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
+    if (isWasm) {
+      final var wasmResolverApi = new WasmResolveApi();
+      wasmResolverApi.setResolverState(desiredState.toProto().toByteArray());
+      resolverServiceFactory =
+          new LocalResolverServiceFactory(
+              wasmResolverApi, resolverState, resolveTokenConverter, mock(), mock());
+    } else {
+      resolverServiceFactory =
+          new LocalResolverServiceFactory(
+              null, resolverState, resolveTokenConverter, mock(), mock());
+    }
   }
 
-  public static void setup() {
-    final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
-    resolverServiceFactory =
-        new LocalResolverServiceFactory(resolverState, resolveTokenConverter, mock(), mock());
-  }
+  protected static void setup() {}
 
   @BeforeEach
   protected void setUp() {
@@ -66,6 +75,7 @@ public class TestBase {
           .resolveFlags(
               ResolveFlagsRequest.newBuilder()
                   .addAllFlags(flags)
+                  .setClientSecret(secret)
                   .setEvaluationContext(
                       Structs.of(
                           "targeting_key", Values.of(username), structFieldName, Values.of(struct)))

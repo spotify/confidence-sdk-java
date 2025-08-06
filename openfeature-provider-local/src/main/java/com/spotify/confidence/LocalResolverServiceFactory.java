@@ -31,6 +31,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private final AtomicReference<ResolverState> resolverStateHolder;
   private final ResolveTokenConverter resolveTokenConverter;
 
+  private final WasmResolveApi wasmResolveApi;
   private final Supplier<Instant> timeSupplier;
   private final Supplier<String> resolveIdSupplier;
   private final ResolveLogger resolveLogger;
@@ -57,48 +58,11 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   static FlagResolverService from(ApiSecret apiSecret, String clientSecret, boolean isWasm) {
-    if (isWasm) {
-      return createWasmFlagResolverService(apiSecret);
-    }
-    return createJavaFlagResolverService(apiSecret, clientSecret);
+    return createFlagResolverService(apiSecret, clientSecret, isWasm);
   }
 
-  private static FlagResolverService createWasmFlagResolverService(ApiSecret apiSecret) {
-    final var channel = createConfidenceChannel();
-    final AuthServiceGrpc.AuthServiceBlockingStub authService =
-        AuthServiceGrpc.newBlockingStub(channel);
-    final TokenHolder tokenHolder =
-        new TokenHolder(apiSecret.clientId(), apiSecret.clientSecret(), authService);
-    final TokenHolder.Token token = tokenHolder.getToken();
-    final Channel authenticatedChannel =
-        ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
-    final ResolverStateServiceGrpc.ResolverStateServiceBlockingStub resolverStateService =
-        ResolverStateServiceGrpc.newBlockingStub(authenticatedChannel);
-    final HealthStatusManager healthStatusManager = new HealthStatusManager();
-    final HealthStatus healthStatus = new HealthStatus(healthStatusManager);
-    final FlagsAdminStateFetcher fetcher =
-        new FlagsAdminStateFetcher(resolverStateService, healthStatus, token.account());
-    final long pollIntervalSeconds =
-        Optional.ofNullable(System.getenv("CONFIDENCE_RESOLVER_POLL_INTERVAL_SECONDS"))
-            .map(Long::parseLong)
-            .orElse(Duration.ofMinutes(5).toSeconds());
-
-    fetcher.reload();
-    final var wasmResolverApi = new WasmResolveApi();
-    wasmResolverApi.setResolverState(fetcher.rawStateHolder().get().toByteArray());
-    flagsFetcherExecutor.scheduleWithFixedDelay(
-        () -> {
-          fetcher.reload();
-          wasmResolverApi.setResolverState(fetcher.rawStateHolder().get().toByteArray());
-        },
-        pollIntervalSeconds,
-        pollIntervalSeconds,
-        TimeUnit.SECONDS);
-    return request -> CompletableFuture.completedFuture(wasmResolverApi.resolve(request));
-  }
-
-  private static FlagResolverService createJavaFlagResolverService(
-      ApiSecret apiSecret, String clientSecret) {
+  private static FlagResolverService createFlagResolverService(
+      ApiSecret apiSecret, String clientSecret, boolean isWasm) {
     final var channel = createConfidenceChannel();
     final AuthServiceGrpc.AuthServiceBlockingStub authService =
         AuthServiceGrpc.newBlockingStub(channel);
@@ -125,8 +89,20 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
     final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
     sidecarFlagsAdminFetcher.reload();
+
+    final WasmResolveApi wasmResolverApi = new WasmResolveApi();
+    if (isWasm) {
+      wasmResolverApi.setResolverState(
+          sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray());
+    }
     flagsFetcherExecutor.scheduleWithFixedDelay(
-        sidecarFlagsAdminFetcher::reload,
+        () -> {
+          sidecarFlagsAdminFetcher.reload();
+          if (isWasm) {
+            wasmResolverApi.setResolverState(
+                sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray());
+          }
+        },
         pollIntervalSeconds,
         pollIntervalSeconds,
         TimeUnit.SECONDS);
@@ -137,6 +113,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final ResolveLogger resolveLogger =
         ResolveLogger.createStarted(() -> flagsAdminStub, RESOLVE_INFO_LOG_INTERVAL);
     return new LocalResolverServiceFactory(
+            isWasm ? wasmResolverApi : null,
             sidecarFlagsAdminFetcher.stateHolder(),
             resolveTokenConverter,
             resolveLogger,
@@ -144,12 +121,14 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         .create(clientSecret);
   }
 
-  public LocalResolverServiceFactory(
+  LocalResolverServiceFactory(
+      WasmResolveApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       ResolveLogger resolveLogger,
       AssignLogger assignLogger) {
     this(
+        wasmResolveApi,
         resolverStateHolder,
         resolveTokenConverter,
         Instant::now,
@@ -158,13 +137,15 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         assignLogger);
   }
 
-  public LocalResolverServiceFactory(
+  LocalResolverServiceFactory(
+      WasmResolveApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       Supplier<Instant> timeSupplier,
       Supplier<String> resolveIdSupplier,
       ResolveLogger resolveLogger,
       AssignLogger assignLogger) {
+    this.wasmResolveApi = wasmResolveApi;
     this.resolverStateHolder = resolverStateHolder;
     this.resolveTokenConverter = resolveTokenConverter;
     this.timeSupplier = timeSupplier;
@@ -175,6 +156,9 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
   @Override
   public FlagResolverService create(ClientCredential.ClientSecret clientSecret) {
+    if (wasmResolveApi != null) {
+      return request -> CompletableFuture.completedFuture(wasmResolveApi.resolve(request));
+    }
     return createJavaFlagResolverService(clientSecret);
   }
 
@@ -184,7 +168,8 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
     final AccountClient accountClient = state.secrets().get(clientSecret);
     if (accountClient == null) {
-      throw new UnauthenticatedException("Not authenticated");
+      throw new UnauthenticatedException(
+          "Resolver state not set or client secret could not be found");
     }
 
     final AccountState accountState = state.accountStates().get(accountClient.accountName());

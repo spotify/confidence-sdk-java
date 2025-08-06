@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.function.Function;
+import rust_guest.Types;
 
 public class WasmResolveApi {
 
@@ -49,7 +50,19 @@ public class WasmResolveApi {
                   ImportValues.builder()
                       .addFunction(
                           createImportFunction(
+                              "log_resolve", Types.LogResolveRequest::parseFrom, this::logResolve))
+                      .addFunction(
+                          createImportFunction(
+                              "log_assign", Types.LogAssignRequest::parseFrom, this::logAssign))
+                      .addFunction(
+                          createImportFunction(
                               "current_time", Messages.Void::parseFrom, this::currentTime))
+                      .addFunction(
+                          new ImportFunction(
+                              "wasm_msg",
+                              "wasm_msg_current_thread_id",
+                              FunctionType.of(List.of(), List.of(ValType.I32)),
+                              this::currentThreadId))
                       .build())
               .withMachineFactory(MachineFactoryCompiler::compile)
               .build();
@@ -60,6 +73,18 @@ public class WasmResolveApi {
     } catch (IOException e) {
       throw new RuntimeException("Failed to load WASM module", e);
     }
+  }
+
+  private long[] currentThreadId(Instance instance, long... longs) {
+    return new long[] {0};
+  }
+
+  private GeneratedMessageV3 logAssign(Types.LogAssignRequest logAssignRequest) {
+    return Messages.Void.getDefaultInstance();
+  }
+
+  private GeneratedMessageV3 logResolve(Types.LogResolveRequest logResolveRequest) {
+    return Messages.Void.getDefaultInstance();
   }
 
   private Timestamp currentTime(Messages.Void unused) {
@@ -96,7 +121,7 @@ public class WasmResolveApi {
   private <T extends GeneratedMessageV3> T consumeRequest(int addr, ParserFn<T> codec) {
     try {
       final Messages.Request request = Messages.Request.parseFrom(consume(addr));
-      return codec.apply(request.toByteArray());
+      return codec.apply(request.getData().toByteArray());
     } catch (InvalidProtocolBufferException e) {
       throw new RuntimeException(e);
     }
