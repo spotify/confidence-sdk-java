@@ -31,8 +31,20 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
   /**
    * ConfidenceFeatureProvider constructor
    *
-   * @param confidence an instance of the Confidence
+   * @param confidenceBuilder a Confidence.Builder
    */
+  public ConfidenceFeatureProvider(Confidence.Builder confidenceBuilder) {
+    this.confidence = confidenceBuilder.buildForProvider();
+  }
+
+  /**
+   * ConfidenceFeatureProvider constructor
+   *
+   * @param confidence an instance of the Confidence
+   * @deprecated This constructor is deprecated. Please use {@link
+   *     #ConfidenceFeatureProvider(Confidence.Builder)} instead.
+   */
+  @Deprecated()
   public ConfidenceFeatureProvider(Confidence confidence) {
     this.confidence = confidence;
   }
@@ -46,11 +58,11 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    * @param clientSecret generated from the Confidence portal
    * @param managedChannel gRPC channel
    * @deprecated This constructor is deprecated. Please use {@link
-   *     #ConfidenceFeatureProvider(Confidence)} instead.
+   *     #ConfidenceFeatureProvider(Confidence.Builder)} instead.
    */
   @Deprecated()
   public ConfidenceFeatureProvider(String clientSecret, ManagedChannel managedChannel) {
-    this(Confidence.builder(clientSecret).flagResolverManagedChannel(managedChannel).build());
+    this(Confidence.builder(clientSecret).flagResolverManagedChannel(managedChannel));
   }
 
   /**
@@ -58,7 +70,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    *
    * @param clientSecret generated from the Confidence portal
    * @deprecated This constructor is deprecated. Please use {@link
-   *     #ConfidenceFeatureProvider(Confidence)} instead.
+   *     #ConfidenceFeatureProvider(Confidence.Builder)} instead.
    */
   @Deprecated()
   public ConfidenceFeatureProvider(String clientSecret) {
@@ -73,7 +85,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    * @param host gRPC host you want to connect to.
    * @param port port of the gRPC host that you want to use.
    * @deprecated This constructor is deprecated. Please use {@link
-   *     #ConfidenceFeatureProvider(Confidence)} instead.
+   *     #ConfidenceFeatureProvider(Confidence.Builder)} instead.
    */
   @Deprecated()
   public ConfidenceFeatureProvider(String clientSecret, String host, int port) {
