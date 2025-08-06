@@ -14,16 +14,20 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
+import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.shaded.iam.v1.Client;
+import com.spotify.confidence.shaded.iam.v1.ClientCredential;
 import com.spotify.confidence.wasm.Messages;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.List;
 import java.util.function.Function;
 import rust_guest.Types;
 
-public class WasmResolveApi {
+class WasmResolveApi {
 
   private static final FunctionType HOST_FN_TYPE =
       FunctionType.of(List.of(ValType.I32), List.of(ValType.I32));
@@ -32,12 +36,14 @@ public class WasmResolveApi {
   // interop
   private final ExportFunction wasmMsgAlloc;
   private final ExportFunction wasmMsgFree;
+  private final FlagLogger flagLogger;
 
   // api
   private final ExportFunction wasmMsgGuestSetResolverState;
   private final ExportFunction wasmMsgGuestResolve;
 
-  public WasmResolveApi() {
+  public WasmResolveApi(FlagLogger flagLogger) {
+    this.flagLogger = flagLogger;
     try (InputStream wasmStream =
         getClass().getClassLoader().getResourceAsStream("wasm/rust_guest.wasm")) {
       if (wasmStream == null) {
@@ -80,10 +86,36 @@ public class WasmResolveApi {
   }
 
   private GeneratedMessageV3 logAssign(Types.LogAssignRequest logAssignRequest) {
+    flagLogger.logAssigns(
+        logAssignRequest.getResolveId(),
+        logAssignRequest.getSdk(),
+        List.of(
+            new FlagToApply(
+                Instant.ofEpochSecond(logAssignRequest.getSkewAdjustedAppliedTime().getSeconds()),
+                logAssignRequest.getAssignedFlag())),
+        new AccountClient(
+            logAssignRequest.getClient().getAccount().getName(),
+            Client.newBuilder().setName(logAssignRequest.getClient().getClientName()).build(),
+            ClientCredential.newBuilder()
+                .setName(logAssignRequest.getClient().getClientCredentialName())
+                .build()));
     return Messages.Void.getDefaultInstance();
   }
 
   private GeneratedMessageV3 logResolve(Types.LogResolveRequest logResolveRequest) {
+    flagLogger.logResolve(
+        logResolveRequest.getResolveId(),
+        logResolveRequest.getEvaluationContext(),
+        logResolveRequest.getSdk(),
+        new AccountClient(
+            logResolveRequest.getClient().getAccount().getName(),
+            Client.newBuilder().setName(logResolveRequest.getClient().getClientName()).build(),
+            ClientCredential.newBuilder()
+                .setName(logResolveRequest.getClient().getClientCredentialName())
+                .build()),
+        logResolveRequest.getValueList().stream()
+            .map(v -> new ResolvedValue(Flag.newBuilder().setName(v.getFlag().getName()).build()))
+            .toList());
     return Messages.Void.getDefaultInstance();
   }
 
