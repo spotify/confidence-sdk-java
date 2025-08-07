@@ -1,6 +1,6 @@
 # Owners
 
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for general contribution guidelines.
+- See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for general contribution guidelines.
 
 ## Core Developers
 
