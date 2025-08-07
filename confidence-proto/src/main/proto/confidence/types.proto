@@ -19,10 +19,14 @@ message LogResolveRequest {
 message LogAssignRequest {
   string resolve_id = 1;
   google.protobuf.Struct evaluation_context = 2;
-  google.protobuf.Timestamp skew_adjusted_applied_time = 3;
-  confidence.flags.resolver.v1.ResolveTokenV1.AssignedFlag assigned_flag = 4;
+  repeated FlagToApply assigned_flags = 4;
   optional confidence.flags.resolver.v1.Sdk sdk = 5;
   Client client = 6;
+}
+
+message FlagToApply {
+  google.protobuf.Timestamp skew_adjusted_applied_time = 1;
+  confidence.flags.resolver.v1.ResolveTokenV1.AssignedFlag assigned_flag = 2;
 }
 
 message Client {

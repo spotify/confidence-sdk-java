@@ -4,31 +4,6 @@ package confidence.wasm;
 import "google/protobuf/struct.proto";
 option java_package = "com.spotify.confidence.wasm";
 
-// Example messages for echo functionality
-message EchoRequest {
-  string text = 1;
-}
-
-message EchoResponse {
-  string text = 1;
-}
-
-// Example messages for add functionality
-message AddRequest {
-  int32 a = 1;
-  int32 b = 2;
-}
-
-message AddResponse {
-  int32 sum = 1;
-}
-
-message NowUtcRequest {}
-
-message NowUtcResponse {
-  int64 timestamp = 1;
-}
-
 message Void {}
 
 

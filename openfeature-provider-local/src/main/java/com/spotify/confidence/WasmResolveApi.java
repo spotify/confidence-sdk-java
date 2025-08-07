@@ -89,10 +89,13 @@ class WasmResolveApi {
     flagLogger.logAssigns(
         logAssignRequest.getResolveId(),
         logAssignRequest.getSdk(),
-        List.of(
-            new FlagToApply(
-                Instant.ofEpochSecond(logAssignRequest.getSkewAdjustedAppliedTime().getSeconds()),
-                logAssignRequest.getAssignedFlag())),
+        logAssignRequest.getAssignedFlagsList().stream()
+            .map(
+                f ->
+                    new FlagToApply(
+                        Instant.ofEpochSecond(f.getSkewAdjustedAppliedTime().getSeconds()),
+                        f.getAssignedFlag()))
+            .toList(),
         new AccountClient(
             logAssignRequest.getClient().getAccount().getName(),
             Client.newBuilder().setName(logAssignRequest.getClient().getClientName()).build(),

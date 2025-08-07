@@ -21,7 +21,6 @@ interface FlagResolverService {
 
 class JavaFlagResolverService implements FlagResolverService {
   private static final Logger logger = LoggerFactory.getLogger(JavaFlagResolverService.class);
-  private static final Logger LOG = LoggerFactory.getLogger(JavaFlagResolverService.class);
   private final Supplier<String> resolveIdSupplier;
   private final Supplier<Instant> timeSupplier;
   private final AccountState accountState;
@@ -124,7 +123,7 @@ class JavaFlagResolverService implements FlagResolverService {
   }
 
   private AccountResolver getAccountResolver(Struct evaluationContext) {
-    return new AccountResolver(accountClient, accountState, evaluationContext, LOG);
+    return new AccountResolver(accountClient, accountState, evaluationContext, logger);
   }
 
   private String generateResolveId() {
