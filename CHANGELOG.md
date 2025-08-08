@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1](https://github.com/spotify/confidence-sdk-java/compare/v0.2.0...v0.2.1) (2025-08-08)
+
+
+### 🐛 Bug Fixes
+
+* add more log resolve/assign values for the wasm ([#237](https://github.com/spotify/confidence-sdk-java/issues/237)) ([c8dcbea](https://github.com/spotify/confidence-sdk-java/commit/c8dcbea220768937cbd8b7c1c63569a8640e8fa6))
+
+
+### 🧹 Chore
+
+* **main:** release 0.2.1-SNAPSHOT ([#235](https://github.com/spotify/confidence-sdk-java/issues/235)) ([7e5a198](https://github.com/spotify/confidence-sdk-java/commit/7e5a1983d7f4b8ab4731c55763faf69154dc288c))
+
 ## [0.2.0](https://github.com/spotify/confidence-sdk-java/compare/v0.1.16...v0.2.0) (2025-08-08)
 
 
