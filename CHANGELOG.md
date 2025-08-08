@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.2](https://github.com/spotify/confidence-sdk-java/compare/v0.2.1...v0.2.2) (2025-08-08)
+
+
+### 🐛 Bug Fixes
+
+* fix time in wasm local resolve ([#239](https://github.com/spotify/confidence-sdk-java/issues/239)) ([a3ad71a](https://github.com/spotify/confidence-sdk-java/commit/a3ad71ae07ba2128bdc12877a2a9b2d8e350c22b))
+
+
+### 🧹 Chore
+
+* **main:** release 0.2.2-SNAPSHOT ([#238](https://github.com/spotify/confidence-sdk-java/issues/238)) ([c1e41c0](https://github.com/spotify/confidence-sdk-java/commit/c1e41c0cd00e6ef2a82d55cf2847b1df982aeaf9))
+
 ## [0.2.1](https://github.com/spotify/confidence-sdk-java/compare/v0.2.0...v0.2.1) (2025-08-08)
 
 
