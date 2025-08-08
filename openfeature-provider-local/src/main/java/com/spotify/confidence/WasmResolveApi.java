@@ -172,7 +172,7 @@ class WasmResolveApi {
   }
 
   private Timestamp currentTime(Messages.Void unused) {
-    return Timestamp.getDefaultInstance();
+    return Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
   }
 
   public void setResolverState(byte[] state) {
