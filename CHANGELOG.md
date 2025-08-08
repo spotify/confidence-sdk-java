@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.16](https://github.com/spotify/confidence-sdk-java/compare/v0.1.15...v0.1.16) (2025-08-08)
+
+
+### ✨ New Features
+
+* Add wasm to local ([#228](https://github.com/spotify/confidence-sdk-java/issues/228)) ([dca04fb](https://github.com/spotify/confidence-sdk-java/commit/dca04fb0fdd8afc7e3109d9d034d334016ff9cd7))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.16-SNAPSHOT ([#225](https://github.com/spotify/confidence-sdk-java/issues/225)) ([62d9686](https://github.com/spotify/confidence-sdk-java/commit/62d96865e5e7127e6cb556006d3b1dc7a8bd9e97))
+
 ## [0.1.15](https://github.com/spotify/confidence-sdk-java/compare/v0.1.14...v0.1.15) (2025-07-24)
 
 
