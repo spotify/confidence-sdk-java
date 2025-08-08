@@ -81,9 +81,32 @@ The library includes a `Provider` for
 the [OpenFeature Java SDK](https://openfeature.dev/docs/tutorials/getting-started/java), that can be
 used to resolve feature flag values from the Confidence platform.
 
-The constructor for creating an OpenFeature `ConfidenceProvider` takes a `Confidence` instance as a parameter.
-We kindly ask you to use the `Confidence.Builder.buildForProvider()` function when creating a `Confidence` instance that 
-will be used with OpenFeature.
+### Creating an OpenFeature Provider
+
+To create a `ConfidenceFeatureProvider`, use the new constructor that takes a `Confidence.Builder`:
+
+```java
+import com.spotify.confidence.Confidence;
+import com.spotify.confidence.ConfidenceFeatureProvider;
+import dev.openfeature.sdk.OpenFeatureAPI;
+
+// Create the provider using the new constructor with Builder pattern
+ConfidenceFeatureProvider provider = new ConfidenceFeatureProvider(
+    Confidence.builder("<CLIENT_SECRET>")
+);
+
+// For custom provider setup with resolve deadline and managed channel:
+ConfidenceFeatureProvider provider = new ConfidenceFeatureProvider(
+    Confidence.builder("<CLIENT_SECRET>")
+        .resolveDeadlineMs(1000)  // 1 second timeout for flag resolution
+        .flagResolverManagedChannel("uri.to.resolver.sidecar.com", <port>)
+);
+
+// Set the provider with OpenFeature
+OpenFeatureAPI.getInstance().setProvider(provider);
+```
+
+**Note:** The new constructor automatically calls `buildForProvider()` internally, which optimizes the Confidence instance for use with OpenFeature. All previous constructors taking `String clientSecret` or `Confidence` instances directly are now deprecated.
 
 To learn more about the basic concepts (flags, targeting key, evaluation contexts),
 the [OpenFeature reference documentation](https://openfeature.dev/docs/reference/intro) can be
