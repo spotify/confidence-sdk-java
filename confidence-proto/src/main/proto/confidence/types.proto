@@ -4,6 +4,7 @@ package rust_guest;
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "confidence/flags/admin/v1/internal_api.proto";
+import "confidence/flags/resolver/v1/events/events.proto";
 import "confidence/flags/admin/v1/types.proto";
 import "confidence/flags/resolver/v1/types.proto";
 import "confidence/iam/iam.proto";
@@ -19,14 +20,33 @@ message LogResolveRequest {
 message LogAssignRequest {
   string resolve_id = 1;
   google.protobuf.Struct evaluation_context = 2;
-  repeated FlagToApply assigned_flags = 4;
+  repeated FlagToApply assigned_flags = 3;
   optional confidence.flags.resolver.v1.Sdk sdk = 5;
   Client client = 6;
 }
 
 message FlagToApply {
   google.protobuf.Timestamp skew_adjusted_applied_time = 1;
-  confidence.flags.resolver.v1.ResolveTokenV1.AssignedFlag assigned_flag = 2;
+  AssignedFlag assigned_flags = 2;
+}
+
+message AssignedFlag {
+  string flag = 1;
+
+  string targeting_key = 2;
+  string targeting_key_selector = 10;
+
+  string segment = 3;
+
+  string variant = 4;
+
+  string rule = 5;
+
+  confidence.flags.resolver.v1.ResolveReason reason = 6;
+
+  repeated confidence.flags.resolver.v1.events.FallthroughAssignment fallthrough_assignments = 9;
+
+  string assignment_id = 8;
 }
 
 message Client {
@@ -42,8 +62,8 @@ message Account {
 message ResolvedValue {
   confidence.flags.admin.v1.Flag flag = 1;
   optional AssignmentMatch assignment_match = 2;
-  confidence.flags.resolver.v1.ResolveReason reason = 6;
   repeated FallthroughRule fallthrough_rules = 3;
+  confidence.flags.resolver.v1.ResolveReason reason = 4;
 }
 
 message AssignmentMatch {
