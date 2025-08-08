@@ -26,8 +26,12 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private final FlagResolverService flagResolverService;
 
   public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
-    final var isWasm = System.getenv("LOCAL_RESOLVE_MODEL").equals("WASM");
-    this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, isWasm);
+    final var env = System.getenv("LOCAL_RESOLVE_MODE");
+    if (env != null && env.equals("WASM")) {
+      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
+    } else {
+      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, false);
+    }
     this.clientSecret = clientSecret;
   }
 

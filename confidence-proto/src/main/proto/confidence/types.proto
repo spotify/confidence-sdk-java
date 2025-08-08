@@ -41,18 +41,22 @@ message Account {
 
 message ResolvedValue {
   confidence.flags.admin.v1.Flag flag = 1;
-  optional AssigmentMatch assignment_match = 2;
+  optional AssignmentMatch assignment_match = 2;
+  confidence.flags.resolver.v1.ResolveReason reason = 6;
   repeated FallthroughRule fallthrough_rules = 3;
 }
 
-message AssigmentMatch {
+message AssignmentMatch {
   string assignment_id = 1;
   optional Variant variant = 2;
   optional MatchedRule matched_rule = 3;
+  string targeting_key = 4;
+  string segment = 5;
 }
 
 message Variant {
   string name = 1;
+  optional google.protobuf.Struct value = 2;
 }
 
 message MatchedRule {

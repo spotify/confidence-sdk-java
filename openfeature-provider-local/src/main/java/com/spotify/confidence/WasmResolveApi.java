@@ -15,6 +15,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
+import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.iam.v1.Client;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import rust_guest.Types;
 
@@ -117,9 +119,41 @@ class WasmResolveApi {
                 .setName(logResolveRequest.getClient().getClientCredentialName())
                 .build()),
         logResolveRequest.getValueList().stream()
-            .map(v -> new ResolvedValue(Flag.newBuilder().setName(v.getFlag().getName()).build()))
+            .map(
+                v ->
+                    new ResolvedValue(
+                        Flag.newBuilder().setName(v.getFlag().getName()).build(),
+                        v.getReason(),
+                        Optional.of(convertAssignmentMatch(v.getAssignmentMatch())),
+                        convertFallthroughRules(v.getFallthroughRulesList())))
             .toList());
     return Messages.Void.getDefaultInstance();
+  }
+
+  private List<FallthroughRule> convertFallthroughRules(
+      List<Types.FallthroughRule> fallthroughRulesList) {
+    return fallthroughRulesList.stream()
+        .map(
+            rule ->
+                new FallthroughRule(
+                    Flag.Rule.newBuilder().setName(rule.getName()).build(),
+                    rule.getAssignmentId(),
+                    rule.getTargetingKey()))
+        .toList();
+  }
+
+  private AssignmentMatch convertAssignmentMatch(Types.AssignmentMatch assignmentMatch) {
+    return new AssignmentMatch(
+        assignmentMatch.getAssignmentId(),
+        assignmentMatch.getTargetingKey(),
+        convertVariant(assignmentMatch.getVariant()),
+        Optional.of(assignmentMatch.getVariant().getValue()),
+        Segment.newBuilder().setName(assignmentMatch.getSegment()).build(),
+        Flag.Rule.newBuilder().setName(assignmentMatch.getMatchedRule().getName()).build());
+  }
+
+  private Optional<String> convertVariant(Types.Variant variant) {
+    return Optional.of(variant.getName());
   }
 
   private Timestamp currentTime(Messages.Void unused) {
