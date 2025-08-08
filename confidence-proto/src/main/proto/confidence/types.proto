@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package rust_guest;
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "confidence/flags/admin/v1/internal_api.proto";
+import "confidence/flags/admin/v1/types.proto";
+import "confidence/flags/resolver/v1/types.proto";
+import "confidence/iam/iam.proto";
+
+message LogResolveRequest {
+  string resolve_id = 1;
+  google.protobuf.Struct evaluation_context = 2;
+  repeated ResolvedValue value = 3;
+  Client client = 4;
+  optional confidence.flags.resolver.v1.Sdk sdk = 5;
+}
+
+message LogAssignRequest {
+  string resolve_id = 1;
+  google.protobuf.Struct evaluation_context = 2;
+  repeated FlagToApply assigned_flags = 4;
+  optional confidence.flags.resolver.v1.Sdk sdk = 5;
+  Client client = 6;
+}
+
+message FlagToApply {
+  google.protobuf.Timestamp skew_adjusted_applied_time = 1;
+  confidence.flags.resolver.v1.ResolveTokenV1.AssignedFlag assigned_flag = 2;
+}
+
+message Client {
+  Account account = 1;
+  string client_name = 2;
+  string client_credential_name = 3;
+}
+
+message Account {
+  string name = 1;
+}
+
+message ResolvedValue {
+  confidence.flags.admin.v1.Flag flag = 1;
+  optional AssigmentMatch assignment_match = 2;
+  repeated FallthroughRule fallthrough_rules = 3;
+}
+
+message AssigmentMatch {
+  string assignment_id = 1;
+  optional Variant variant = 2;
+  optional MatchedRule matched_rule = 3;
+}
+
+message Variant {
+  string name = 1;
+}
+
+message MatchedRule {
+  string name = 1;
+}
+
+message FallthroughRule {
+  string targeting_key = 1;
+  string targeting_key_selector = 2;
+  string assignment_id = 3;
+  string name = 4;
+}

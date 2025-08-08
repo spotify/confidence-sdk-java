@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package confidence.wasm;
+import "google/protobuf/struct.proto";
+option java_package = "com.spotify.confidence.wasm";
+
+message Void {}
+
+
+message Request {
+  bytes data = 1;
+}
+
+message Response {
+  oneof result {
+    bytes data = 1;
+    string error = 2;
+  }
+}

@@ -17,7 +17,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class ResolveTest extends TestBase {
+abstract class ResolveTest extends TestBase {
   private static final String flag1 = "flags/flag-1";
 
   private static final String flagOff = flag1 + "/variants/offf";
@@ -109,8 +109,8 @@ public class ResolveTest extends TestBase {
             secrets);
   }
 
-  protected ResolveTest() {
-    super(exampleState);
+  protected ResolveTest(boolean isWasm) {
+    super(exampleState, isWasm);
   }
 
   @BeforeAll
@@ -130,7 +130,7 @@ public class ResolveTest extends TestBase {
                     Struct.newBuilder().build(),
                     false,
                     "invalid-secret"))
-        .withMessage("Not authenticated");
+        .withMessage("Resolver state not set or client secret could not be found");
   }
 
   @Test
@@ -166,9 +166,6 @@ public class ResolveTest extends TestBase {
                     "bar",
                     Struct.newBuilder().build(),
                     false))
-        .withMessage(
-            "java.util.concurrent.ExecutionException: "
-                + "com.spotify.confidence.BadRequestException:"
-                + " Targeting key is too larger, max 100 characters.");
+        .withMessageContaining("Targeting key is too larger, max 100 characters.");
   }
 }

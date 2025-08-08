@@ -75,7 +75,7 @@ message ResolveFlagsRequest {
   ];
 
   // Information about the SDK used to initiate the request.
-  Sdk sdk = 5 [
+  optional Sdk sdk = 5 [
     (google.api.field_behavior) = OPTIONAL
   ];
 }
