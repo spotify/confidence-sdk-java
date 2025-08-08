@@ -61,6 +61,7 @@ abstract class ResolveTest extends TestBase {
               .addClients(clientName)
               .addRules(
                   Flag.Rule.newBuilder()
+                      .setName("MyRule")
                       .setSegment(segmentA)
                       .setEnabled(true)
                       .setAssignmentSpec(
@@ -142,9 +143,9 @@ abstract class ResolveTest extends TestBase {
   }
 
   @Test
-  public void testResolveFlag() {
+  public void testResolveFlag() throws InterruptedException {
     final var response =
-        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), false);
+        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), true);
     assertThat(response.getResolveId()).isNotEmpty();
     final Struct expectedValue =
         // expanded with nulls to match schema

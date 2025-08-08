@@ -18,6 +18,7 @@ import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
 import com.spotify.confidence.wasm.Messages;
@@ -96,7 +97,7 @@ class WasmResolveApi {
                 f ->
                     new FlagToApply(
                         Instant.ofEpochSecond(f.getSkewAdjustedAppliedTime().getSeconds()),
-                        f.getAssignedFlag()))
+                        convertAssignedFlag(f.getAssignedFlags())))
             .toList(),
         new AccountClient(
             logAssignRequest.getClient().getAccount().getName(),
@@ -105,6 +106,20 @@ class WasmResolveApi {
                 .setName(logAssignRequest.getClient().getClientCredentialName())
                 .build()));
     return Messages.Void.getDefaultInstance();
+  }
+
+  private ResolveTokenV1.AssignedFlag convertAssignedFlag(Types.AssignedFlag assignedFlag) {
+    return ResolveTokenV1.AssignedFlag.newBuilder()
+        .setSegment(assignedFlag.getSegment())
+        .setAssignmentId(assignedFlag.getAssignmentId())
+        .setFlag(assignedFlag.getFlag())
+        .setTargetingKeySelector(assignedFlag.getTargetingKeySelector())
+        .setTargetingKey(assignedFlag.getTargetingKey())
+        .setRule(assignedFlag.getRule())
+        .setReason(assignedFlag.getReason())
+        .addAllFallthroughAssignments(assignedFlag.getFallthroughAssignmentsList())
+        .setVariant(assignedFlag.getVariant())
+        .build();
   }
 
   private GeneratedMessageV3 logResolve(Types.LogResolveRequest logResolveRequest) {
