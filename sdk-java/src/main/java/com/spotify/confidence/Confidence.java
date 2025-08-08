@@ -395,7 +395,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       return this;
     }
 
-    public Confidence buildForProvider() {
+    Confidence buildForProvider() {
       this.isProvider = true;
       return build();
     }
