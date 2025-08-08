@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.2.0](https://github.com/spotify/confidence-sdk-java/compare/v0.1.16...v0.2.0) (2025-08-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* add new constructor that takes builder to replace deprecated ones ([#227](https://github.com/spotify/confidence-sdk-java/issues/227))
+
+### 🐛 Bug Fixes
+
+* add new constructor that takes builder to replace deprecated ones ([#227](https://github.com/spotify/confidence-sdk-java/issues/227)) ([4bbdb17](https://github.com/spotify/confidence-sdk-java/commit/4bbdb17da0dc6b283ce650615383b45af1d4c643))
+* fix null value for env ([#234](https://github.com/spotify/confidence-sdk-java/issues/234)) ([078de1a](https://github.com/spotify/confidence-sdk-java/commit/078de1a05b5da4db32687a193966132c4962034f))
+
+
+### 🧹 Chore
+
+* **main:** release 0.1.17-SNAPSHOT ([#232](https://github.com/spotify/confidence-sdk-java/issues/232)) ([c18eb04](https://github.com/spotify/confidence-sdk-java/commit/c18eb04045ebdf4656e6923e09020d4600aa0498))
+* update sdk name in catalog-info ([#229](https://github.com/spotify/confidence-sdk-java/issues/229)) ([37789b2](https://github.com/spotify/confidence-sdk-java/commit/37789b2f3f3d7ef0acaffe1b369f6772cfe43694))
+
+
+### 📚 Documentation
+
+* move Contributing file ([#231](https://github.com/spotify/confidence-sdk-java/issues/231)) ([93e01aa](https://github.com/spotify/confidence-sdk-java/commit/93e01aab84efef47cdb543cdff2ee84419bac9a5))
+
 ## [0.1.16](https://github.com/spotify/confidence-sdk-java/compare/v0.1.15...v0.1.16) (2025-08-08)
 
 
