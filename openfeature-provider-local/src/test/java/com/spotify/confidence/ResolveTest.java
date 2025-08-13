@@ -145,6 +145,20 @@ abstract class ResolveTest extends TestBase {
   @Test
   public void testResolveFlag() {
     final var response =
+        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), true);
+    assertThat(response.getResolveId()).isNotEmpty();
+    final Struct expectedValue =
+        // expanded with nulls to match schema
+        variantOn.getValue().toBuilder().putFields("extra", Values.ofNull()).build();
+
+    assertEquals(variantOn.getName(), response.getResolvedFlags(0).getVariant());
+    assertEquals(expectedValue, response.getResolvedFlags(0).getValue());
+    assertEquals(schema1, response.getResolvedFlags(0).getFlagSchema());
+  }
+
+  @Test
+  public void testResolveFlagWithEncryptedResolveToken() {
+    final var response =
         resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), false);
     assertThat(response.getResolveId()).isNotEmpty();
     final Struct expectedValue =
@@ -154,6 +168,7 @@ abstract class ResolveTest extends TestBase {
     assertEquals(variantOn.getName(), response.getResolvedFlags(0).getVariant());
     assertEquals(expectedValue, response.getResolvedFlags(0).getValue());
     assertEquals(schema1, response.getResolvedFlags(0).getFlagSchema());
+    assertThat(response.getResolveToken()).isNotEmpty();
   }
 
   //  @Test
