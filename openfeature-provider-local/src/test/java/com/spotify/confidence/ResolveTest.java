@@ -156,6 +156,32 @@ abstract class ResolveTest extends TestBase {
     assertEquals(schema1, response.getResolvedFlags(0).getFlagSchema());
   }
 
+  //  @Test
+  //  public void perf() {
+  //    final ScheduledExecutorService flagsFetcherExecutor =
+  //            Executors.newScheduledThreadPool(1, new
+  // ThreadFactoryBuilder().setDaemon(true).build());
+  //
+  //    flagsFetcherExecutor.scheduleAtFixedRate(
+  //            () -> {
+  //              System.out.println("flagsFetcherExecutor started");
+  //              resolverServiceFactory.setState(desiredState.toProto().toByteArray());
+  //              System.out.println("flagsFetcherExecutor ended");
+  //            },
+  //            2,
+  //            2,
+  //            TimeUnit.SECONDS);
+  //
+  //    for (int i = 1; i <= 100; i++) {
+  //      final var start = System.currentTimeMillis();
+  //      for (int j = 0; j < 10000; j++) {
+  //        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), true);
+  //      }
+  //      System.out.println(
+  //          "Iteration " + i + " took " + (System.currentTimeMillis() - start) + " ms");
+  //    }
+  //  }
+
   @Test
   public void testTooLongKey() {
     assertThatExceptionOfType(RuntimeException.class)

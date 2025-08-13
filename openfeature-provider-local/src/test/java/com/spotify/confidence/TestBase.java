@@ -23,8 +23,8 @@ public class TestBase {
 
   protected static final ClientCredential.ClientSecret secret =
       ClientCredential.ClientSecret.newBuilder().setSecret("very-secret").build();
-  private final ResolverState desiredState;
-  private static ResolverServiceFactory resolverServiceFactory;
+  protected final ResolverState desiredState;
+  protected static LocalResolverServiceFactory resolverServiceFactory;
   static final String account = "accounts/foo";
   static final String clientName = "clients/client";
   static final String credentialName = clientName + "/credentials/creddy";
@@ -44,7 +44,7 @@ public class TestBase {
     final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
     if (isWasm) {
       final var wasmResolverApi =
-          new WasmResolveApi(
+          new SwapWasmResolverApi(
               new FlagLogger() {
                 @Override
                 public void logResolve(
@@ -52,20 +52,16 @@ public class TestBase {
                     Struct evaluationContext,
                     Sdk sdk,
                     AccountClient accountClient,
-                    List<ResolvedValue> values) {
-                  System.out.println("Resolving " + resolveId);
-                }
+                    List<ResolvedValue> values) {}
 
                 @Override
                 public void logAssigns(
                     String resolveId,
                     Sdk sdk,
                     List<FlagToApply> flagsToApply,
-                    AccountClient accountClient) {
-                  System.out.println("Assigning " + resolveId);
-                }
-              });
-      wasmResolverApi.setResolverState(desiredState.toProto().toByteArray());
+                    AccountClient accountClient) {}
+              },
+              desiredState.toProto().toByteArray());
       resolverServiceFactory =
           new LocalResolverServiceFactory(
               wasmResolverApi, resolverState, resolveTokenConverter, mock(), mock());

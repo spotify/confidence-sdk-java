@@ -32,7 +32,7 @@ import rust_guest.Types;
 
 class WasmResolveApi {
 
-  private static final FunctionType HOST_FN_TYPE =
+  private final FunctionType HOST_FN_TYPE =
       FunctionType.of(List.of(ValType.I32), List.of(ValType.I32));
   private final Instance instance;
 
