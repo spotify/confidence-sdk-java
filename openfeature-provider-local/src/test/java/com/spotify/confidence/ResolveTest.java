@@ -129,7 +129,7 @@ abstract class ResolveTest extends TestBase {
                     "foo",
                     "bar",
                     Struct.newBuilder().build(),
-                    false,
+                    true,
                     "invalid-secret"))
         .withMessage("Resolver state not set or client secret could not be found");
   }
@@ -143,9 +143,9 @@ abstract class ResolveTest extends TestBase {
   }
 
   @Test
-  public void testResolveFlag() throws InterruptedException {
+  public void testResolveFlag() {
     final var response =
-        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), true);
+        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), false);
     assertThat(response.getResolveId()).isNotEmpty();
     final Struct expectedValue =
         // expanded with nulls to match schema
