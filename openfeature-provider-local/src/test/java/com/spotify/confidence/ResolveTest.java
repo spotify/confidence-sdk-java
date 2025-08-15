@@ -129,7 +129,7 @@ abstract class ResolveTest extends TestBase {
                     "foo",
                     "bar",
                     Struct.newBuilder().build(),
-                    false,
+                    true,
                     "invalid-secret"))
         .withMessage("Resolver state not set or client secret could not be found");
   }
@@ -143,7 +143,7 @@ abstract class ResolveTest extends TestBase {
   }
 
   @Test
-  public void testResolveFlag() throws InterruptedException {
+  public void testResolveFlag() {
     final var response =
         resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), true);
     assertThat(response.getResolveId()).isNotEmpty();
@@ -155,6 +155,47 @@ abstract class ResolveTest extends TestBase {
     assertEquals(expectedValue, response.getResolvedFlags(0).getValue());
     assertEquals(schema1, response.getResolvedFlags(0).getFlagSchema());
   }
+
+  @Test
+  public void testResolveFlagWithEncryptedResolveToken() {
+    final var response =
+        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), false);
+    assertThat(response.getResolveId()).isNotEmpty();
+    final Struct expectedValue =
+        // expanded with nulls to match schema
+        variantOn.getValue().toBuilder().putFields("extra", Values.ofNull()).build();
+
+    assertEquals(variantOn.getName(), response.getResolvedFlags(0).getVariant());
+    assertEquals(expectedValue, response.getResolvedFlags(0).getValue());
+    assertEquals(schema1, response.getResolvedFlags(0).getFlagSchema());
+    assertThat(response.getResolveToken()).isNotEmpty();
+  }
+
+  //  @Test
+  //  public void perf() {
+  //    final ScheduledExecutorService flagsFetcherExecutor =
+  //            Executors.newScheduledThreadPool(1, new
+  // ThreadFactoryBuilder().setDaemon(true).build());
+  //
+  //    flagsFetcherExecutor.scheduleAtFixedRate(
+  //            () -> {
+  //              System.out.println("flagsFetcherExecutor started");
+  //              resolverServiceFactory.setState(desiredState.toProto().toByteArray());
+  //              System.out.println("flagsFetcherExecutor ended");
+  //            },
+  //            2,
+  //            2,
+  //            TimeUnit.SECONDS);
+  //
+  //    for (int i = 1; i <= 100; i++) {
+  //      final var start = System.currentTimeMillis();
+  //      for (int j = 0; j < 10000; j++) {
+  //        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), true);
+  //      }
+  //      System.out.println(
+  //          "Iteration " + i + " took " + (System.currentTimeMillis() - start) + " ms");
+  //    }
+  //  }
 
   @Test
   public void testTooLongKey() {

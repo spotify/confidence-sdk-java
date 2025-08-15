@@ -25,6 +25,11 @@ message LogAssignRequest {
   Client client = 6;
 }
 
+message EncryptionRequest {
+  bytes token_data = 1;
+  bytes encryption_key = 2;
+}
+
 message FlagToApply {
   google.protobuf.Timestamp skew_adjusted_applied_time = 1;
   AssignedFlag assigned_flags = 2;

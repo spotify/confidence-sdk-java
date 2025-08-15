@@ -1,6 +1,7 @@
 package com.spotify.confidence;
 
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Struct;
 import com.spotify.confidence.flags.shaded.admin.v1.FlagAdminServiceGrpc;
@@ -31,7 +32,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private final AtomicReference<ResolverState> resolverStateHolder;
   private final ResolveTokenConverter resolveTokenConverter;
 
-  private final WasmResolveApi wasmResolveApi;
+  private final SwapWasmResolverApi wasmResolveApi;
   private final Supplier<Instant> timeSupplier;
   private final Supplier<String> resolveIdSupplier;
   private final ResolveLogger resolveLogger;
@@ -97,33 +98,43 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final ResolveLogger resolveLogger =
         ResolveLogger.createStarted(() -> flagsAdminStub, RESOLVE_INFO_LOG_INTERVAL);
     final var flagLogger = getFlagLogger(resolveLogger, assignLogger);
-    final WasmResolveApi wasmResolverApi = new WasmResolveApi(flagLogger);
     if (isWasm) {
-      wasmResolverApi.setResolverState(
-          sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray());
-    }
-    flagsFetcherExecutor.scheduleWithFixedDelay(
-        () -> {
-          sidecarFlagsAdminFetcher.reload();
-          if (isWasm) {
-            wasmResolverApi.setResolverState(
+      final SwapWasmResolverApi wasmResolverApi =
+          new SwapWasmResolverApi(
+              flagLogger, sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray());
+      flagsFetcherExecutor.scheduleAtFixedRate(
+          () -> {
+            sidecarFlagsAdminFetcher.reload();
+            wasmResolverApi.updateState(
                 sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray());
-          }
-        },
-        pollIntervalSeconds,
-        pollIntervalSeconds,
-        TimeUnit.SECONDS);
-    return new LocalResolverServiceFactory(
-            isWasm ? wasmResolverApi : null,
-            sidecarFlagsAdminFetcher.stateHolder(),
-            resolveTokenConverter,
-            resolveLogger,
-            assignLogger)
-        .create(clientSecret);
+          },
+          pollIntervalSeconds,
+          pollIntervalSeconds,
+          TimeUnit.SECONDS);
+      return new LocalResolverServiceFactory(
+              wasmResolverApi,
+              sidecarFlagsAdminFetcher.stateHolder(),
+              resolveTokenConverter,
+              resolveLogger,
+              assignLogger)
+          .create(clientSecret);
+    } else {
+      flagsFetcherExecutor.scheduleWithFixedDelay(
+          sidecarFlagsAdminFetcher::reload,
+          pollIntervalSeconds,
+          pollIntervalSeconds,
+          TimeUnit.SECONDS);
+      return new LocalResolverServiceFactory(
+              sidecarFlagsAdminFetcher.stateHolder(),
+              resolveTokenConverter,
+              resolveLogger,
+              assignLogger)
+          .create(clientSecret);
+    }
   }
 
   LocalResolverServiceFactory(
-      WasmResolveApi wasmResolveApi,
+      SwapWasmResolverApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       ResolveLogger resolveLogger,
@@ -139,7 +150,22 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   LocalResolverServiceFactory(
-      WasmResolveApi wasmResolveApi,
+      AtomicReference<ResolverState> resolverStateHolder,
+      ResolveTokenConverter resolveTokenConverter,
+      ResolveLogger resolveLogger,
+      AssignLogger assignLogger) {
+    this(
+        null,
+        resolverStateHolder,
+        resolveTokenConverter,
+        Instant::now,
+        () -> RandomStringUtils.randomAlphanumeric(32),
+        resolveLogger,
+        assignLogger);
+  }
+
+  LocalResolverServiceFactory(
+      SwapWasmResolverApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       Supplier<Instant> timeSupplier,
@@ -153,6 +179,13 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     this.resolveIdSupplier = resolveIdSupplier;
     this.resolveLogger = resolveLogger;
     this.assignLogger = assignLogger;
+  }
+
+  @VisibleForTesting
+  public void setState(byte[] state) {
+    if (this.wasmResolveApi != null) {
+      wasmResolveApi.updateState(state);
+    }
   }
 
   @Override
