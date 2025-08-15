@@ -31,7 +31,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private final AtomicReference<ResolverState> resolverStateHolder;
   private final ResolveTokenConverter resolveTokenConverter;
 
-  private final WasmResolveApi wasmResolveApi;
+  private final AtomicReference<WasmResolveApi> wasmResolveApiRef;
   private final Supplier<Instant> timeSupplier;
   private final Supplier<String> resolveIdSupplier;
   private final ResolveLogger resolveLogger;
@@ -97,24 +97,27 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final ResolveLogger resolveLogger =
         ResolveLogger.createStarted(() -> flagsAdminStub, RESOLVE_INFO_LOG_INTERVAL);
     final var flagLogger = getFlagLogger(resolveLogger, assignLogger);
-    final WasmResolveApi wasmResolverApi = new WasmResolveApi(flagLogger);
+    final AtomicReference<WasmResolveApi> wasmApiRef = new AtomicReference<>();
     if (isWasm) {
-      wasmResolverApi.setResolverState(
-          sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray());
+      final WasmResolveApi initialApi = new WasmResolveApi(flagLogger);
+      initialApi.setResolverState(sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray());
+      wasmApiRef.set(initialApi);
     }
     flagsFetcherExecutor.scheduleWithFixedDelay(
         () -> {
           sidecarFlagsAdminFetcher.reload();
           if (isWasm) {
-            wasmResolverApi.setResolverState(
+            final WasmResolveApi updatedApi = new WasmResolveApi(flagLogger);
+            updatedApi.setResolverState(
                 sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray());
+            wasmApiRef.set(updatedApi);
           }
         },
         pollIntervalSeconds,
         pollIntervalSeconds,
         TimeUnit.SECONDS);
     return new LocalResolverServiceFactory(
-            isWasm ? wasmResolverApi : null,
+            isWasm ? wasmApiRef : null,
             sidecarFlagsAdminFetcher.stateHolder(),
             resolveTokenConverter,
             resolveLogger,
@@ -123,13 +126,13 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   LocalResolverServiceFactory(
-      WasmResolveApi wasmResolveApi,
+      AtomicReference<WasmResolveApi> wasmResolveApiRef,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       ResolveLogger resolveLogger,
       AssignLogger assignLogger) {
     this(
-        wasmResolveApi,
+        wasmResolveApiRef,
         resolverStateHolder,
         resolveTokenConverter,
         Instant::now,
@@ -139,14 +142,14 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   LocalResolverServiceFactory(
-      WasmResolveApi wasmResolveApi,
+      AtomicReference<WasmResolveApi> wasmResolveApiRef,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       Supplier<Instant> timeSupplier,
       Supplier<String> resolveIdSupplier,
       ResolveLogger resolveLogger,
       AssignLogger assignLogger) {
-    this.wasmResolveApi = wasmResolveApi;
+    this.wasmResolveApiRef = wasmResolveApiRef;
     this.resolverStateHolder = resolverStateHolder;
     this.resolveTokenConverter = resolveTokenConverter;
     this.timeSupplier = timeSupplier;
@@ -157,8 +160,15 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
   @Override
   public FlagResolverService create(ClientCredential.ClientSecret clientSecret) {
-    if (wasmResolveApi != null) {
-      return request -> CompletableFuture.completedFuture(wasmResolveApi.resolve(request));
+    if (wasmResolveApiRef != null && wasmResolveApiRef.get() != null) {
+      return request -> {
+        final WasmResolveApi api = wasmResolveApiRef.get();
+        if (api == null) {
+          return CompletableFuture.failedFuture(
+              new IllegalStateException("WASM resolver not ready"));
+        }
+        return CompletableFuture.completedFuture(api.resolve(request));
+      };
     }
     return createJavaFlagResolverService(clientSecret);
   }

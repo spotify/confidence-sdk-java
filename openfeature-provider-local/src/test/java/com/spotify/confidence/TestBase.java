@@ -68,11 +68,19 @@ public class TestBase {
       wasmResolverApi.setResolverState(desiredState.toProto().toByteArray());
       resolverServiceFactory =
           new LocalResolverServiceFactory(
-              wasmResolverApi, resolverState, resolveTokenConverter, mock(), mock());
+              new AtomicReference<>(wasmResolverApi),
+              resolverState,
+              resolveTokenConverter,
+              mock(),
+              mock());
     } else {
       resolverServiceFactory =
           new LocalResolverServiceFactory(
-              null, resolverState, resolveTokenConverter, mock(), mock());
+              (AtomicReference<WasmResolveApi>) null,
+              resolverState,
+              resolveTokenConverter,
+              mock(),
+              mock());
     }
   }
 
