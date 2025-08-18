@@ -3,6 +3,7 @@ package com.spotify.confidence;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 class SwapWasmResolverApi {
   private final AtomicReference<WasmResolveApi> wasmResolverApiRef = new AtomicReference<>();
@@ -29,7 +30,12 @@ class SwapWasmResolverApi {
     isPrimary = !isPrimary;
   }
 
+  private final ReentrantLock logResolveLock = new ReentrantLock();
+
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    return wasmResolverApiRef.get().resolve(request);
+    logResolveLock.lock();
+    final var response = wasmResolverApiRef.get().resolve(request);
+    logResolveLock.unlock();
+    return response;
   }
 }
