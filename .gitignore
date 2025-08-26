@@ -3,6 +3,7 @@
 # specific files), please put them in your ~/.global-gitignore and not here!
 .*
 !.git*
-**/target/
+/target/
+*/target/
 *.iml
 **dependency-reduced-pom.xml
