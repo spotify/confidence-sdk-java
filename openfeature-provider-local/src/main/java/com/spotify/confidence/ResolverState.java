@@ -14,15 +14,15 @@ record ResolverState(
     Map<String, AccountState> accountStates,
     Map<ClientCredential.ClientSecret, AccountClient> secrets) {
 
-  public com.spotify.confidence.flags.shaded.admin.v1.ResolverState toProto() {
-    final com.spotify.confidence.flags.shaded.admin.v1.ResolverState.Builder builder =
-        com.spotify.confidence.flags.shaded.admin.v1.ResolverState.newBuilder();
+  public com.spotify.confidence.shaded.flags.admin.v1.ResolverState toProto() {
+    final com.spotify.confidence.shaded.flags.admin.v1.ResolverState.Builder builder =
+        com.spotify.confidence.shaded.flags.admin.v1.ResolverState.newBuilder();
 
     // Collect all flags from all account states
     final List<com.spotify.confidence.shaded.flags.admin.v1.Flag> allFlags = new ArrayList<>();
     final List<com.spotify.confidence.shaded.flags.admin.v1.Segment> allSegments =
         new ArrayList<>();
-    final List<com.spotify.confidence.flags.shaded.admin.v1.ResolverState.PackedBitset> allBitsets =
+    final List<com.spotify.confidence.shaded.flags.admin.v1.ResolverState.PackedBitset> allBitsets =
         new ArrayList<>();
     final List<Client> allClients = new ArrayList<>();
     final List<com.spotify.confidence.shaded.iam.v1.ClientCredential> allClientCredentials =
@@ -41,9 +41,9 @@ record ResolverState(
         final String segmentName = entry.getKey();
         final BitSet bitSet = entry.getValue();
 
-        final com.spotify.confidence.flags.shaded.admin.v1.ResolverState.PackedBitset.Builder
+        final com.spotify.confidence.shaded.flags.admin.v1.ResolverState.PackedBitset.Builder
             bitsetBuilder =
-                com.spotify.confidence.flags.shaded.admin.v1.ResolverState.PackedBitset.newBuilder()
+                com.spotify.confidence.shaded.flags.admin.v1.ResolverState.PackedBitset.newBuilder()
                     .setSegment(segmentName);
 
         // Check if it's a full bitset (all bits set)
@@ -74,7 +74,7 @@ record ResolverState(
 
     // Set region if available (default to UNSPECIFIED)
     builder.setRegion(
-        com.spotify.confidence.flags.shaded.admin.v1.ResolverState.Region.REGION_UNSPECIFIED);
+        com.spotify.confidence.shaded.flags.admin.v1.ResolverState.Region.REGION_UNSPECIFIED);
 
     return builder.build();
   }

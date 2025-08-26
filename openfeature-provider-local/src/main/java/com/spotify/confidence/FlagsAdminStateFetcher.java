@@ -6,10 +6,10 @@ import static java.util.stream.Collectors.toMap;
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
-import com.spotify.confidence.flags.shaded.admin.v1.ResolverStateServiceGrpc;
-import com.spotify.confidence.flags.shaded.admin.v1.ResolverStateUriRequest;
-import com.spotify.confidence.flags.shaded.admin.v1.ResolverStateUriResponse;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
+import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateServiceGrpc;
+import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateUriRequest;
+import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateUriResponse;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
@@ -40,10 +40,10 @@ class FlagsAdminStateFetcher {
   // Source of truth for resolver state, shared with GrpcFlagResolverService
   private final AtomicReference<ResolverState> stateHolder =
       new AtomicReference<>(new ResolverState(Map.of(), Map.of()));
-  private final AtomicReference<com.spotify.confidence.flags.shaded.admin.v1.ResolverState>
+  private final AtomicReference<com.spotify.confidence.shaded.flags.admin.v1.ResolverState>
       rawResolverStateHolder =
           new AtomicReference<>(
-              com.spotify.confidence.flags.shaded.admin.v1.ResolverState.newBuilder().build());
+              com.spotify.confidence.shaded.flags.admin.v1.ResolverState.newBuilder().build());
   private final AtomicReference<ResolverStateUriResponse> resolverStateUriResponse =
       new AtomicReference<>();
   private final AtomicReference<Instant> refreshTimeHolder = new AtomicReference<>();
@@ -61,7 +61,7 @@ class FlagsAdminStateFetcher {
     return stateHolder;
   }
 
-  public AtomicReference<com.spotify.confidence.flags.shaded.admin.v1.ResolverState>
+  public AtomicReference<com.spotify.confidence.shaded.flags.admin.v1.ResolverState>
       rawStateHolder() {
     return rawResolverStateHolder;
   }
@@ -112,7 +112,7 @@ class FlagsAdminStateFetcher {
 
   private AccountState fetchState() {
     final String uri = getResolverFileUri();
-    final com.spotify.confidence.flags.shaded.admin.v1.ResolverState state;
+    final com.spotify.confidence.shaded.flags.admin.v1.ResolverState state;
     final String etag;
     try {
       final HttpURLConnection conn = (HttpURLConnection) new URL(uri).openConnection();
@@ -126,7 +126,7 @@ class FlagsAdminStateFetcher {
       }
       etag = conn.getHeaderField("etag");
       try (final var stream = conn.getInputStream()) {
-        state = com.spotify.confidence.flags.shaded.admin.v1.ResolverState.parseFrom(stream);
+        state = com.spotify.confidence.shaded.flags.admin.v1.ResolverState.parseFrom(stream);
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -138,7 +138,7 @@ class FlagsAdminStateFetcher {
         state.getBitsetsList().stream()
             .collect(
                 toMap(
-                    com.spotify.confidence.flags.shaded.admin.v1.ResolverState.PackedBitset
+                    com.spotify.confidence.shaded.flags.admin.v1.ResolverState.PackedBitset
                         ::getSegment,
                     bitset ->
                         switch (bitset.getBitsetCase()) {
