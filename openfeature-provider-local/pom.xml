@@ -34,22 +34,49 @@
       <version>0.2.3-SNAPSHOT</version>
     </dependency>
     <!---x-release-please-end-->
+    
+    <!-- Core dependencies -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.dylibso.chicory</groupId>
+      <artifactId>wasm</artifactId>
+      <version>1.4.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java-util</artifactId>
+    </dependency>
+    
+    <!-- Test dependencies -->
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
-      <version>3.24.2</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.crypto.tink</groupId>
-      <artifactId>tink</artifactId>
-      <version>1.15.0</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
-      <version>${jupiter.version}</version>
     </dependency>
     <dependency>
       <groupId>com.dylibso.chicory</groupId>
@@ -65,18 +92,15 @@
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
-      <version>${jupiter.version}</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
-      <version>${mockito.version}</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-services</artifactId>
-      <version>1.68.1</version>
     </dependency>
     <dependency>
       <groupId>net.bytebuddy</groupId>
@@ -95,12 +119,6 @@
           <artifactId>byte-buddy</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
-      <version>${mockito.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
