@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.3](https://github.com/spotify/confidence-sdk-java/compare/v0.2.2...v0.2.3) (2025-08-28)
+
+
+### 🐛 Bug Fixes
+
+* make the wasm resolve thread safe ([#244](https://github.com/spotify/confidence-sdk-java/issues/244)) ([21e911a](https://github.com/spotify/confidence-sdk-java/commit/21e911a2b517ff285977ea41bd759b59a99e80ab))
+* remove duplicate classes ([#248](https://github.com/spotify/confidence-sdk-java/issues/248)) ([9a3ebae](https://github.com/spotify/confidence-sdk-java/commit/9a3ebae405108b56c173ed5f46453657e66224fb))
+* Remove generated google types ([#247](https://github.com/spotify/confidence-sdk-java/issues/247)) ([d9f58cc](https://github.com/spotify/confidence-sdk-java/commit/d9f58ccd03e4672a5ed2aed79bdd2f3ff40ec1c9))
+* set resolver state with an alternating modules ([#242](https://github.com/spotify/confidence-sdk-java/issues/242)) ([534e6ca](https://github.com/spotify/confidence-sdk-java/commit/534e6caeb73bd28031cadf3dc14dbdd47ccc9cbb))
+
+
+### 🧹 Chore
+
+* **main:** release 0.2.3-SNAPSHOT ([#241](https://github.com/spotify/confidence-sdk-java/issues/241)) ([b74ee8f](https://github.com/spotify/confidence-sdk-java/commit/b74ee8f0a344485b41cc75e0ebfe7b7aede47de7))
+
 ## [0.2.2](https://github.com/spotify/confidence-sdk-java/compare/v0.2.1...v0.2.2) (2025-08-08)
 
 
