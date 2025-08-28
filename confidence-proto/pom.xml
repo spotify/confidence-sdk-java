@@ -13,10 +13,10 @@
   <name>Confidence Proto files</name>
 
   <dependencies>
+    <!-- Core gRPC and protobuf dependencies -->
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-protobuf</artifactId>
-      <version>${grpc.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.guava</groupId>
@@ -25,14 +25,43 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java-util</artifactId>
-      <version>${protobuf.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
       <artifactId>proto-google-common-protos</artifactId>
-      <version>${common.protos.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>grpc-google-common-protos</artifactId>
+    </dependency>
+    
+    <!-- Annotations needed for gRPC -->
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
   </dependencies>
 
@@ -44,9 +73,16 @@
         <version>0.6.1</version>
         <executions>
           <execution>
+            <id>compile-protobuf</id>
+            <phase>generate-sources</phase>
             <goals>
               <goal>compile</goal>
-              <!-- https://www.xolstice.org/protobuf-maven-plugin/compile-custom-mojo.html -->
+            </goals>
+          </execution>
+          <execution>
+            <id>compile-grpc</id>
+            <phase>generate-sources</phase>
+            <goals>
               <goal>compile-custom</goal>
             </goals>
           </execution>
@@ -55,6 +91,13 @@
           <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
           <pluginId>grpc-java</pluginId>
           <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
+          <protocDependencies>
+            <protocDependency>
+              <groupId>com.google.protobuf</groupId>
+              <artifactId>protobuf-java</artifactId>
+              <version>${protobuf.version}</version>
+            </protocDependency>
+          </protocDependencies>
         </configuration>
       </plugin>
       <plugin>

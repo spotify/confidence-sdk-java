@@ -1,39 +1,40 @@
 package com.spotify.confidence;
 
-class Exceptions {
+public class Exceptions {
 
+  // Internal exceptions - package-private
   static class ValueNotFound extends Exception {
-    public ValueNotFound(String message) {
+    ValueNotFound(String message) {
       super(message);
     }
   }
 
   static class IllegalValuePath extends Exception {
-    public IllegalValuePath(String message) {
+    IllegalValuePath(String message) {
       super(message);
     }
   }
 
   static class ParseError extends RuntimeException {
-    public ParseError(String message) {
+    ParseError(String message) {
       super(message);
     }
   }
 
   static class InvalidContextInMessaageError extends RuntimeException {
-    public InvalidContextInMessaageError(String message) {
+    InvalidContextInMessaageError(String message) {
       super(message);
     }
   }
 
   static class IllegalValueType extends Exception {
-    public IllegalValueType(String message) {
+    IllegalValueType(String message) {
       super(message);
     }
   }
 
   static class IncompatibleValueType extends Exception {
-    public IncompatibleValueType(String message) {
+    IncompatibleValueType(String message) {
       super(message);
     }
   }

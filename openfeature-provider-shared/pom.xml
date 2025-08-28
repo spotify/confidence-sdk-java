@@ -73,10 +73,26 @@
           <version>0.2.3-SNAPSHOT</version>
     </dependency>
     <!---x-release-please-end-->
+    
     <dependency>
       <groupId>dev.openfeature</groupId>
       <artifactId>sdk</artifactId>
       <version>1.6.1</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
   </dependencies>
     <build>
@@ -94,6 +110,7 @@
                 </executions>
                 <configuration>
                     <failOnError>false</failOnError>
+                    <quiet>true</quiet>
                     <additionalOptions>
                         <additionalOption>-Xdoclint:none</additionalOption>
                     </additionalOptions>
