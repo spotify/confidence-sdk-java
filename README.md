@@ -17,8 +17,8 @@ Add the OpenFeature provider dependency if you want to use Confidence via the Op
     <artifactId>openfeature-provider</artifactId>
     <version>0.2.4-SNAPSHOT</version>
 </dependency>
-<!---x-release-please-end-->
 ```
+<!---x-release-please-end-->
 
 _Note: we strongly recommend to adopt the latest non-SNAPSHOT release [available here](https://github.com/spotify/confidence-sdk-java/releases/)._
 
