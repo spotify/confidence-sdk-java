@@ -2,10 +2,82 @@
 
 Java library for [Confidence](https://confidence.spotify.com/). This library is designed to work in a java backend environment. For Android, please visit [Confidence-SDK-Android](https://github.com/spotify/confidence-sdk-android).
 
+We suggest you to use the OpenFeature SDK to consume the Confidence feature flags.
+
 ## Install
 
-### Maven
- 
+### OpenFeature provider (Maven)
+
+Add the OpenFeature provider dependency if you want to use Confidence via the OpenFeature Java SDK:
+
+<!-- x-release-please-start-version -->
+```xml
+<dependency>
+    <groupId>com.spotify.confidence</groupId>
+    <artifactId>openfeature-provider</artifactId>
+    <version>0.2.4-SNAPSHOT</version>
+</dependency>
+```
+<!---x-release-please-end-->
+
+_Note: we strongly recommend to adopt the latest non-SNAPSHOT release [available here](https://github.com/spotify/confidence-sdk-java/releases/)._
+
+
+## Usage
+
+OpenFeature providers connect the OpenFeature SDK to your flag system. Use the Confidence OpenFeature provider to evaluate flags with the Confidence platform.
+
+### Quickstart: OpenFeature provider (Java)
+
+The Provider is instantiated using a client secret configured in the Confidence UI or via the management console.
+
+```java
+import com.spotify.confidence.Confidence;
+import com.spotify.confidence.ConfidenceFeatureProvider;
+import dev.openfeature.sdk.Client;
+import dev.openfeature.sdk.ImmutableContext;
+import dev.openfeature.sdk.OpenFeatureAPI;
+
+// 1) Configure and register the provider
+ConfidenceFeatureProvider provider = new ConfidenceFeatureProvider(
+    Confidence.builder("<CLIENT_SECRET>")
+);
+OpenFeatureAPI api = OpenFeatureAPI.getInstance();
+api.setProvider(provider);
+
+// 2) Get an OpenFeature client
+Client client = api.getClient();
+
+// 3) Provide an evaluation context (targeting key + attributes)
+Map<String, Value> requestAttrs = new HashMap<>();
+requestAttrs.put("email", new Value(session.getAttribute("email")));
+requestAttrs.put("product", new Value("productId"));
+String targetingKey = session.getId();
+EvaluationContext reqCtx = new ImmutableContext(targetingKey, requestAttrs);
+
+// 4) Evaluate flags
+boolean enabled = client.getBooleanValue("my-flag.enabled", false, reqCtx);
+String group = client.getStringValue("my-flag.group", "group1", reqCtx);
+```
+
+#### Advanced configuration (optional)
+
+```java
+ConfidenceFeatureProvider provider = new ConfidenceFeatureProvider(
+    Confidence.builder("<CLIENT_SECRET>")
+        .resolveDeadlineMs(250) // timeout for flag resolution
+        .flagResolverManagedChannel("localhost", 8080) // e.g., local sidecar
+);
+```
+
+To learn more about providers and evaluation contexts, see the [OpenFeature reference docs](https://github.com/open-feature/java-sdk).
+
+## Direct SDK usage (optional)
+
+Use the Confidence SDK directly if you are not using OpenFeature. 
+
+### Vanilla SDK (Maven)
+
 <!-- x-release-please-start-version -->
 ```xml
 <dependency>
@@ -16,27 +88,7 @@ Java library for [Confidence](https://confidence.spotify.com/). This library is 
 ```
 <!---x-release-please-end-->
 
-_Note: we strongly recommend to adopt the latest non-SNAPSHOT release [available here](https://github.com/spotify/confidence-sdk-java/releases/)._
-
-#### Depending on a development snapshot
-We deploy snapshots from the `main` branch to [Sonatype OSSRH](https://oss.sonatype.org/content/repositories/snapshots/com/spotify/confidence/sdk-java/).
-To use a snapshot, add the following repository to your `pom.xml`:
-```xml
-<distributionManagement>
-    <snapshotRepository>
-        <id>central-portal-snapshots</id>
-        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
-    </snapshotRepository>
-</distributionManagement>
-```
-
-## Usage
-
-The SDK is instantiated using a client secret that is configured in the Confidence UI or via the
-management console.
-
 ### Resolving flags
-Flag values are evaluated remotely and returned to the application:
 ```java
 final Confidence confidence = Confidence.builder("<CLIENT_TOKEN>").build();
 confidence.setContext(Map.of("country", ConfidenceValue.of("SE")));
@@ -50,15 +102,11 @@ final String propertyValue =
 ```
 
 ### Tracking events
-Events are emitted to the Confidence backend:
 ```java
 confidence.track("my-event", ConfidenceValue.of(Map.of("field", ConfidenceValue.of("data"))));
 ```
+
 ### Testing with ConfidenceStub
-
-For testing code that uses Confidence, we provide `ConfidenceStub` - a stub implementation that allows configuring predefined values and evaluation results for flags. It also tracks method calls and provides access to the call history for verification.
-
-Basic usage with predefined values:
 
 ```java
 // Create a ConfidenceStub instance
@@ -75,42 +123,6 @@ System.out.println("Retrieved value: " + value);
 List<String> callHistory = stub.getCallHistory();
 System.out.println("Call history: " + callHistory);
 ```
-
-## OpenFeature
-The library includes a `Provider` for
-the [OpenFeature Java SDK](https://openfeature.dev/docs/tutorials/getting-started/java), that can be
-used to resolve feature flag values from the Confidence platform.
-
-### Creating an OpenFeature Provider
-
-To create a `ConfidenceFeatureProvider`, use the new constructor that takes a `Confidence.Builder`:
-
-```java
-import com.spotify.confidence.Confidence;
-import com.spotify.confidence.ConfidenceFeatureProvider;
-import dev.openfeature.sdk.OpenFeatureAPI;
-
-// Create the provider using the new constructor with Builder pattern
-ConfidenceFeatureProvider provider = new ConfidenceFeatureProvider(
-    Confidence.builder("<CLIENT_SECRET>")
-);
-
-// For custom provider setup with resolve deadline and managed channel:
-ConfidenceFeatureProvider provider = new ConfidenceFeatureProvider(
-    Confidence.builder("<CLIENT_SECRET>")
-        .resolveDeadlineMs(1000)  // 1 second timeout for flag resolution
-        .flagResolverManagedChannel("uri.to.resolver.sidecar.com", <port>)
-);
-
-// Set the provider with OpenFeature
-OpenFeatureAPI.getInstance().setProvider(provider);
-```
-
-**Note:** The new constructor automatically calls `buildForProvider()` internally, which optimizes the Confidence instance for use with OpenFeature. All previous constructors taking `String clientSecret` or `Confidence` instances directly are now deprecated.
-
-To learn more about the basic concepts (flags, targeting key, evaluation contexts),
-the [OpenFeature reference documentation](https://openfeature.dev/docs/reference/intro) can be
-useful.
 
 ## Telemetry
 
