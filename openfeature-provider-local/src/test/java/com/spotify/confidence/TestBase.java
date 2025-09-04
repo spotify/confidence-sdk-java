@@ -104,6 +104,41 @@ public class TestBase {
     }
   }
 
+  protected ResolveFlagsResponse resolveWithNumericTargetingKey(
+      List<String> flags,
+      Number targetingKey,
+      String structFieldName,
+      Struct struct,
+      boolean apply) {
+    try {
+      final var builder =
+          ResolveFlagsRequest.newBuilder()
+              .addAllFlags(flags)
+              .setClientSecret(secret.getSecret())
+              .setApply(apply);
+
+      if (targetingKey instanceof Double || targetingKey instanceof Float) {
+        builder.setEvaluationContext(
+            Structs.of(
+                "targeting_key",
+                Values.of(targetingKey.doubleValue()),
+                structFieldName,
+                Values.of(struct)));
+      } else {
+        builder.setEvaluationContext(
+            Structs.of(
+                "targeting_key",
+                Values.of(targetingKey.longValue()),
+                structFieldName,
+                Values.of(struct)));
+      }
+
+      return resolverServiceFactory.create(secret.getSecret()).resolveFlags(builder.build()).get();
+    } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   protected ResolveFlagsResponse resolveWithContext(
       List<String> flags, String username, String structFieldName, Struct struct, boolean apply) {
     return resolveWithContext(flags, username, structFieldName, struct, apply, secret.getSecret());

@@ -9,11 +9,11 @@ import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -203,11 +203,28 @@ abstract class ResolveTest extends TestBase {
         .isThrownBy(
             () ->
                 resolveWithContext(
-                    List.of(flag1),
-                    RandomStringUtils.randomAlphabetic(101),
-                    "bar",
-                    Struct.newBuilder().build(),
-                    false))
+                    List.of(flag1), "a".repeat(101), "bar", Struct.newBuilder().build(), false))
         .withMessageContaining("Targeting key is too larger, max 100 characters.");
+  }
+
+  @Test
+  public void testResolveIntegerTargetingKeyTyped() {
+    final var response =
+        resolveWithNumericTargetingKey(
+            List.of(flag1), 1234567890, "bar", Struct.newBuilder().build(), true);
+
+    assertThat(response.getResolvedFlagsList()).hasSize(1);
+    assertEquals(ResolveReason.RESOLVE_REASON_MATCH, response.getResolvedFlags(0).getReason());
+  }
+
+  @Test
+  public void testResolveDecimalUsername() {
+    final var response =
+        resolveWithNumericTargetingKey(
+            List.of(flag1), 3.14159d, "bar", Struct.newBuilder().build(), true);
+
+    assertThat(response.getResolvedFlagsList()).hasSize(1);
+    assertEquals(
+        ResolveReason.RESOLVE_REASON_TARGETING_KEY_ERROR, response.getResolvedFlags(0).getReason());
   }
 }
