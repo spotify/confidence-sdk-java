@@ -153,11 +153,23 @@ class AccountResolver {
         continue;
       }
 
-      if (unitValue.getKindCase() != Value.KindCase.STRING_VALUE) {
+      final String unit;
+      if (unitValue.getKindCase() == Value.KindCase.STRING_VALUE) {
+        unit = unitValue.getStringValue();
+      } else if (unitValue.getKindCase() == Value.KindCase.NUMBER_VALUE) {
+        // Cast integer values to string for targeting key compatibility
+        final double numberValue = unitValue.getNumberValue();
+        // Only support integers (no fractional part)
+        if (numberValue == Math.floor(numberValue) && !Double.isInfinite(numberValue)) {
+          unit = String.valueOf((long) numberValue);
+        } else {
+          return CompletableFuture.completedFuture(
+              resolvedValue.withReason(ResolveReason.RESOLVE_REASON_TARGETING_KEY_ERROR));
+        }
+      } else {
         return CompletableFuture.completedFuture(
             resolvedValue.withReason(ResolveReason.RESOLVE_REASON_TARGETING_KEY_ERROR));
       }
-      final String unit = unitValue.getStringValue();
       if (unit.length() > 100) {
         throw new BadRequestException("Targeting key is too larger, max 100 characters.");
       }
