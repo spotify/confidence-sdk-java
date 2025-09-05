@@ -7,3 +7,4 @@
 */target/
 *.iml
 **dependency-reduced-pom.xml
+openfeature-provider-local/src/main/resources/wasm/confidence_resolver.wasm
