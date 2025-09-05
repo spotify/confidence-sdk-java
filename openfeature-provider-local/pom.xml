@@ -18,7 +18,7 @@
     <!-- Prevents the compiler version from resetting locally in Intellij -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <!-- WASM file management -->
+    <!-- WASM file version. When updated, make sure to mvn clean to force a new download -->
     <confidence.resolver.wasm.version>v0.2.0</confidence.resolver.wasm.version>
   </properties>
 
@@ -156,7 +156,24 @@
 
   <build>
     <plugins>
-      <!-- Plugin to download WASM file from GitHub releases -->
+      <!-- Plugin to clean WASM file during clean phase -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.3.2</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>src/main/resources/wasm</directory>
+              <includes>
+                <include>confidence_resolver.wasm</include>
+              </includes>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
+
+      <!-- Plugin to download WASM file during generate-resources phase -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
