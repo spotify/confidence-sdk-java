@@ -19,8 +19,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <!-- WASM file management -->
-    <confidence.resolver.rust.version>v0.2.0</confidence.resolver.rust.version>
-    <confidence.wasm.download.url>https://github.com/spotify/confidence-resolver-rust/releases/download/confidence_resolver-${confidence.resolver.rust.version}/confidence_resolver.wasm</confidence.wasm.download.url>
+    <confidence.resolver.wasm.version>v0.2.0</confidence.resolver.wasm.version>
   </properties>
 
 
@@ -172,7 +171,7 @@
             <configuration>
               <target>
                 <mkdir dir="${project.basedir}/src/main/resources/wasm"/>
-                <get src="${confidence.wasm.download.url}"
+                <get src="https://github.com/spotify/confidence-resolver-rust/releases/download/confidence_resolver-${confidence.resolver.wasm.version}/confidence_resolver.wasm"
                      dest="${project.basedir}/src/main/resources/wasm/confidence_resolver.wasm"
                      skipexisting="true"
                      verbose="true"/>
