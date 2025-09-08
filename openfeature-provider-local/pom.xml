@@ -18,6 +18,8 @@
     <!-- Prevents the compiler version from resetting locally in Intellij -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
+    <!-- WASM file version. When updated, make sure to mvn clean to force a new download -->
+    <confidence.resolver.wasm.version>v0.2.0</confidence.resolver.wasm.version>
   </properties>
 
 
@@ -153,6 +155,50 @@
   </dependencies>
 
   <build>
+    <plugins>
+      <!-- Plugin to clean WASM file during clean phase -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.3.2</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>src/main/resources/wasm</directory>
+              <includes>
+                <include>confidence_resolver.wasm</include>
+              </includes>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
+
+      <!-- Plugin to download WASM file during generate-resources phase -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>download-wasm</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <mkdir dir="src/main/resources/wasm"/>
+                <get src="https://github.com/spotify/confidence-resolver-rust/releases/download/confidence_resolver-${confidence.resolver.wasm.version}/confidence_resolver.wasm"
+                     dest="src/main/resources/wasm/confidence_resolver.wasm"
+                     skipexisting="true"
+                     verbose="true"/>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+
     <resources>
       <resource>
         <directory>src/main/resources</directory>

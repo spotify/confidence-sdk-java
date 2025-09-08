@@ -53,9 +53,9 @@ class WasmResolveApi {
   public WasmResolveApi(FlagLogger flagLogger) {
     this.flagLogger = flagLogger;
     try (InputStream wasmStream =
-        getClass().getClassLoader().getResourceAsStream("wasm/rust_guest.wasm")) {
+        getClass().getClassLoader().getResourceAsStream("wasm/confidence_resolver.wasm")) {
       if (wasmStream == null) {
-        throw new RuntimeException("Could not find rust_guest.wasm in resources");
+        throw new RuntimeException("Could not find confidence_resolver.wasm in resources");
       }
       final WasmModule module = Parser.parse(wasmStream);
       instance =
