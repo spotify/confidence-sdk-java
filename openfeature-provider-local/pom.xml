@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>confidence-sdk-java</artifactId>
-    <version>0.2.4-SNAPSHOT</version>
+    <version>0.2.4</version>
   </parent>
   <!---x-release-please-end-->
 
@@ -28,12 +28,12 @@
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>confidence-proto</artifactId>
-      <version>0.2.4-SNAPSHOT</version>
+      <version>0.2.4</version>
     </dependency>
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>openfeature-provider-shared</artifactId>
-      <version>0.2.4-SNAPSHOT</version>
+      <version>0.2.4</version>
     </dependency>
     <!---x-release-please-end-->
     
@@ -188,10 +188,7 @@
             <configuration>
               <target>
                 <mkdir dir="src/main/resources/wasm"/>
-                <get src="https://github.com/spotify/confidence-resolver-rust/releases/download/confidence_resolver-${confidence.resolver.wasm.version}/confidence_resolver.wasm"
-                     dest="src/main/resources/wasm/confidence_resolver.wasm"
-                     skipexisting="true"
-                     verbose="true"/>
+                <get src="https://github.com/spotify/confidence-resolver-rust/releases/download/confidence_resolver-${confidence.resolver.wasm.version}/confidence_resolver.wasm" dest="src/main/resources/wasm/confidence_resolver.wasm" skipexisting="true" verbose="true"/>
               </target>
             </configuration>
           </execution>

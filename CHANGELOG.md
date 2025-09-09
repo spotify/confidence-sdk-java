@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.4](https://github.com/spotify/confidence-sdk-java/compare/v0.2.3...v0.2.4) (2025-09-08)
+
+
+### ✨ New Features
+
+* [Local-Native] Targeting Key integer type ([#252](https://github.com/spotify/confidence-sdk-java/issues/252)) ([fea8fc5](https://github.com/spotify/confidence-sdk-java/commit/fea8fc58aae9b660ce76deaaf8c9dd6f10b77163))
+* Integer targeting key native local resolve ([fea8fc5](https://github.com/spotify/confidence-sdk-java/commit/fea8fc58aae9b660ce76deaaf8c9dd6f10b77163))
+
+
+### 🧹 Chore
+
+* **main:** release 0.2.4-SNAPSHOT ([#249](https://github.com/spotify/confidence-sdk-java/issues/249)) ([16e1979](https://github.com/spotify/confidence-sdk-java/commit/16e19794839d2f8162c655b042be6d2f1320058b))
+
+
+### 📚 Documentation
+
+* restructure to focus on Openfeature ([#251](https://github.com/spotify/confidence-sdk-java/issues/251)) ([313a06f](https://github.com/spotify/confidence-sdk-java/commit/313a06f43b4899ea6056762ffd7b643d0aa792e9))
+
 ## [0.2.3](https://github.com/spotify/confidence-sdk-java/compare/v0.2.2...v0.2.3) (2025-08-28)
 
 
