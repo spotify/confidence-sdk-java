@@ -67,8 +67,7 @@ public class TestBase {
               wasmResolverApi, resolverState, resolveTokenConverter, mock(), mock());
     } else {
       resolverServiceFactory =
-          new LocalResolverServiceFactory(
-              null, resolverState, resolveTokenConverter, mock(), mock());
+          new LocalResolverServiceFactory(resolverState, resolveTokenConverter, mock(), mock());
     }
   }
 

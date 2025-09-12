@@ -18,6 +18,49 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import org.slf4j.Logger;
 
+/**
+ * OpenFeature provider for Confidence feature flags using local resolution.
+ *
+ * <p>This provider evaluates feature flags locally using either a WebAssembly (WASM) resolver or a
+ * pure Java implementation. It periodically syncs flag configurations from the Confidence service
+ * and caches them locally for fast, low-latency flag evaluation.
+ *
+ * <p>The provider supports two resolution modes:
+ *
+ * <ul>
+ *   <li><strong>WASM mode</strong> (default): Uses a WebAssembly resolver
+ *   <li><strong>Java mode</strong>: Uses a pure Java resolver
+ * </ul>
+ *
+ * <p>Resolution mode can be controlled via the {@code LOCAL_RESOLVE_MODE} environment variable:
+ *
+ * <ul>
+ *   <li>{@code LOCAL_RESOLVE_MODE=WASM} - Forces WASM mode
+ *   <li>{@code LOCAL_RESOLVE_MODE=JAVA} - Forces Java mode
+ *   <li>Not set - Defaults to WASM mode
+ * </ul>
+ *
+ * <p><strong>Usage Example:</strong>
+ *
+ * <pre>{@code
+ * // Create API credentials
+ * ApiSecret apiSecret = new ApiSecret("your-client-id", "your-client-secret");
+ * String clientSecret = "your-application-client-secret";
+ *
+ * // Create provider with default settings (exposure logs enabled)
+ * OpenFeatureLocalResolveProvider provider =
+ *     new OpenFeatureLocalResolveProvider(apiSecret, clientSecret);
+ *
+ * // Register with OpenFeature
+ * OpenFeatureAPI.getInstance().setProvider(provider);
+ *
+ * // Use with OpenFeature client
+ * Client client = OpenFeatureAPI.getInstance().getClient();
+ * String flagValue = client.getStringValue("my-flag", "default-value");
+ * }</pre>
+ *
+ * @since 0.2.4
+ */
 @Experimental
 public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private final String clientSecret;
@@ -25,12 +68,55 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
       org.slf4j.LoggerFactory.getLogger(OpenFeatureLocalResolveProvider.class);
   private final FlagResolverService flagResolverService;
 
+  /**
+   * Creates a new OpenFeature provider for local flag resolution with exposure logging enabled.
+   *
+   * <p>This constructor enables exposure logging by default, which means flag evaluations will be
+   * logged to the Confidence service for populating exposure data and other analytics.
+   *
+   * <p>This is equivalent to calling {@code new OpenFeatureLocalResolveProvider(apiSecret,
+   * clientSecret, true)}.
+   *
+   * @param apiSecret the API credentials for authenticating with the Confidence service
+   * @param clientSecret the client secret for your application
+   * @see #OpenFeatureLocalResolveProvider(ApiSecret, String, boolean) for detailed parameter
+   *     documentation
+   */
   public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+    this(apiSecret, clientSecret, true);
+  }
+
+  /**
+   * Creates a new OpenFeature provider for local flag resolution with configurable exposure
+   * logging.
+   *
+   * <p>This is the primary constructor that allows full control over the provider configuration.
+   * The provider will automatically determine the resolution mode (WASM or Java) based on the
+   * {@code LOCAL_RESOLVE_MODE} environment variable, defaulting to WASM mode.
+   *
+   * @param apiSecret the API credentials containing client ID and client secret for authenticating
+   *     with the Confidence service. Create using {@code new ApiSecret("client-id",
+   *     "client-secret")}
+   * @param clientSecret the client secret for your application, used for flag resolution
+   *     authentication. This is different from the API secret and is specific to your application
+   *     configuration
+   * @param enableExposureLogs whether to enable exposure logging. When {@code true}, flag
+   *     evaluations are logged to Confidence. When {@code false}, evaluations are not logged,
+   *     useful when debugging.
+   * @since 0.2.4
+   */
+  public OpenFeatureLocalResolveProvider(
+      ApiSecret apiSecret, String clientSecret, boolean enableExposureLogs) {
     final var env = System.getenv("LOCAL_RESOLVE_MODE");
     if (env != null && env.equals("WASM")) {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, enableExposureLogs);
+    } else if (env != null && env.equals("JAVA")) {
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, false, enableExposureLogs);
     } else {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, false);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, enableExposureLogs);
     }
     this.clientSecret = clientSecret;
   }
