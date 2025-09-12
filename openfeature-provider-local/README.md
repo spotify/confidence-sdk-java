@@ -1,5 +1,7 @@
 # Confidence OpenFeature Local Provider
 
+![Status: Experimental](https://img.shields.io/badge/status-experimental-orange)
+
 A high-performance OpenFeature provider for [Confidence](https://confidence.spotify.com/) feature flags that evaluates flags locally for minimal latency.
 
 ## Features
