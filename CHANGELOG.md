@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.5](https://github.com/spotify/confidence-sdk-java/compare/v0.2.4...v0.2.5) (2025-09-12)
+
+
+### ✨ New Features
+
+* Exposure logging toggle and WASM default ([#256](https://github.com/spotify/confidence-sdk-java/issues/256)) ([a7b73d5](https://github.com/spotify/confidence-sdk-java/commit/a7b73d5636ecab2f5092a2bf99a37a355a366f4d))
+
+
+### 🧹 Chore
+
+* **main:** release 0.2.5-SNAPSHOT ([#254](https://github.com/spotify/confidence-sdk-java/issues/254)) ([ddd634a](https://github.com/spotify/confidence-sdk-java/commit/ddd634a9b8a23551bbeabb6d63baa2abdedb8b2d))
+
 ## [0.2.4](https://github.com/spotify/confidence-sdk-java/compare/v0.2.3...v0.2.4) (2025-09-08)
 
 
