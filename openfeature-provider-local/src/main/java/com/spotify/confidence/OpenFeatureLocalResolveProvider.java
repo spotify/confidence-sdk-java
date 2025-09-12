@@ -26,13 +26,21 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private final FlagResolverService flagResolverService;
 
   public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+    this(apiSecret, clientSecret, true);
+  }
+
+  public OpenFeatureLocalResolveProvider(
+      ApiSecret apiSecret, String clientSecret, boolean enableExposureLogs) {
     final var env = System.getenv("LOCAL_RESOLVE_MODE");
     if (env != null && env.equals("WASM")) {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, enableExposureLogs);
     } else if (env != null && env.equals("JAVA")) {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, false);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, false, enableExposureLogs);
     } else {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, enableExposureLogs);
     }
     this.clientSecret = clientSecret;
   }

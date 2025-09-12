@@ -37,6 +37,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private final Supplier<String> resolveIdSupplier;
   private final ResolveLogger resolveLogger;
   private final AssignLogger assignLogger;
+  private final boolean enableExposureLogs;
   private static final MetricRegistry metricRegistry = new MetricRegistry();
   private static final String CONFIDENCE_DOMAIN = "edge-grpc.spotify.com";
   private static final Duration ASSIGN_LOG_INTERVAL = Duration.ofSeconds(10);
@@ -59,11 +60,16 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   static FlagResolverService from(ApiSecret apiSecret, String clientSecret, boolean isWasm) {
-    return createFlagResolverService(apiSecret, clientSecret, isWasm);
+    return createFlagResolverService(apiSecret, clientSecret, isWasm, true);
+  }
+
+  static FlagResolverService from(
+      ApiSecret apiSecret, String clientSecret, boolean isWasm, boolean enableExposureLogs) {
+    return createFlagResolverService(apiSecret, clientSecret, isWasm, enableExposureLogs);
   }
 
   private static FlagResolverService createFlagResolverService(
-      ApiSecret apiSecret, String clientSecret, boolean isWasm) {
+      ApiSecret apiSecret, String clientSecret, boolean isWasm, boolean enableExposureLogs) {
     final var channel = createConfidenceChannel();
     final AuthServiceGrpc.AuthServiceBlockingStub authService =
         AuthServiceGrpc.newBlockingStub(channel);
@@ -97,7 +103,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
             flagLoggerStub, ASSIGN_LOG_INTERVAL, metricRegistry, assignLogCapacity);
     final ResolveLogger resolveLogger =
         ResolveLogger.createStarted(() -> flagsAdminStub, RESOLVE_INFO_LOG_INTERVAL);
-    final var flagLogger = getFlagLogger(resolveLogger, assignLogger);
+    final var flagLogger = getFlagLogger(resolveLogger, assignLogger, enableExposureLogs);
     if (isWasm) {
       final SwapWasmResolverApi wasmResolverApi =
           new SwapWasmResolverApi(
@@ -116,7 +122,8 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
               sidecarFlagsAdminFetcher.stateHolder(),
               resolveTokenConverter,
               resolveLogger,
-              assignLogger)
+              assignLogger,
+              enableExposureLogs)
           .create(clientSecret);
     } else {
       flagsFetcherExecutor.scheduleWithFixedDelay(
@@ -128,9 +135,28 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
               sidecarFlagsAdminFetcher.stateHolder(),
               resolveTokenConverter,
               resolveLogger,
-              assignLogger)
+              assignLogger,
+              enableExposureLogs)
           .create(clientSecret);
     }
+  }
+
+  LocalResolverServiceFactory(
+      SwapWasmResolverApi wasmResolveApi,
+      AtomicReference<ResolverState> resolverStateHolder,
+      ResolveTokenConverter resolveTokenConverter,
+      ResolveLogger resolveLogger,
+      AssignLogger assignLogger,
+      boolean enableExposureLogs) {
+    this(
+        wasmResolveApi,
+        resolverStateHolder,
+        resolveTokenConverter,
+        Instant::now,
+        () -> RandomStringUtils.randomAlphanumeric(32),
+        resolveLogger,
+        assignLogger,
+        enableExposureLogs);
   }
 
   LocalResolverServiceFactory(
@@ -146,7 +172,25 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         Instant::now,
         () -> RandomStringUtils.randomAlphanumeric(32),
         resolveLogger,
-        assignLogger);
+        assignLogger,
+        true);
+  }
+
+  LocalResolverServiceFactory(
+      AtomicReference<ResolverState> resolverStateHolder,
+      ResolveTokenConverter resolveTokenConverter,
+      ResolveLogger resolveLogger,
+      AssignLogger assignLogger,
+      boolean enableExposureLogs) {
+    this(
+        null,
+        resolverStateHolder,
+        resolveTokenConverter,
+        Instant::now,
+        () -> RandomStringUtils.randomAlphanumeric(32),
+        resolveLogger,
+        assignLogger,
+        enableExposureLogs);
   }
 
   LocalResolverServiceFactory(
@@ -161,7 +205,8 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         Instant::now,
         () -> RandomStringUtils.randomAlphanumeric(32),
         resolveLogger,
-        assignLogger);
+        assignLogger,
+        true);
   }
 
   LocalResolverServiceFactory(
@@ -171,7 +216,8 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
       Supplier<Instant> timeSupplier,
       Supplier<String> resolveIdSupplier,
       ResolveLogger resolveLogger,
-      AssignLogger assignLogger) {
+      AssignLogger assignLogger,
+      boolean enableExposureLogs) {
     this.wasmResolveApi = wasmResolveApi;
     this.resolverStateHolder = resolverStateHolder;
     this.resolveTokenConverter = resolveTokenConverter;
@@ -179,6 +225,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     this.resolveIdSupplier = resolveIdSupplier;
     this.resolveLogger = resolveLogger;
     this.assignLogger = assignLogger;
+    this.enableExposureLogs = enableExposureLogs;
   }
 
   @VisibleForTesting
@@ -207,7 +254,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     }
 
     final AccountState accountState = state.accountStates().get(accountClient.accountName());
-    final var flagLogger = getFlagLogger(resolveLogger, assignLogger);
+    final var flagLogger = getFlagLogger(resolveLogger, assignLogger, enableExposureLogs);
 
     return new JavaFlagResolverService(
         accountState,
@@ -218,7 +265,31 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         resolveIdSupplier);
   }
 
-  private static FlagLogger getFlagLogger(ResolveLogger resolveLogger, AssignLogger assignLogger) {
+  private static FlagLogger getFlagLogger(
+      ResolveLogger resolveLogger, AssignLogger assignLogger, boolean enableExposureLogs) {
+    if (!enableExposureLogs) {
+      return new FlagLogger() {
+        @Override
+        public void logResolve(
+            String resolveId,
+            Struct evaluationContext,
+            Sdk sdk,
+            AccountClient accountClient,
+            List<ResolvedValue> values) {
+          // Logging disabled - no-op
+        }
+
+        @Override
+        public void logAssigns(
+            String resolveId,
+            Sdk sdk,
+            List<FlagToApply> flagsToApply,
+            AccountClient accountClient) {
+          // Logging disabled - no-op
+        }
+      };
+    }
+
     return new FlagLogger() {
       @Override
       public void logResolve(
