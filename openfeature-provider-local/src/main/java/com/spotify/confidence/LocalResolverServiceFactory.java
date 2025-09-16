@@ -59,13 +59,17 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     return builder.intercept(new DefaultDeadlineClientInterceptor(Duration.ofMinutes(1))).build();
   }
 
-  static FlagResolverService from(ApiSecret apiSecret, String clientSecret, boolean isWasm) {
-    return createFlagResolverService(apiSecret, clientSecret, isWasm, true);
-  }
-
   static FlagResolverService from(
       ApiSecret apiSecret, String clientSecret, boolean isWasm, boolean enableExposureLogs) {
     return createFlagResolverService(apiSecret, clientSecret, isWasm, enableExposureLogs);
+  }
+
+  static FlagResolverService from(
+      AccountStateProvider accountStateProvider, String clientSecret, boolean enableExposureLogs) {
+    final var env = System.getenv("LOCAL_RESOLVE_MODE");
+    final boolean isWasm = env == null || !env.equals("JAVA"); // Default to WASM
+    return createFlagResolverService(
+        accountStateProvider, clientSecret, isWasm, enableExposureLogs);
   }
 
   private static FlagResolverService createFlagResolverService(
@@ -137,6 +141,108 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
               resolveLogger,
               assignLogger,
               enableExposureLogs)
+          .create(clientSecret);
+    }
+  }
+
+  private static FlagResolverService createFlagResolverService(
+      AccountStateProvider accountStateProvider,
+      String clientSecret,
+      boolean isWasm,
+      boolean enableExposureLogs) {
+    final var channel = createConfidenceChannel();
+    final long assignLogCapacity =
+        Optional.ofNullable(System.getenv("CONFIDENCE_ASSIGN_LOG_CAPACITY"))
+            .map(Long::parseLong)
+            .orElseGet(() -> (long) (Runtime.getRuntime().maxMemory() / 3.0));
+    final var flagLoggerStub = InternalFlagLoggerServiceGrpc.newBlockingStub(channel);
+    final AssignLogger assignLogger =
+        AssignLogger.createStarted(
+            flagLoggerStub, ASSIGN_LOG_INTERVAL, metricRegistry, assignLogCapacity);
+    final ResolveLogger resolveLogger =
+        ResolveLogger.createStarted(
+            () -> FlagAdminServiceGrpc.newBlockingStub(channel), RESOLVE_INFO_LOG_INTERVAL);
+    final long pollIntervalSeconds =
+        Optional.ofNullable(System.getenv("CONFIDENCE_RESOLVER_POLL_INTERVAL_SECONDS"))
+            .map(Long::parseLong)
+            .orElse(Duration.ofMinutes(5).toSeconds());
+
+    final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
+
+    // Initialize the state holder with the first AccountState
+    final AccountState initialAccountState = accountStateProvider.provide();
+    final AtomicReference<ResolverState> stateHolder =
+        new AtomicReference<>(
+            new ResolverState(
+                java.util.Map.of(initialAccountState.account().name(), initialAccountState),
+                initialAccountState.secrets()));
+
+    // For WASM mode, we also need to track the raw proto state
+    final AtomicReference<com.spotify.confidence.shaded.flags.admin.v1.ResolverState>
+        rawStateHolder = new AtomicReference<>(stateHolder.get().toProto());
+
+    final var flagLogger = getFlagLogger(resolveLogger, assignLogger, enableExposureLogs);
+
+    if (isWasm) {
+      final SwapWasmResolverApi wasmResolverApi =
+          new SwapWasmResolverApi(flagLogger, rawStateHolder.get().toByteArray());
+
+      // Schedule periodic refresh of the AccountState with WASM support
+      flagsFetcherExecutor.scheduleAtFixedRate(
+          () -> {
+            try {
+              final AccountState newAccountState = accountStateProvider.provide();
+              final ResolverState newResolverState =
+                  new ResolverState(
+                      java.util.Map.of(newAccountState.account().name(), newAccountState),
+                      newAccountState.secrets());
+              stateHolder.set(newResolverState);
+
+              final com.spotify.confidence.shaded.flags.admin.v1.ResolverState newRawState =
+                  newResolverState.toProto();
+              rawStateHolder.set(newRawState);
+              wasmResolverApi.updateState(newRawState.toByteArray());
+            } catch (Exception e) {
+              // Log error but don't propagate to avoid stopping the scheduler
+              org.slf4j.LoggerFactory.getLogger(LocalResolverServiceFactory.class)
+                  .warn("Failed to refresh AccountState from provider, ignoring refresh", e);
+            }
+          },
+          pollIntervalSeconds,
+          pollIntervalSeconds,
+          TimeUnit.SECONDS);
+
+      return new LocalResolverServiceFactory(
+              wasmResolverApi,
+              stateHolder,
+              resolveTokenConverter,
+              resolveLogger,
+              assignLogger,
+              enableExposureLogs)
+          .create(clientSecret);
+    } else {
+      // Schedule periodic refresh of the AccountState for Java mode
+      flagsFetcherExecutor.scheduleWithFixedDelay(
+          () -> {
+            try {
+              final AccountState newAccountState = accountStateProvider.provide();
+              final ResolverState newResolverState =
+                  new ResolverState(
+                      java.util.Map.of(newAccountState.account().name(), newAccountState),
+                      newAccountState.secrets());
+              stateHolder.set(newResolverState);
+            } catch (Exception e) {
+              // Log error but don't propagate to avoid stopping the scheduler
+              org.slf4j.LoggerFactory.getLogger(LocalResolverServiceFactory.class)
+                  .warn("Failed to refresh AccountState from provider, ignoring refresh", e);
+            }
+          },
+          pollIntervalSeconds,
+          pollIntervalSeconds,
+          TimeUnit.SECONDS);
+
+      return new LocalResolverServiceFactory(
+              stateHolder, resolveTokenConverter, resolveLogger, assignLogger, enableExposureLogs)
           .create(clientSecret);
     }
   }

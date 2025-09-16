@@ -121,6 +121,41 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
     this.clientSecret = clientSecret;
   }
 
+  /**
+   * Creates a new OpenFeature provider for local flag resolution using a custom
+   * AccountStateProvider.
+   *
+   * <p>This constructor allows you to provide a custom implementation for supplying AccountState.
+   * instead of using the default FlagsAdminStateFetcher. This is useful when you want to:
+   *
+   * <ul>
+   *   <li>Testing purposes
+   *   <li>Load flags from a different source (file, database, etc.)
+   *   <li>Implement custom flag data fetching logic
+   * </ul>
+   *
+   * <p>The AccountStateProvider will be called to obtain the AccountState whenever flag resolution
+   * is needed. Make sure your implementation is thread-safe and handles errors appropriately.
+   *
+   * <p>The resolution mode (WASM or Java) will be determined by the {@code LOCAL_RESOLVE_MODE}
+   * environment variable, defaulting to WASM mode if not set.
+   *
+   * @param accountStateProvider a functional interface that provides AccountState instances
+   * @param clientSecret the client secret for your application, used for flag resolution
+   *     authentication. This is different from the API secret and is specific to your application
+   *     configuration
+   * @param enableExposureLogs whether to enable exposure logging. When {@code true}, flag
+   *     evaluations are logged to Confidence. When {@code false}, evaluations are not logged,
+   *     useful when debugging.
+   * @since 0.2.4
+   */
+  public OpenFeatureLocalResolveProvider(
+      AccountStateProvider accountStateProvider, String clientSecret, boolean enableExposureLogs) {
+    this.flagResolverService =
+        LocalResolverServiceFactory.from(accountStateProvider, clientSecret, enableExposureLogs);
+    this.clientSecret = clientSecret;
+  }
+
   @Override
   public Metadata getMetadata() {
     return () -> "confidence-sdk-java-local";
