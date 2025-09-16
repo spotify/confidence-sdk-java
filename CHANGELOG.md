@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/spotify/confidence-sdk-java/compare/v0.2.6...v0.2.7) (2025-09-16)
+
+
+### 🧹 Chore
+
+* **main:** release 0.2.7-SNAPSHOT ([#262](https://github.com/spotify/confidence-sdk-java/issues/262)) ([595f90c](https://github.com/spotify/confidence-sdk-java/commit/595f90caf5ca7f9628a78a197904f130d2b9f685))
+
 ## [0.2.6](https://github.com/spotify/confidence-sdk-java/compare/v0.2.5...v0.2.6) (2025-09-16)
 
 
