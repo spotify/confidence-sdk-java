@@ -261,7 +261,6 @@
         <directory>src/main/resources</directory>
         <filtering>true</filtering>
       </resource>
-      <resource><directory>src/main/proto</directory></resource>
     </resources>
     <plugins>
       <plugin>
