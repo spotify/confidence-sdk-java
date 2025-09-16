@@ -64,10 +64,10 @@ public class TestBase {
               desiredState.toProto().toByteArray());
       resolverServiceFactory =
           new LocalResolverServiceFactory(
-              wasmResolverApi, resolverState, resolveTokenConverter, mock(), mock());
+              wasmResolverApi, resolverState, resolveTokenConverter, mock());
     } else {
       resolverServiceFactory =
-          new LocalResolverServiceFactory(resolverState, resolveTokenConverter, mock(), mock());
+          new LocalResolverServiceFactory(resolverState, resolveTokenConverter, mock());
     }
   }
 
