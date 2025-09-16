@@ -3,17 +3,20 @@ package com.spotify.confidence;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -226,5 +229,71 @@ abstract class ResolveTest extends TestBase {
     assertThat(response.getResolvedFlagsList()).hasSize(1);
     assertEquals(
         ResolveReason.RESOLVE_REASON_TARGETING_KEY_ERROR, response.getResolvedFlags(0).getReason());
+  }
+
+  @Test
+  public void testAccountStateProviderInterface() {
+    final AccountStateProvider customProvider =
+        () ->
+            new AccountState(
+                new Account(account, Region.EU), flags, segments, bitsets, secrets, "test-etag");
+
+    final AccountState providedState = customProvider.provide();
+
+    assertThat(providedState.account().name()).isEqualTo(account);
+    assertThat(providedState.flags()).containsKey(flag1);
+    assertThat(providedState.segments()).containsKey(segmentA);
+    assertThat(providedState.secrets()).containsKey(secret);
+    assertThat(providedState.stateFileHash()).isEqualTo("test-etag");
+
+    final Flag providedFlag = providedState.flags().get(flag1);
+    assertThat(providedFlag.getName()).isEqualTo(flag1);
+    assertThat(providedFlag.getState()).isEqualTo(Flag.State.ACTIVE);
+    assertThat(providedFlag.getVariantsList()).hasSize(2);
+  }
+
+  @Test
+  public void testAccountStateProviderWithFlagResolver() {
+    final AtomicReference<ResolverState> stateHolder = getResolverStateAtomicReference();
+    final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
+    final LocalResolverServiceFactory testFactory =
+        new LocalResolverServiceFactory(stateHolder, resolveTokenConverter, mock(), mock());
+    final FlagResolverService flagResolverService = testFactory.create(secret.getSecret());
+    assertThat(flagResolverService).isNotNull();
+
+    try {
+      final var response =
+          flagResolverService
+              .resolveFlags(
+                  ResolveFlagsRequest.newBuilder()
+                      .addFlags(flag1)
+                      .setClientSecret(secret.getSecret())
+                      .setEvaluationContext(
+                          Structs.of(
+                              "targeting_key",
+                              Values.of("foo"),
+                              "bar",
+                              Values.of(Struct.newBuilder().build())))
+                      .setApply(true)
+                      .build())
+              .get();
+
+      assertThat(response.getResolvedFlagsList()).hasSize(1);
+      assertThat(response.getResolvedFlags(0).getVariant()).isEqualTo(flagOn);
+      assertThat(response.getResolvedFlags(0).getValue()).isNotNull();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static AtomicReference<ResolverState> getResolverStateAtomicReference() {
+    final AccountStateProvider customProvider =
+        () ->
+            new AccountState(
+                new Account(account, Region.EU), flags, segments, bitsets, secrets, "test-etag");
+    final AccountState initialState = customProvider.provide();
+    return new AtomicReference<>(
+        new ResolverState(
+            Map.of(initialState.account().name(), initialState), initialState.secrets()));
   }
 }
