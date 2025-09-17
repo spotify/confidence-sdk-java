@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/spotify/confidence-sdk-java/compare/v0.2.7...v0.3.0) (2025-09-17)
+
+
+### Features
+
+* AccountStateProvider for testing ([#265](https://github.com/spotify/confidence-sdk-java/issues/265)) ([beb21f5](https://github.com/spotify/confidence-sdk-java/commit/beb21f551cd8eca74926400d7b4477cd5060ea26))
+* Bump release please ([#267](https://github.com/spotify/confidence-sdk-java/issues/267)) ([3974865](https://github.com/spotify/confidence-sdk-java/commit/3974865bf69c1daeb6a1f159c0f2ff164dbc3365))
+
 ## [0.2.8](https://github.com/spotify/confidence-sdk-java/compare/v0.2.7...v0.2.8) (2025-09-17)
 
 
