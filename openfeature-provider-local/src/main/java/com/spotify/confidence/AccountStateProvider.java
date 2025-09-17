@@ -3,20 +3,21 @@ package com.spotify.confidence;
 /**
  * Functional interface for providing AccountState instances.
  *
- * <p>This interface allows custom implementations to provide AccountState data instead of using the
- * default FlagsAdminStateFetcher. This is useful for scenarios where flag data should be sourced
- * from custom locations or caching mechanisms.
+ * <p>The untyped nature of this interface allows high flexibility for testing, but it's not advised
+ * to be used in production.
  *
- * @since 0.2.4
+ * <p>This can be useful if the provider implementer defines the AccountState proto schema in a
+ * different Java package.
  */
 @FunctionalInterface
 public interface AccountStateProvider {
 
   /**
-   * Provides an AccountState instance.
+   * Provides an AccountState protobuf, from this proto specification: {@link
+   * com.spotify.confidence.shaded.flags.admin.v1.AccountState}
    *
-   * @return the AccountState containing flag configurations and metadata
+   * @return the AccountState protobuf containing flag configurations and metadata
    * @throws RuntimeException if the AccountState cannot be provided
    */
-  AccountState provide();
+  byte[] provide();
 }

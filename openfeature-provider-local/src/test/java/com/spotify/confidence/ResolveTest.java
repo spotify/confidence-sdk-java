@@ -227,25 +227,4 @@ abstract class ResolveTest extends TestBase {
     assertEquals(
         ResolveReason.RESOLVE_REASON_TARGETING_KEY_ERROR, response.getResolvedFlags(0).getReason());
   }
-
-  @Test
-  public void testAccountStateProviderInterface() {
-    final AccountStateProvider customProvider =
-        () ->
-            new AccountState(
-                new Account(account, Region.EU), flags, segments, bitsets, secrets, "test-etag");
-
-    final AccountState providedState = customProvider.provide();
-
-    assertThat(providedState.account().name()).isEqualTo(account);
-    assertThat(providedState.flags()).containsKey(flag1);
-    assertThat(providedState.segments()).containsKey(segmentA);
-    assertThat(providedState.secrets()).containsKey(secret);
-    assertThat(providedState.stateFileHash()).isEqualTo("test-etag");
-
-    final Flag providedFlag = providedState.flags().get(flag1);
-    assertThat(providedFlag.getName()).isEqualTo(flag1);
-    assertThat(providedFlag.getState()).isEqualTo(Flag.State.ACTIVE);
-    assertThat(providedFlag.getVariantsList()).hasSize(2);
-  }
 }
