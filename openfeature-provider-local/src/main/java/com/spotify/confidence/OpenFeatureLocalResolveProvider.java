@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.Struct;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
@@ -69,24 +70,6 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private final FlagResolverService flagResolverService;
 
   /**
-   * Creates a new OpenFeature provider for local flag resolution with exposure logging enabled.
-   *
-   * <p>This constructor enables exposure logging by default, which means flag evaluations will be
-   * logged to the Confidence service for populating exposure data and other analytics.
-   *
-   * <p>This is equivalent to calling {@code new OpenFeatureLocalResolveProvider(apiSecret,
-   * clientSecret, true)}.
-   *
-   * @param apiSecret the API credentials for authenticating with the Confidence service
-   * @param clientSecret the client secret for your application
-   * @see #OpenFeatureLocalResolveProvider(ApiSecret, String, boolean) for detailed parameter
-   *     documentation
-   */
-  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
-    this(apiSecret, clientSecret, true);
-  }
-
-  /**
    * Creates a new OpenFeature provider for local flag resolution with configurable exposure
    * logging.
    *
@@ -100,25 +83,34 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @param clientSecret the client secret for your application, used for flag resolution
    *     authentication. This is different from the API secret and is specific to your application
    *     configuration
-   * @param enableExposureLogs whether to enable exposure logging. When {@code true}, flag
-   *     evaluations are logged to Confidence. When {@code false}, evaluations are not logged,
-   *     useful when debugging.
    * @since 0.2.4
    */
-  public OpenFeatureLocalResolveProvider(
-      ApiSecret apiSecret, String clientSecret, boolean enableExposureLogs) {
+  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
     final var env = System.getenv("LOCAL_RESOLVE_MODE");
     if (env != null && env.equals("WASM")) {
-      this.flagResolverService =
-          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, enableExposureLogs);
+      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
     } else if (env != null && env.equals("JAVA")) {
-      this.flagResolverService =
-          LocalResolverServiceFactory.from(apiSecret, clientSecret, false, enableExposureLogs);
+      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, false);
     } else {
-      this.flagResolverService =
-          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, enableExposureLogs);
+      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
     }
     this.clientSecret = clientSecret;
+  }
+
+  /**
+   * To be used for testing purposes only! This constructor allows to inject flags state for testing
+   * the WASM resolver (no Java supported) No resolve/assign logging is forwarded to production No
+   * need to supply ApiSecret
+   *
+   * @param accountStateProvider a functional interface that provides AccountState instances
+   * @param clientSecret the flag client key used to filter the flags
+   * @since 0.2.4
+   */
+  @VisibleForTesting
+  public OpenFeatureLocalResolveProvider(
+      AccountStateProvider accountStateProvider, String clientSecret) {
+    this.clientSecret = clientSecret;
+    this.flagResolverService = LocalResolverServiceFactory.from(accountStateProvider);
   }
 
   @Override

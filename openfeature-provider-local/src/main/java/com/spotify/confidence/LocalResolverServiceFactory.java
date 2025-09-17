@@ -4,12 +4,15 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Struct;
+import com.spotify.confidence.TokenHolder.Token;
 import com.spotify.confidence.shaded.flags.admin.v1.FlagAdminServiceGrpc;
 import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateServiceGrpc;
+import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateServiceGrpc.ResolverStateServiceBlockingStub;
 import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
-import com.spotify.confidence.shaded.iam.v1.ClientCredential;
+import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc.AuthServiceBlockingStub;
+import com.spotify.confidence.shaded.iam.v1.ClientCredential.ClientSecret;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
@@ -18,6 +21,7 @@ import io.grpc.protobuf.services.HealthStatusManager;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -26,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.LoggerFactory;
 
 class LocalResolverServiceFactory implements ResolverServiceFactory {
 
@@ -35,9 +40,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private final SwapWasmResolverApi wasmResolveApi;
   private final Supplier<Instant> timeSupplier;
   private final Supplier<String> resolveIdSupplier;
-  private final ResolveLogger resolveLogger;
-  private final AssignLogger assignLogger;
-  private final boolean enableExposureLogs;
+  private final FlagLogger flagLogger;
   private static final MetricRegistry metricRegistry = new MetricRegistry();
   private static final String CONFIDENCE_DOMAIN = "edge-grpc.spotify.com";
   private static final Duration ASSIGN_LOG_INTERVAL = Duration.ofSeconds(10);
@@ -60,22 +63,20 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   static FlagResolverService from(ApiSecret apiSecret, String clientSecret, boolean isWasm) {
-    return createFlagResolverService(apiSecret, clientSecret, isWasm, true);
+    return createFlagResolverService(apiSecret, clientSecret, isWasm);
   }
 
-  static FlagResolverService from(
-      ApiSecret apiSecret, String clientSecret, boolean isWasm, boolean enableExposureLogs) {
-    return createFlagResolverService(apiSecret, clientSecret, isWasm, enableExposureLogs);
+  static FlagResolverService from(AccountStateProvider accountStateProvider) {
+    return createFlagResolverService(accountStateProvider);
   }
 
   private static FlagResolverService createFlagResolverService(
-      ApiSecret apiSecret, String clientSecret, boolean isWasm, boolean enableExposureLogs) {
+      ApiSecret apiSecret, String clientSecret, boolean isWasm) {
     final var channel = createConfidenceChannel();
-    final AuthServiceGrpc.AuthServiceBlockingStub authService =
-        AuthServiceGrpc.newBlockingStub(channel);
+    final AuthServiceBlockingStub authService = AuthServiceGrpc.newBlockingStub(channel);
     final TokenHolder tokenHolder =
         new TokenHolder(apiSecret.clientId(), apiSecret.clientSecret(), authService);
-    final TokenHolder.Token token = tokenHolder.getToken();
+    final Token token = tokenHolder.getToken();
     final Channel authenticatedChannel =
         ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
     final var flagLoggerStub = InternalFlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
@@ -83,7 +84,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         Optional.ofNullable(System.getenv("CONFIDENCE_ASSIGN_LOG_CAPACITY"))
             .map(Long::parseLong)
             .orElseGet(() -> (long) (Runtime.getRuntime().maxMemory() / 3.0));
-    final ResolverStateServiceGrpc.ResolverStateServiceBlockingStub resolverStateService =
+    final ResolverStateServiceBlockingStub resolverStateService =
         ResolverStateServiceGrpc.newBlockingStub(authenticatedChannel);
     final HealthStatusManager healthStatusManager = new HealthStatusManager();
     final HealthStatus healthStatus = new HealthStatus(healthStatusManager);
@@ -103,7 +104,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
             flagLoggerStub, ASSIGN_LOG_INTERVAL, metricRegistry, assignLogCapacity);
     final ResolveLogger resolveLogger =
         ResolveLogger.createStarted(() -> flagsAdminStub, RESOLVE_INFO_LOG_INTERVAL);
-    final var flagLogger = getFlagLogger(resolveLogger, assignLogger, enableExposureLogs);
+    final var flagLogger = getFlagLogger(resolveLogger, assignLogger);
     if (isWasm) {
       final SwapWasmResolverApi wasmResolverApi =
           new SwapWasmResolverApi(
@@ -117,14 +118,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
           pollIntervalSeconds,
           pollIntervalSeconds,
           TimeUnit.SECONDS);
-      return new LocalResolverServiceFactory(
-              wasmResolverApi,
-              sidecarFlagsAdminFetcher.stateHolder(),
-              resolveTokenConverter,
-              resolveLogger,
-              assignLogger,
-              enableExposureLogs)
-          .create(clientSecret);
+      return request -> CompletableFuture.completedFuture(wasmResolverApi.resolve(request));
     } else {
       flagsFetcherExecutor.scheduleWithFixedDelay(
           sidecarFlagsAdminFetcher::reload,
@@ -132,81 +126,79 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
           pollIntervalSeconds,
           TimeUnit.SECONDS);
       return new LocalResolverServiceFactory(
-              sidecarFlagsAdminFetcher.stateHolder(),
-              resolveTokenConverter,
-              resolveLogger,
-              assignLogger,
-              enableExposureLogs)
+              sidecarFlagsAdminFetcher.stateHolder(), resolveTokenConverter, flagLogger)
           .create(clientSecret);
     }
   }
 
-  LocalResolverServiceFactory(
-      SwapWasmResolverApi wasmResolveApi,
-      AtomicReference<ResolverState> resolverStateHolder,
-      ResolveTokenConverter resolveTokenConverter,
-      ResolveLogger resolveLogger,
-      AssignLogger assignLogger,
-      boolean enableExposureLogs) {
-    this(
-        wasmResolveApi,
-        resolverStateHolder,
-        resolveTokenConverter,
-        Instant::now,
-        () -> RandomStringUtils.randomAlphanumeric(32),
-        resolveLogger,
-        assignLogger,
-        enableExposureLogs);
+  private static FlagResolverService createFlagResolverService(
+      AccountStateProvider accountStateProvider) {
+    final long pollIntervalSeconds =
+        Optional.ofNullable(System.getenv("CONFIDENCE_RESOLVER_POLL_INTERVAL_SECONDS"))
+            .map(Long::parseLong)
+            .orElse(Duration.ofMinutes(5).toSeconds());
+    final AccountState initialAccountState = accountStateProvider.provide();
+    final AtomicReference<ResolverState> stateHolder =
+        new AtomicReference<>(
+            new ResolverState(
+                Map.of(initialAccountState.account().name(), initialAccountState),
+                initialAccountState.secrets()));
+    final AtomicReference<com.spotify.confidence.shaded.flags.admin.v1.ResolverState>
+        rawStateHolder = new AtomicReference<>(stateHolder.get().toProto());
+    final FlagLogger flagLogger = new NoopFlagLogger();
+    final SwapWasmResolverApi wasmResolverApi =
+        new SwapWasmResolverApi(flagLogger, rawStateHolder.get().toByteArray());
+    flagsFetcherExecutor.scheduleAtFixedRate(
+        () -> {
+          try {
+            final AccountState newAccountState = accountStateProvider.provide();
+            final ResolverState newResolverState =
+                new ResolverState(
+                    Map.of(newAccountState.account().name(), newAccountState),
+                    newAccountState.secrets());
+            stateHolder.set(newResolverState);
+
+            final com.spotify.confidence.shaded.flags.admin.v1.ResolverState newRawState =
+                newResolverState.toProto();
+            rawStateHolder.set(newRawState);
+            wasmResolverApi.updateState(newRawState.toByteArray());
+          } catch (Exception e) {
+            LoggerFactory.getLogger(LocalResolverServiceFactory.class)
+                .warn("Failed to refresh AccountState from provider, ignoring refresh", e);
+          }
+        },
+        pollIntervalSeconds,
+        pollIntervalSeconds,
+        TimeUnit.SECONDS);
+
+    return request -> CompletableFuture.completedFuture(wasmResolverApi.resolve(request));
   }
 
   LocalResolverServiceFactory(
-      SwapWasmResolverApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
-      ResolveLogger resolveLogger,
-      AssignLogger assignLogger) {
-    this(
-        wasmResolveApi,
-        resolverStateHolder,
-        resolveTokenConverter,
-        Instant::now,
-        () -> RandomStringUtils.randomAlphanumeric(32),
-        resolveLogger,
-        assignLogger,
-        true);
-  }
-
-  LocalResolverServiceFactory(
-      AtomicReference<ResolverState> resolverStateHolder,
-      ResolveTokenConverter resolveTokenConverter,
-      ResolveLogger resolveLogger,
-      AssignLogger assignLogger,
-      boolean enableExposureLogs) {
+      FlagLogger flagLogger) {
     this(
         null,
         resolverStateHolder,
         resolveTokenConverter,
         Instant::now,
         () -> RandomStringUtils.randomAlphanumeric(32),
-        resolveLogger,
-        assignLogger,
-        enableExposureLogs);
+        flagLogger);
   }
 
   LocalResolverServiceFactory(
+      SwapWasmResolverApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
-      ResolveLogger resolveLogger,
-      AssignLogger assignLogger) {
+      FlagLogger flagLogger) {
     this(
-        null,
+        wasmResolveApi,
         resolverStateHolder,
         resolveTokenConverter,
         Instant::now,
         () -> RandomStringUtils.randomAlphanumeric(32),
-        resolveLogger,
-        assignLogger,
-        true);
+        flagLogger);
   }
 
   LocalResolverServiceFactory(
@@ -215,17 +207,13 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
       ResolveTokenConverter resolveTokenConverter,
       Supplier<Instant> timeSupplier,
       Supplier<String> resolveIdSupplier,
-      ResolveLogger resolveLogger,
-      AssignLogger assignLogger,
-      boolean enableExposureLogs) {
+      FlagLogger flagLogger) {
     this.wasmResolveApi = wasmResolveApi;
     this.resolverStateHolder = resolverStateHolder;
     this.resolveTokenConverter = resolveTokenConverter;
     this.timeSupplier = timeSupplier;
     this.resolveIdSupplier = resolveIdSupplier;
-    this.resolveLogger = resolveLogger;
-    this.assignLogger = assignLogger;
-    this.enableExposureLogs = enableExposureLogs;
+    this.flagLogger = flagLogger;
   }
 
   @VisibleForTesting
@@ -236,15 +224,11 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   @Override
-  public FlagResolverService create(ClientCredential.ClientSecret clientSecret) {
-    if (wasmResolveApi != null) {
-      return request -> CompletableFuture.completedFuture(wasmResolveApi.resolve(request));
-    }
+  public FlagResolverService create(ClientSecret clientSecret) {
     return createJavaFlagResolverService(clientSecret);
   }
 
-  private FlagResolverService createJavaFlagResolverService(
-      ClientCredential.ClientSecret clientSecret) {
+  private FlagResolverService createJavaFlagResolverService(ClientSecret clientSecret) {
     final ResolverState state = resolverStateHolder.get();
 
     final AccountClient accountClient = state.secrets().get(clientSecret);
@@ -254,8 +238,6 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     }
 
     final AccountState accountState = state.accountStates().get(accountClient.accountName());
-    final var flagLogger = getFlagLogger(resolveLogger, assignLogger, enableExposureLogs);
-
     return new JavaFlagResolverService(
         accountState,
         accountClient,
@@ -265,31 +247,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         resolveIdSupplier);
   }
 
-  private static FlagLogger getFlagLogger(
-      ResolveLogger resolveLogger, AssignLogger assignLogger, boolean enableExposureLogs) {
-    if (!enableExposureLogs) {
-      return new FlagLogger() {
-        @Override
-        public void logResolve(
-            String resolveId,
-            Struct evaluationContext,
-            Sdk sdk,
-            AccountClient accountClient,
-            List<ResolvedValue> values) {
-          // Logging disabled - no-op
-        }
-
-        @Override
-        public void logAssigns(
-            String resolveId,
-            Sdk sdk,
-            List<FlagToApply> flagsToApply,
-            AccountClient accountClient) {
-          // Logging disabled - no-op
-        }
-      };
-    }
-
+  private static FlagLogger getFlagLogger(ResolveLogger resolveLogger, AssignLogger assignLogger) {
     return new FlagLogger() {
       @Override
       public void logResolve(
