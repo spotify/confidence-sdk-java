@@ -21,7 +21,6 @@ import io.grpc.protobuf.services.HealthStatusManager;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -30,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.slf4j.LoggerFactory;
 
 class LocalResolverServiceFactory implements ResolverServiceFactory {
 
@@ -133,39 +131,21 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
   private static FlagResolverService createFlagResolverService(
       AccountStateProvider accountStateProvider) {
+    final var mode = System.getenv("LOCAL_RESOLVE_MODE");
+    if (!(mode == null || mode.equals("WASM"))) {
+      throw new RuntimeException("Only WASM mode supported with AccountStateProvider");
+    }
     final long pollIntervalSeconds =
         Optional.ofNullable(System.getenv("CONFIDENCE_RESOLVER_POLL_INTERVAL_SECONDS"))
             .map(Long::parseLong)
             .orElse(Duration.ofMinutes(5).toSeconds());
-    final AccountState initialAccountState = accountStateProvider.provide();
-    final AtomicReference<ResolverState> stateHolder =
-        new AtomicReference<>(
-            new ResolverState(
-                Map.of(initialAccountState.account().name(), initialAccountState),
-                initialAccountState.secrets()));
-    final AtomicReference<com.spotify.confidence.shaded.flags.admin.v1.ResolverState>
-        rawStateHolder = new AtomicReference<>(stateHolder.get().toProto());
+    final byte[] resolverStateProtobuf = accountStateProvider.provide();
     final FlagLogger flagLogger = new NoopFlagLogger();
     final SwapWasmResolverApi wasmResolverApi =
-        new SwapWasmResolverApi(flagLogger, rawStateHolder.get().toByteArray());
+        new SwapWasmResolverApi(flagLogger, resolverStateProtobuf);
     flagsFetcherExecutor.scheduleAtFixedRate(
         () -> {
-          try {
-            final AccountState newAccountState = accountStateProvider.provide();
-            final ResolverState newResolverState =
-                new ResolverState(
-                    Map.of(newAccountState.account().name(), newAccountState),
-                    newAccountState.secrets());
-            stateHolder.set(newResolverState);
-
-            final com.spotify.confidence.shaded.flags.admin.v1.ResolverState newRawState =
-                newResolverState.toProto();
-            rawStateHolder.set(newRawState);
-            wasmResolverApi.updateState(newRawState.toByteArray());
-          } catch (Exception e) {
-            LoggerFactory.getLogger(LocalResolverServiceFactory.class)
-                .warn("Failed to refresh AccountState from provider, ignoring refresh", e);
-          }
+          wasmResolverApi.updateState(accountStateProvider.provide());
         },
         pollIntervalSeconds,
         pollIntervalSeconds,
