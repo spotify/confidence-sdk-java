@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/spotify/confidence-sdk-java/compare/v0.3.0...v0.3.1) (2025-09-18)
+
+
+### Features
+
+* AccountStateProvider based constructor for WASM testing ([#270](https://github.com/spotify/confidence-sdk-java/issues/270)) ([df31e47](https://github.com/spotify/confidence-sdk-java/commit/df31e473a4b161e2af68d05c4f91a6e2dec5e457))
+
 ## [0.3.0](https://github.com/spotify/confidence-sdk-java/compare/v0.2.7...v0.3.0) (2025-09-17)
 
 
