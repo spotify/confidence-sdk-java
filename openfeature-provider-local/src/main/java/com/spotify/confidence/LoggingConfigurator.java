@@ -4,15 +4,19 @@ import java.lang.reflect.Method;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility class for configuring logging levels based on ProviderOptions.
+ * Utility class for configuring console logging levels based on ProviderOptions.
  *
- * <p>This class provides functionality to configure SLF4J loggers based on the logging level
- * specified in {@link ProviderOptions}. It attempts to configure Logback loggers when available,
- * but gracefully falls back if Logback is not present in the classpath.
+ * <p>This class provides functionality to configure SLF4J loggers based on the console logging
+ * level specified in {@link ProviderOptions}. It attempts to configure Logback loggers when
+ * available, but gracefully falls back if Logback is not present in the classpath.
+ *
+ * <p>This configurator only affects console logging output from the Confidence SDK components. It
+ * does not impact the assign and resolve logs that are sent as network requests to the Confidence
+ * service for telemetry purposes.
  *
  * <p>Note: This configurator currently supports Logback. If you're using a different SLF4J
- * implementation, the logging level configuration may not take effect, but the provider will still
- * function normally.
+ * implementation, the console logging level configuration may not take effect, but the provider
+ * will still function normally.
  *
  * @since 0.2.4
  */
@@ -32,9 +36,9 @@ class LoggingConfigurator {
   }
 
   /**
-   * Configures logging for all Confidence SDK components based on the provided options.
+   * Configures console logging for all Confidence SDK components based on the provided options.
    *
-   * @param options the provider options containing logging configuration
+   * @param options the provider options containing console logging configuration
    */
   static void configureLogging(ProviderOptions options) {
     if (options == null || !logbackAvailable) {
@@ -47,10 +51,10 @@ class LoggingConfigurator {
   }
 
   /**
-   * Configures logging for a specific logger based on the provided options.
+   * Configures console logging for a specific logger based on the provided options.
    *
    * @param loggerName the name of the logger to configure
-   * @param options the provider options containing logging configuration
+   * @param options the provider options containing console logging configuration
    */
   static void configureLogger(String loggerName, ProviderOptions options) {
     if (options == null || loggerName == null || !logbackAvailable) {

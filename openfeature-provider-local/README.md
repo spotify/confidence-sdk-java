@@ -65,17 +65,24 @@ export LOCAL_RESOLVE_MODE=WASM
 export LOCAL_RESOLVE_MODE=JAVA
 ```
 
-### Exposure Logging
+### Console Logging
 
-Enable or disable exposure logging:
+Configure console logging levels using `ProviderOptions`:
 
 ```java
-// Enable exposure logging (default)
-new OpenFeatureLocalResolveProvider(apiSecret, clientSecret, true);
+import com.spotify.confidence.ProviderOptions;
 
-// Disable exposure logging
-new OpenFeatureLocalResolveProvider(apiSecret, clientSecret, false);
+// Default console logging (INFO level - all levels above debug)
+new OpenFeatureLocalResolveProvider(apiSecret, clientSecret);
+
+// Custom console logging level
+ProviderOptions options = ProviderOptions.withLoggingLevel(ProviderOptions.LoggingLevel.DEBUG);
+new OpenFeatureLocalResolveProvider(apiSecret, clientSecret, options);
+
+// Available logging levels: ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
 ```
+
+**Note**: This setting only affects console logging output from the provider and its components. It does not impact the assign and resolve logs that are sent as network requests to the Confidence service for telemetry purposes.
 
 ## Credentials
 

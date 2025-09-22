@@ -4,18 +4,23 @@ package com.spotify.confidence;
  * Configuration options for the OpenFeature local resolve provider.
  *
  * <p>This class provides configuration options that control the behavior of the {@link
- * OpenFeatureLocalResolveProvider}, including logging levels and other provider-specific settings.
+ * OpenFeatureLocalResolveProvider}, including console logging levels and other provider-specific
+ * settings.
  *
  * @since 0.2.4
  */
 public class ProviderOptions {
 
   /**
-   * Enumeration of available logging levels for the provider.
+   * Enumeration of available console logging levels for the provider.
    *
-   * <p>The logging level controls which log messages are output by the provider and its underlying
-   * components. The default level is INFO, which includes all levels above debug (INFO, WARN,
-   * ERROR).
+   * <p>The console logging level controls which log messages are output to the console by the
+   * provider and its underlying components. The default level is INFO, which includes all levels
+   * above debug (INFO, WARN, ERROR).
+   *
+   * <p>Note: This setting only affects console logging output. It does not impact the assign and
+   * resolve logs that are sent as network requests to the Confidence service for telemetry
+   * purposes.
    */
   public enum LoggingLevel {
     /** All logging levels enabled, including TRACE and DEBUG messages */
