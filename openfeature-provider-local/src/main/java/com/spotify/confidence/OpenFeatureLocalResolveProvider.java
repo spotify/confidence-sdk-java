@@ -48,9 +48,14 @@ import org.slf4j.Logger;
  * ApiSecret apiSecret = new ApiSecret("your-client-id", "your-client-secret");
  * String clientSecret = "your-application-client-secret";
  *
- * // Create provider with default settings (exposure logs enabled)
+ * // Create provider with default settings (INFO level logging)
  * OpenFeatureLocalResolveProvider provider =
  *     new OpenFeatureLocalResolveProvider(apiSecret, clientSecret);
+ *
+ * // Or create provider with custom logging level
+ * ProviderOptions options = ProviderOptions.withLoggingLevel(ProviderOptions.LoggingLevel.DEBUG);
+ * OpenFeatureLocalResolveProvider providerWithDebug =
+ *     new OpenFeatureLocalResolveProvider(apiSecret, clientSecret, options);
  *
  * // Register with OpenFeature
  * OpenFeatureAPI.getInstance().setProvider(provider);
@@ -83,9 +88,15 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @param clientSecret the client secret for your application, used for flag resolution
    *     authentication. This is different from the API secret and is specific to your application
    *     configuration
+   * @param options configuration options for the provider, including logging level settings. If
+   *     null, default options will be used (INFO level logging)
    * @since 0.2.4
    */
-  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+  public OpenFeatureLocalResolveProvider(
+      ApiSecret apiSecret, String clientSecret, ProviderOptions options) {
+    // Configure logging based on options
+    LoggingConfigurator.configureLogging(options != null ? options : ProviderOptions.defaults());
+
     final var env = System.getenv("LOCAL_RESOLVE_MODE");
     if (env != null && env.equals("WASM")) {
       this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
@@ -98,9 +109,49 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   }
 
   /**
+   * Creates a new OpenFeature provider for local flag resolution with default options.
+   *
+   * <p>This convenience constructor uses default provider options, which include INFO level logging
+   * (all levels above debug). The provider will automatically determine the resolution mode (WASM
+   * or Java) based on the {@code LOCAL_RESOLVE_MODE} environment variable, defaulting to WASM mode.
+   *
+   * @param apiSecret the API credentials containing client ID and client secret for authenticating
+   *     with the Confidence service. Create using {@code new ApiSecret("client-id",
+   *     "client-secret")}
+   * @param clientSecret the client secret for your application, used for flag resolution
+   *     authentication. This is different from the API secret and is specific to your application
+   *     configuration
+   * @since 0.2.4
+   */
+  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+    this(apiSecret, clientSecret, ProviderOptions.defaults());
+  }
+
+  /**
    * To be used for testing purposes only! This constructor allows to inject flags state for testing
    * the WASM resolver (no Java supported) No resolve/assign logging is forwarded to production No
    * need to supply ApiSecret
+   *
+   * @param accountStateProvider a functional interface that provides AccountState instances
+   * @param clientSecret the flag client key used to filter the flags
+   * @param options configuration options for the provider, including logging level settings. If
+   *     null, default options will be used (INFO level logging)
+   * @since 0.2.4
+   */
+  @VisibleForTesting
+  public OpenFeatureLocalResolveProvider(
+      AccountStateProvider accountStateProvider, String clientSecret, ProviderOptions options) {
+    // Configure logging based on options
+    LoggingConfigurator.configureLogging(options != null ? options : ProviderOptions.defaults());
+
+    this.clientSecret = clientSecret;
+    this.flagResolverService = LocalResolverServiceFactory.from(accountStateProvider);
+  }
+
+  /**
+   * To be used for testing purposes only! This constructor allows to inject flags state for testing
+   * the WASM resolver (no Java supported) No resolve/assign logging is forwarded to production No
+   * need to supply ApiSecret. Uses default provider options.
    *
    * @param accountStateProvider a functional interface that provides AccountState instances
    * @param clientSecret the flag client key used to filter the flags
@@ -109,8 +160,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   @VisibleForTesting
   public OpenFeatureLocalResolveProvider(
       AccountStateProvider accountStateProvider, String clientSecret) {
-    this.clientSecret = clientSecret;
-    this.flagResolverService = LocalResolverServiceFactory.from(accountStateProvider);
+    this(accountStateProvider, clientSecret, ProviderOptions.defaults());
   }
 
   @Override
