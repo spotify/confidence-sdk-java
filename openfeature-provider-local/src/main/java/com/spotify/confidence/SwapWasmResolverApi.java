@@ -2,6 +2,7 @@ package com.spotify.confidence;
 
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.sticky.StickyResolveStrategy;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -11,10 +12,11 @@ class SwapWasmResolverApi {
   private final WasmResolveApi secondaryWasmResolverApi;
   private Boolean isPrimary = true;
 
-  public SwapWasmResolverApi(FlagLogger flagLogger, byte[] initialState) {
-    this.primaryWasmResolverApi = new WasmResolveApi(flagLogger);
+  public SwapWasmResolverApi(
+      FlagLogger flagLogger, byte[] initialState, StickyResolveStrategy stickyResolveStrategy) {
+    this.primaryWasmResolverApi = new WasmResolveApi(flagLogger, stickyResolveStrategy);
     this.primaryWasmResolverApi.setResolverState(initialState);
-    this.secondaryWasmResolverApi = new WasmResolveApi(flagLogger);
+    this.secondaryWasmResolverApi = new WasmResolveApi(flagLogger, stickyResolveStrategy);
     this.secondaryWasmResolverApi.setResolverState(initialState);
     this.wasmResolverApiRef.set(primaryWasmResolverApi);
   }

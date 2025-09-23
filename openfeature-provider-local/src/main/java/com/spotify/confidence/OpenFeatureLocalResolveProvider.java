@@ -5,6 +5,7 @@ import com.google.protobuf.Struct;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
+import com.spotify.confidence.sticky.StickyResolveStrategy;
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FeatureProvider;
 import dev.openfeature.sdk.Metadata;
@@ -85,14 +86,18 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    *     configuration
    * @since 0.2.4
    */
-  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+  public OpenFeatureLocalResolveProvider(
+      ApiSecret apiSecret, String clientSecret, StickyResolveStrategy stickyResolveStrategy) {
     final var env = System.getenv("LOCAL_RESOLVE_MODE");
     if (env != null && env.equals("WASM")) {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, stickyResolveStrategy);
     } else if (env != null && env.equals("JAVA")) {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, false);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, false, stickyResolveStrategy);
     } else {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, stickyResolveStrategy);
     }
     this.clientSecret = clientSecret;
   }

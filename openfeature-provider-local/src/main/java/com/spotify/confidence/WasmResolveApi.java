@@ -22,6 +22,7 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
+import com.spotify.confidence.sticky.StickyResolveStrategy;
 import com.spotify.confidence.wasm.Messages;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,9 +50,11 @@ class WasmResolveApi {
   // api
   private final ExportFunction wasmMsgGuestSetResolverState;
   private final ExportFunction wasmMsgGuestResolve;
+  private final StickyResolveStrategy stickyResolveStrategy;
 
-  public WasmResolveApi(FlagLogger flagLogger) {
+  public WasmResolveApi(FlagLogger flagLogger, StickyResolveStrategy stickyResolveStrategy) {
     this.flagLogger = flagLogger;
+    this.stickyResolveStrategy = stickyResolveStrategy;
     try (InputStream wasmStream =
         getClass().getClassLoader().getResourceAsStream("wasm/confidence_resolver.wasm")) {
       if (wasmStream == null) {
@@ -221,6 +224,7 @@ class WasmResolveApi {
   }
 
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
+    // TODO Handle sticky strategy
     final int reqPtr = transferRequest(request);
     final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
     return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);

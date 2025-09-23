@@ -43,13 +43,15 @@ public class TestBase {
     final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
     if (isWasm) {
       final var wasmResolverApi =
-          new SwapWasmResolverApi(new NoopFlagLogger(), desiredState.toProto().toByteArray());
+          new SwapWasmResolverApi(
+              new NoopFlagLogger(), desiredState.toProto().toByteArray(), stickyResolveStrategy);
       resolverServiceFactory =
           new LocalResolverServiceFactory(
               wasmResolverApi, resolverState, resolveTokenConverter, mock());
     } else {
       resolverServiceFactory =
-          new LocalResolverServiceFactory(resolverState, resolveTokenConverter, mock());
+          new LocalResolverServiceFactory(
+              resolverState, resolveTokenConverter, mock(), stickyResolveStrategy);
     }
   }
 
