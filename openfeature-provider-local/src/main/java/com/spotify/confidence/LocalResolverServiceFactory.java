@@ -14,8 +14,6 @@ import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc.AuthServiceBlockingStub;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential.ClientSecret;
-import com.spotify.confidence.sticky.ResolverFallback;
-import com.spotify.confidence.sticky.StickyResolveStrategy;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
@@ -70,8 +68,11 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     return createFlagResolverService(apiSecret, clientSecret, isWasm, stickyResolveStrategy);
   }
 
-  static FlagResolverService from(AccountStateProvider accountStateProvider, String accountId) {
-    return createFlagResolverService(accountStateProvider, accountId);
+  static FlagResolverService from(
+      AccountStateProvider accountStateProvider,
+      String accountId,
+      StickyResolveStrategy stickyResolveStrategy) {
+    return createFlagResolverService(accountStateProvider, accountId, stickyResolveStrategy);
   }
 
   private static FlagResolverService createFlagResolverService(
@@ -148,7 +149,9 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   private static FlagResolverService createFlagResolverService(
-      AccountStateProvider accountStateProvider, String accountId) {
+      AccountStateProvider accountStateProvider,
+      String accountId,
+      StickyResolveStrategy stickyResolveStrategy) {
     final var mode = System.getenv("LOCAL_RESOLVE_MODE");
     if (!(mode == null || mode.equals("WASM"))) {
       throw new RuntimeException("Only WASM mode supported with AccountStateProvider");
@@ -161,7 +164,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final FlagLogger flagLogger = new NoopFlagLogger();
     final SwapWasmResolverApi wasmResolverApi =
         new SwapWasmResolverApi(
-            flagLogger, resolverStateProtobuf, accountId, (ResolverFallback) request -> null);
+            flagLogger, resolverStateProtobuf, accountId, stickyResolveStrategy);
     flagsFetcherExecutor.scheduleAtFixedRate(
         () -> {
           wasmResolverApi.updateState(accountStateProvider.provide(), accountId);

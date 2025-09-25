@@ -1,4 +1,4 @@
-package com.spotify.confidence.sticky;
+package com.spotify.confidence;
 
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;

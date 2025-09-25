@@ -1,4 +1,4 @@
-package com.spotify.confidence.sticky;
+package com.spotify.confidence;
 
 import java.util.Map;
 import java.util.Optional;

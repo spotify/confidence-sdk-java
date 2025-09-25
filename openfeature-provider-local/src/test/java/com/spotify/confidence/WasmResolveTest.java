@@ -3,6 +3,7 @@ package com.spotify.confidence;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import dev.openfeature.sdk.ImmutableContext;
@@ -19,7 +20,8 @@ public class WasmResolveTest extends ResolveTest {
   public void testAccountStateProviderInterface() {
     final AccountStateProvider customProvider = () -> exampleState.toProto().toByteArray();
     final OpenFeatureLocalResolveProvider localResolveProvider =
-        new OpenFeatureLocalResolveProvider(customProvider, "", TestBase.secret.getSecret());
+        new OpenFeatureLocalResolveProvider(
+            customProvider, "", TestBase.secret.getSecret(), mock());
     final ProviderEvaluation<Value> objectEvaluation =
         localResolveProvider.getObjectEvaluation(
             "flag-1", new Value("error"), new ImmutableContext("user1"));

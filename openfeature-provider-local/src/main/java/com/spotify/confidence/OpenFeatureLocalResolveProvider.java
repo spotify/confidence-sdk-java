@@ -5,7 +5,6 @@ import com.google.protobuf.Struct;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
-import com.spotify.confidence.sticky.StickyResolveStrategy;
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FeatureProvider;
 import dev.openfeature.sdk.Metadata;
@@ -69,6 +68,29 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private static final Logger log =
       org.slf4j.LoggerFactory.getLogger(OpenFeatureLocalResolveProvider.class);
   private final FlagResolverService flagResolverService;
+  private final StickyResolveStrategy stickyResolveStrategy;
+
+  /**
+   * Creates a new OpenFeature provider for local flag resolution with default fallback strategy.
+   *
+   * <p>This constructor uses {@link ConfidenceResolverFallback} as the default sticky resolve
+   * strategy, which provides fallback to the remote Confidence service when the WASM resolver
+   * encounters missing materializations.
+   *
+   * <p>The provider will automatically determine the resolution mode (WASM or Java) based on the
+   * {@code LOCAL_RESOLVE_MODE} environment variable, defaulting to WASM mode.
+   *
+   * @param apiSecret the API credentials containing client ID and client secret for authenticating
+   *     with the Confidence service. Create using {@code new ApiSecret("client-id",
+   *     "client-secret")}
+   * @param clientSecret the client secret for your application, used for flag resolution
+   *     authentication. This is different from the API secret and is specific to your application
+   *     configuration
+   * @since 0.2.4
+   */
+  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+    this(apiSecret, clientSecret, new ConfidenceResolverFallback(apiSecret));
+  }
 
   /**
    * Creates a new OpenFeature provider for local flag resolution with configurable exposure
@@ -84,6 +106,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @param clientSecret the client secret for your application, used for flag resolution
    *     authentication. This is different from the API secret and is specific to your application
    *     configuration
+   * @param stickyResolveStrategy the strategy to use for handling sticky flag resolution
    * @since 0.2.4
    */
   public OpenFeatureLocalResolveProvider(
@@ -99,6 +122,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
       this.flagResolverService =
           LocalResolverServiceFactory.from(apiSecret, clientSecret, true, stickyResolveStrategy);
     }
+    this.stickyResolveStrategy = stickyResolveStrategy;
     this.clientSecret = clientSecret;
   }
 
@@ -113,9 +137,14 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    */
   @VisibleForTesting
   public OpenFeatureLocalResolveProvider(
-      AccountStateProvider accountStateProvider, String accountId, String clientSecret) {
+      AccountStateProvider accountStateProvider,
+      String accountId,
+      String clientSecret,
+      StickyResolveStrategy stickyResolveStrategy) {
+    this.stickyResolveStrategy = stickyResolveStrategy;
     this.clientSecret = clientSecret;
-    this.flagResolverService = LocalResolverServiceFactory.from(accountStateProvider, accountId);
+    this.flagResolverService =
+        LocalResolverServiceFactory.from(accountStateProvider, accountId, stickyResolveStrategy);
   }
 
   @Override
@@ -174,6 +203,12 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
         .errorMessage(objectEvaluation.getErrorMessage())
         .errorCode(objectEvaluation.getErrorCode())
         .build();
+  }
+
+  @Override
+  public void shutdown() {
+    this.stickyResolveStrategy.close();
+    FeatureProvider.super.shutdown();
   }
 
   @Override

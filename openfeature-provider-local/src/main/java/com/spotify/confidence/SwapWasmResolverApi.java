@@ -5,9 +5,6 @@ import com.spotify.confidence.flags.resolver.v1.MissingMaterializationItem;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
-import com.spotify.confidence.sticky.MaterializationRepository;
-import com.spotify.confidence.sticky.ResolverFallback;
-import com.spotify.confidence.sticky.StickyResolveStrategy;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,15 +114,13 @@ class SwapWasmResolverApi {
             // Store assignments for each unit
             updatesByUnit.forEach(
                 (unit, unitUpdates) -> {
-                  final Map<String, com.spotify.confidence.sticky.MaterializationInfo> assignments =
-                      new HashMap<>();
+                  final Map<String, MaterializationInfo> assignments = new HashMap<>();
                   unitUpdates.forEach(
                       update -> {
                         final var ruleToVariant = Map.of(update.getRule(), update.getVariant());
                         assignments.put(
                             update.getWriteMaterialization(),
-                            new com.spotify.confidence.sticky.MaterializationInfo(
-                                true, ruleToVariant));
+                            new MaterializationInfo(true, ruleToVariant));
                       });
 
                   repository

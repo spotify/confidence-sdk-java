@@ -9,7 +9,6 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
-import com.spotify.confidence.sticky.ResolverFallback;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,7 @@ public class TestBase {
               new NoopFlagLogger(),
               desiredState.toProto().toByteArray(),
               "",
-              (ResolverFallback) request -> null);
+              new ConfidenceResolverFallback(new ApiSecret("", "")));
       resolverServiceFactory =
           new LocalResolverServiceFactory(
               wasmResolverApi, resolverState, resolveTokenConverter, mock());
