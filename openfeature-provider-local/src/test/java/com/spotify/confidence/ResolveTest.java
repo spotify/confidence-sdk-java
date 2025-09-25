@@ -64,6 +64,16 @@ abstract class ResolveTest extends TestBase {
                       .setName("MyRule")
                       .setSegment(segmentA)
                       .setEnabled(true)
+                      .setMaterializationSpec(
+                          Flag.Rule.MaterializationSpec.newBuilder()
+                              .setReadMaterialization("read-mat")
+                              .setMode(
+                                  Flag.Rule.MaterializationSpec.MaterializationReadMode.newBuilder()
+                                      .setMaterializationMustMatch(true)
+                                      .setSegmentTargetingCanBeIgnored(false)
+                                      .build())
+                              .setWriteMaterialization("write-mat")
+                              .build())
                       .setAssignmentSpec(
                           Flag.Rule.AssignmentSpec.newBuilder()
                               .setBucketCount(2)

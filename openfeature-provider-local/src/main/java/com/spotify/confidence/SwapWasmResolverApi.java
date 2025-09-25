@@ -62,15 +62,9 @@ class SwapWasmResolverApi {
   public CompletableFuture<ResolveFlagsResponse> resolveWithSticky(
       ResolveWithStickyRequest request) {
     logResolveLock.lock();
-    try {
-      try {
-        return resolveWithStickyInternal(request);
-      } catch (FallbackToOnlineException e) {
-        return e.fallback.resolve(e.request);
-      }
-    } finally {
-      logResolveLock.unlock();
-    }
+    final var response = resolveWithStickyInternal(request);
+    logResolveLock.unlock();
+    return response;
   }
 
   private CompletableFuture<ResolveFlagsResponse> resolveWithStickyInternal(

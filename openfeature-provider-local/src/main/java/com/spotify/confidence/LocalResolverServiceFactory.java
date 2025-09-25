@@ -5,6 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Struct;
 import com.spotify.confidence.TokenHolder.Token;
+import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.shaded.flags.admin.v1.FlagAdminServiceGrpc;
 import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateServiceGrpc;
 import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateServiceGrpc.ResolverStateServiceBlockingStub;
@@ -24,7 +25,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -129,7 +129,12 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
           pollIntervalSeconds,
           pollIntervalSeconds,
           TimeUnit.SECONDS);
-      return request -> CompletableFuture.completedFuture(wasmResolverApi.resolve(request));
+      return request ->
+          wasmResolverApi.resolveWithSticky(
+              ResolveWithStickyRequest.newBuilder()
+                  .setResolveRequest(request)
+                  .setFailFastOnSticky(true)
+                  .build());
     } else {
       flagsFetcherExecutor.scheduleWithFixedDelay(
           sidecarFlagsAdminFetcher::reload,
@@ -165,7 +170,12 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         pollIntervalSeconds,
         TimeUnit.SECONDS);
 
-    return request -> CompletableFuture.completedFuture(wasmResolverApi.resolve(request));
+    return request ->
+        wasmResolverApi.resolveWithSticky(
+            ResolveWithStickyRequest.newBuilder()
+                .setResolveRequest(request)
+                .setFailFastOnSticky(true)
+                .build());
   }
 
   LocalResolverServiceFactory(
@@ -219,6 +229,14 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
   @Override
   public FlagResolverService create(ClientSecret clientSecret) {
+    if (wasmResolveApi != null) {
+      return request ->
+          wasmResolveApi.resolveWithSticky(
+              ResolveWithStickyRequest.newBuilder()
+                  .setResolveRequest(request)
+                  .setFailFastOnSticky(true)
+                  .build());
+    }
     return createJavaFlagResolverService(clientSecret);
   }
 
