@@ -15,6 +15,8 @@ import com.google.protobuf.BytesValue;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
+import com.spotify.confidence.flags.resolver.v1.ResolveFlagResponseResult;
+import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
@@ -22,7 +24,6 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
-import com.spotify.confidence.sticky.StickyResolveStrategy;
 import com.spotify.confidence.wasm.Messages;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,11 +51,10 @@ class WasmResolveApi {
   // api
   private final ExportFunction wasmMsgGuestSetResolverState;
   private final ExportFunction wasmMsgGuestResolve;
-  private final StickyResolveStrategy stickyResolveStrategy;
+  private final ExportFunction wasmMsgGuestResolveWithSticky;
 
-  public WasmResolveApi(FlagLogger flagLogger, StickyResolveStrategy stickyResolveStrategy) {
+  public WasmResolveApi(FlagLogger flagLogger) {
     this.flagLogger = flagLogger;
-    this.stickyResolveStrategy = stickyResolveStrategy;
     try (InputStream wasmStream =
         getClass().getClassLoader().getResourceAsStream("wasm/confidence_resolver.wasm")) {
       if (wasmStream == null) {
@@ -92,6 +92,7 @@ class WasmResolveApi {
       wasmMsgFree = instance.export("wasm_msg_free");
       wasmMsgGuestSetResolverState = instance.export("wasm_msg_guest_set_resolver_state");
       wasmMsgGuestResolve = instance.export("wasm_msg_guest_resolve");
+      wasmMsgGuestResolveWithSticky = instance.export("wasm_msg_guest_resolve_with_sticky");
     } catch (IOException e) {
       throw new RuntimeException("Failed to load WASM module", e);
     }
@@ -223,8 +224,13 @@ class WasmResolveApi {
     consumeResponse(respPtr, Messages.Void::parseFrom);
   }
 
+  public ResolveFlagResponseResult resolveWithSticky(ResolveWithStickyRequest request) {
+    final int reqPtr = transferRequest(request);
+    final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
+    return consumeResponse(respPtr, ResolveFlagResponseResult::parseFrom);
+  }
+
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    // TODO Handle sticky strategy
     final int reqPtr = transferRequest(request);
     final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
     return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);

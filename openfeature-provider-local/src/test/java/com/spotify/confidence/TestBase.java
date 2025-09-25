@@ -9,6 +9,7 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
+import com.spotify.confidence.sticky.ResolverFallback;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
@@ -44,14 +45,16 @@ public class TestBase {
     if (isWasm) {
       final var wasmResolverApi =
           new SwapWasmResolverApi(
-              new NoopFlagLogger(), desiredState.toProto().toByteArray(), stickyResolveStrategy);
+              new NoopFlagLogger(),
+              desiredState.toProto().toByteArray(),
+              (ResolverFallback) request -> null);
       resolverServiceFactory =
           new LocalResolverServiceFactory(
-              wasmResolverApi, resolverState, resolveTokenConverter, mock());
+              wasmResolverApi, resolverState, resolveTokenConverter, mock(), mock());
     } else {
       resolverServiceFactory =
           new LocalResolverServiceFactory(
-              resolverState, resolveTokenConverter, mock(), stickyResolveStrategy);
+              resolverState, resolveTokenConverter, mock(), (ResolverFallback) request -> null);
     }
   }
 
