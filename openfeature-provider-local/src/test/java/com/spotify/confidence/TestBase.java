@@ -47,14 +47,14 @@ public class TestBase {
           new SwapWasmResolverApi(
               new NoopFlagLogger(),
               desiredState.toProto().toByteArray(),
+              "",
               (ResolverFallback) request -> null);
       resolverServiceFactory =
           new LocalResolverServiceFactory(
-              wasmResolverApi, resolverState, resolveTokenConverter, mock(), mock());
+              wasmResolverApi, resolverState, resolveTokenConverter, mock());
     } else {
       resolverServiceFactory =
-          new LocalResolverServiceFactory(
-              resolverState, resolveTokenConverter, mock(), (ResolverFallback) request -> null);
+          new LocalResolverServiceFactory(resolverState, resolveTokenConverter, mock());
     }
   }
 

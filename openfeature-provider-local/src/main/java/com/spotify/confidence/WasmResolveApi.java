@@ -17,6 +17,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
 import com.spotify.confidence.flags.resolver.v1.ResolveFlagResponseResult;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
+import com.spotify.confidence.flags.resolver.v1.SetResolverStateRequest;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
@@ -216,9 +217,17 @@ class WasmResolveApi {
     return Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
   }
 
-  public void setResolverState(byte[] state) {
+  public void setResolverState(byte[] state, String accountId) {
+    final var resolverStateRequest =
+        SetResolverStateRequest.newBuilder()
+            .setState(ByteString.copyFrom(state))
+            .setAccountId(accountId)
+            .build();
     final byte[] request =
-        Messages.Request.newBuilder().setData(ByteString.copyFrom(state)).build().toByteArray();
+        Messages.Request.newBuilder()
+            .setData(ByteString.copyFrom(resolverStateRequest.toByteArray()))
+            .build()
+            .toByteArray();
     final int addr = transfer(request);
     final int respPtr = (int) wasmMsgGuestSetResolverState.apply(addr)[0];
     consumeResponse(respPtr, Messages.Void::parseFrom);

@@ -113,9 +113,9 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    */
   @VisibleForTesting
   public OpenFeatureLocalResolveProvider(
-      AccountStateProvider accountStateProvider, String clientSecret) {
+      AccountStateProvider accountStateProvider, String accountId, String clientSecret) {
     this.clientSecret = clientSecret;
-    this.flagResolverService = LocalResolverServiceFactory.from(accountStateProvider);
+    this.flagResolverService = LocalResolverServiceFactory.from(accountStateProvider, accountId);
   }
 
   @Override

@@ -19,7 +19,7 @@ public class WasmResolveTest extends ResolveTest {
   public void testAccountStateProviderInterface() {
     final AccountStateProvider customProvider = () -> exampleState.toProto().toByteArray();
     final OpenFeatureLocalResolveProvider localResolveProvider =
-        new OpenFeatureLocalResolveProvider(customProvider, TestBase.secret.getSecret());
+        new OpenFeatureLocalResolveProvider(customProvider, "", TestBase.secret.getSecret());
     final ProviderEvaluation<Value> objectEvaluation =
         localResolveProvider.getObjectEvaluation(
             "flag-1", new Value("error"), new ImmutableContext("user1"));

@@ -12,6 +12,10 @@ option java_package = "com.spotify.confidence.flags.resolver.v1";
 option java_multiple_files = true;
 option java_outer_classname = "WasmApiProto";
 
+message SetResolverStateRequest {
+  bytes state = 1;
+  string account_id = 2;
+}
 
 message ResolveWithStickyRequest {
   ResolveFlagsRequest resolve_request = 1;

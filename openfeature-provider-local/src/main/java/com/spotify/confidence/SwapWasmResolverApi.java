@@ -34,21 +34,24 @@ class SwapWasmResolverApi {
   private Boolean isPrimary = true;
 
   public SwapWasmResolverApi(
-      FlagLogger flagLogger, byte[] initialState, StickyResolveStrategy stickyResolveStrategy) {
+      FlagLogger flagLogger,
+      byte[] initialState,
+      String accountId,
+      StickyResolveStrategy stickyResolveStrategy) {
     this.stickyResolveStrategy = stickyResolveStrategy;
     this.primaryWasmResolverApi = new WasmResolveApi(flagLogger);
-    this.primaryWasmResolverApi.setResolverState(initialState);
+    this.primaryWasmResolverApi.setResolverState(initialState, accountId);
     this.secondaryWasmResolverApi = new WasmResolveApi(flagLogger);
-    this.secondaryWasmResolverApi.setResolverState(initialState);
+    this.secondaryWasmResolverApi.setResolverState(initialState, accountId);
     this.wasmResolverApiRef.set(primaryWasmResolverApi);
   }
 
-  public void updateState(byte[] state) {
+  public void updateState(byte[] state, String accountId) {
     if (isPrimary) {
-      this.secondaryWasmResolverApi.setResolverState(state);
+      this.secondaryWasmResolverApi.setResolverState(state, accountId);
       this.wasmResolverApiRef.set(secondaryWasmResolverApi);
     } else {
-      this.primaryWasmResolverApi.setResolverState(state);
+      this.primaryWasmResolverApi.setResolverState(state, accountId);
       this.wasmResolverApiRef.set(primaryWasmResolverApi);
     }
     isPrimary = !isPrimary;
