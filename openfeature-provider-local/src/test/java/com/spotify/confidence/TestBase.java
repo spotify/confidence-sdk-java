@@ -20,6 +20,7 @@ public class TestBase {
   protected static final AtomicReference<ResolverState> resolverState =
       new AtomicReference<>(new ResolverState(Map.of(), Map.of()));
 
+  protected final ResolverFallback mockFallback = mock(ResolverFallback.class);
   protected static final ClientCredential.ClientSecret secret =
       ClientCredential.ClientSecret.newBuilder().setSecret("very-secret").build();
   protected final ResolverState desiredState;
@@ -44,16 +45,14 @@ public class TestBase {
     if (isWasm) {
       final var wasmResolverApi =
           new SwapWasmResolverApi(
-              new NoopFlagLogger(),
-              desiredState.toProto().toByteArray(),
-              "",
-              new ConfidenceResolverFallback(new ApiSecret("", "")));
+              new NoopFlagLogger(), desiredState.toProto().toByteArray(), "", mockFallback);
       resolverServiceFactory =
           new LocalResolverServiceFactory(
-              wasmResolverApi, resolverState, resolveTokenConverter, mock());
+              wasmResolverApi, resolverState, resolveTokenConverter, mock(), mockFallback);
     } else {
       resolverServiceFactory =
-          new LocalResolverServiceFactory(resolverState, resolveTokenConverter, mock());
+          new LocalResolverServiceFactory(
+              resolverState, resolveTokenConverter, mock(), mockFallback);
     }
   }
 

@@ -1,8 +1,7 @@
 package com.spotify.confidence;
 
-import com.spotify.confidence.flags.resolver.v1.MaterializationUpdate;
-import com.spotify.confidence.flags.resolver.v1.MissingMaterializationItem;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
+import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.util.HashMap;
@@ -12,16 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-
-class FallbackToOnlineException extends RuntimeException {
-  final ResolverFallback fallback;
-  final ResolveFlagsRequest request;
-
-  FallbackToOnlineException(ResolverFallback fallback, ResolveFlagsRequest request) {
-    this.fallback = fallback;
-    this.request = request;
-  }
-}
 
 class SwapWasmResolverApi {
   private final AtomicReference<WasmResolveApi> wasmResolverApiRef = new AtomicReference<>();
@@ -103,13 +92,16 @@ class SwapWasmResolverApi {
     }
   }
 
-  private void storeUpdates(List<MaterializationUpdate> updates) {
+  private void storeUpdates(List<ResolveWithStickyResponse.MaterializationUpdate> updates) {
     if (stickyResolveStrategy instanceof MaterializationRepository repository) {
       CompletableFuture.runAsync(
           () -> {
             // Group updates by unit
             final var updatesByUnit =
-                updates.stream().collect(Collectors.groupingBy(MaterializationUpdate::getUnit));
+                updates.stream()
+                    .collect(
+                        Collectors.groupingBy(
+                            ResolveWithStickyResponse.MaterializationUpdate::getUnit));
 
             // Store assignments for each unit
             updatesByUnit.forEach(
@@ -142,7 +134,7 @@ class SwapWasmResolverApi {
 
   private ResolveWithStickyRequest handleMissingMaterializations(
       ResolveWithStickyRequest request,
-      List<MissingMaterializationItem> missingItems,
+      List<ResolveWithStickyResponse.MissingMaterializationItem> missingItems,
       MaterializationRepository repository) {
 
     // Group missing items by unit for efficient loading
@@ -150,9 +142,10 @@ class SwapWasmResolverApi {
         missingItems.stream()
             .collect(
                 Collectors.groupingBy(
-                    MissingMaterializationItem::getUnit,
+                    ResolveWithStickyResponse.MissingMaterializationItem::getUnit,
                     Collectors.toMap(
-                        MissingMaterializationItem::getReadMaterialization,
+                        ResolveWithStickyResponse.MissingMaterializationItem
+                            ::getReadMaterialization,
                         item -> List.of(item.getRule()),
                         (existing, replacement) -> {
                           final var combined = new java.util.ArrayList<>(existing);

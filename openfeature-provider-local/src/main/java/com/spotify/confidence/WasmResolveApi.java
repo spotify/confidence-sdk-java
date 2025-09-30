@@ -15,9 +15,9 @@ import com.google.protobuf.BytesValue;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
-import com.spotify.confidence.flags.resolver.v1.ResolveFlagResponseResult;
+import com.spotify.confidence.flags.resolver.v1.LogMessage;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
-import com.spotify.confidence.flags.resolver.v1.SetResolverStateRequest;
+import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyResponse;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
@@ -76,6 +76,8 @@ class WasmResolveApi {
                           createImportFunction(
                               "current_time", Messages.Void::parseFrom, this::currentTime))
                       .addFunction(
+                          createImportFunction("log_message", LogMessage::parseFrom, this::log))
+                      .addFunction(
                           new ImportFunction(
                               "wasm_msg",
                               "wasm_msg_current_thread_id",
@@ -97,6 +99,11 @@ class WasmResolveApi {
     } catch (IOException e) {
       throw new RuntimeException("Failed to load WASM module", e);
     }
+  }
+
+  private GeneratedMessageV3 log(LogMessage message) {
+    System.out.println(message.getMessage());
+    return Messages.Void.getDefaultInstance();
   }
 
   private GeneratedMessageV3 encryptResolveToken(Types.EncryptionRequest encryptionRequest) {
@@ -219,7 +226,7 @@ class WasmResolveApi {
 
   public void setResolverState(byte[] state, String accountId) {
     final var resolverStateRequest =
-        SetResolverStateRequest.newBuilder()
+        Messages.SetResolverStateRequest.newBuilder()
             .setState(ByteString.copyFrom(state))
             .setAccountId(accountId)
             .build();
@@ -233,10 +240,10 @@ class WasmResolveApi {
     consumeResponse(respPtr, Messages.Void::parseFrom);
   }
 
-  public ResolveFlagResponseResult resolveWithSticky(ResolveWithStickyRequest request) {
+  public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request) {
     final int reqPtr = transferRequest(request);
     final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
-    return consumeResponse(respPtr, ResolveFlagResponseResult::parseFrom);
+    return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
   }
 
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {

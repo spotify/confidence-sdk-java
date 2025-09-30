@@ -45,6 +45,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private static final ScheduledExecutorService flagsFetcherExecutor =
       Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
   private static final Duration RESOLVE_INFO_LOG_INTERVAL = Duration.ofMinutes(1);
+  private final StickyResolveStrategy stickyResolveStrategy;
 
   private static ManagedChannel createConfidenceChannel() {
     final String confidenceDomain =
@@ -130,11 +131,12 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
           pollIntervalSeconds,
           pollIntervalSeconds,
           TimeUnit.SECONDS);
+
       return request ->
           wasmResolverApi.resolveWithSticky(
               ResolveWithStickyRequest.newBuilder()
                   .setResolveRequest(request)
-                  .setFailFastOnSticky(true)
+                  .setFailFastOnSticky(getFailFast(stickyResolveStrategy))
                   .build());
     } else {
       flagsFetcherExecutor.scheduleWithFixedDelay(
@@ -143,9 +145,16 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
           pollIntervalSeconds,
           TimeUnit.SECONDS);
       return new LocalResolverServiceFactory(
-              sidecarFlagsAdminFetcher.stateHolder(), resolveTokenConverter, flagLogger)
+              sidecarFlagsAdminFetcher.stateHolder(),
+              resolveTokenConverter,
+              flagLogger,
+              stickyResolveStrategy)
           .create(clientSecret);
     }
+  }
+
+  private static boolean getFailFast(StickyResolveStrategy stickyResolveStrategy) {
+    return stickyResolveStrategy instanceof ResolverFallback;
   }
 
   private static FlagResolverService createFlagResolverService(
@@ -177,35 +186,39 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         wasmResolverApi.resolveWithSticky(
             ResolveWithStickyRequest.newBuilder()
                 .setResolveRequest(request)
-                .setFailFastOnSticky(true)
+                .setFailFastOnSticky(getFailFast(stickyResolveStrategy))
                 .build());
   }
 
   LocalResolverServiceFactory(
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
-      FlagLogger flagLogger) {
+      FlagLogger flagLogger,
+      StickyResolveStrategy stickyResolveStrategy) {
     this(
         null,
         resolverStateHolder,
         resolveTokenConverter,
         Instant::now,
         () -> RandomStringUtils.randomAlphanumeric(32),
-        flagLogger);
+        flagLogger,
+        stickyResolveStrategy);
   }
 
   LocalResolverServiceFactory(
       SwapWasmResolverApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
-      FlagLogger flagLogger) {
+      FlagLogger flagLogger,
+      StickyResolveStrategy stickyResolveStrategy) {
     this(
         wasmResolveApi,
         resolverStateHolder,
         resolveTokenConverter,
         Instant::now,
         () -> RandomStringUtils.randomAlphanumeric(32),
-        flagLogger);
+        flagLogger,
+        stickyResolveStrategy);
   }
 
   LocalResolverServiceFactory(
@@ -214,13 +227,15 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
       ResolveTokenConverter resolveTokenConverter,
       Supplier<Instant> timeSupplier,
       Supplier<String> resolveIdSupplier,
-      FlagLogger flagLogger) {
+      FlagLogger flagLogger,
+      StickyResolveStrategy stickyResolveStrategy) {
     this.wasmResolveApi = wasmResolveApi;
     this.resolverStateHolder = resolverStateHolder;
     this.resolveTokenConverter = resolveTokenConverter;
     this.timeSupplier = timeSupplier;
     this.resolveIdSupplier = resolveIdSupplier;
     this.flagLogger = flagLogger;
+    this.stickyResolveStrategy = stickyResolveStrategy;
   }
 
   @VisibleForTesting
@@ -237,7 +252,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
           wasmResolveApi.resolveWithSticky(
               ResolveWithStickyRequest.newBuilder()
                   .setResolveRequest(request)
-                  .setFailFastOnSticky(true)
+                  .setFailFastOnSticky(getFailFast(stickyResolveStrategy))
                   .build());
     }
     return createJavaFlagResolverService(clientSecret);
