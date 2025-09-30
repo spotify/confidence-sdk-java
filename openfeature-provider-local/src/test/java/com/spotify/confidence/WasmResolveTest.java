@@ -9,10 +9,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.protobuf.util.Structs;
+import com.google.protobuf.util.Values;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
+import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import dev.openfeature.sdk.ImmutableContext;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.Value;
@@ -70,7 +73,17 @@ public class WasmResolveTest extends ResolveTest {
             .addResolvedFlags(
                 ResolvedFlag.newBuilder()
                     .setFlag("flags/flag-1")
+                    .setFlagSchema(
+                        FlagSchema.StructFlagSchema.newBuilder()
+                            .putSchema(
+                                "data",
+                                FlagSchema.newBuilder()
+                                    .setStringSchema(
+                                        FlagSchema.StringFlagSchema.newBuilder().build())
+                                    .build())
+                            .build())
                     .setVariant("flags/flag-1/variants/onnn")
+                    .setValue(Structs.of("data", Values.of("on")))
                     .setReason(ResolveReason.RESOLVE_REASON_MATCH)
                     .build())
             .setResolveId("fallback-resolve-id")
@@ -94,6 +107,8 @@ public class WasmResolveTest extends ResolveTest {
     assertEquals("flags/flag-1/variants/onnn", evaluation.getVariant());
     assertEquals(ResolveReason.RESOLVE_REASON_MATCH.toString(), evaluation.getReason());
     assertTrue(evaluation.getValue().isStructure());
+    final var structure = evaluation.getValue().asStructure();
+    assertEquals("on", structure.getValue("data").asString());
   }
 
   @Test
