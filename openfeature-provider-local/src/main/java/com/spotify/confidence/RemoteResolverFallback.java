@@ -9,11 +9,11 @@ import java.util.concurrent.CompletableFuture;
  * A fallback resolver strategy that uses gRPC to resolve flags when the WASM resolver encounters
  * missing materializations. This provides a fallback to the remote Confidence service.
  */
-final class ConfidenceResolverFallback implements ResolverFallback, StickyResolveStrategy {
+final class RemoteResolverFallback implements ResolverFallback, StickyResolveStrategy {
   private final ConfidenceGrpcFlagResolver grpcFlagResolver;
 
-  ConfidenceResolverFallback(ApiSecret apiSecret) {
-    this.grpcFlagResolver = new ConfidenceGrpcFlagResolver(apiSecret);
+  RemoteResolverFallback() {
+    this.grpcFlagResolver = new ConfidenceGrpcFlagResolver();
   }
 
   @Override

@@ -7,9 +7,6 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk.Builder;
 import com.spotify.confidence.shaded.flags.resolver.v1.SdkId;
-import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
-import io.grpc.Channel;
-import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.time.Duration;
@@ -29,7 +26,7 @@ public class ConfidenceGrpcFlagResolver {
 
   private final FlagResolverServiceGrpc.FlagResolverServiceFutureStub stub;
 
-  public ConfidenceGrpcFlagResolver(ApiSecret apiSecret) {
+  public ConfidenceGrpcFlagResolver() {
     final String confidenceDomain =
         Optional.ofNullable(System.getenv("CONFIDENCE_DOMAIN")).orElse("edge-grpc.spotify.com");
     final boolean useGrpcPlaintext =
@@ -44,15 +41,9 @@ public class ConfidenceGrpcFlagResolver {
 
     final ManagedChannel channel =
         builder.intercept(new DefaultDeadlineClientInterceptor(Duration.ofMinutes(1))).build();
-    final AuthServiceGrpc.AuthServiceBlockingStub authService =
-        AuthServiceGrpc.newBlockingStub(channel);
-    final TokenHolder tokenHolder =
-        new TokenHolder(apiSecret.clientId(), apiSecret.clientSecret(), authService);
-    final Channel authenticatedChannel =
-        ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
 
     this.channel = channel;
-    this.stub = FlagResolverServiceGrpc.newFutureStub(authenticatedChannel);
+    this.stub = FlagResolverServiceGrpc.newFutureStub(channel);
   }
 
   public CompletableFuture<ResolveFlagsResponse> resolve(

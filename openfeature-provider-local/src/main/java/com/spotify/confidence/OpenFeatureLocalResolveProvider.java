@@ -73,9 +73,9 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   /**
    * Creates a new OpenFeature provider for local flag resolution with default fallback strategy.
    *
-   * <p>This constructor uses {@link ConfidenceResolverFallback} as the default sticky resolve
-   * strategy, which provides fallback to the remote Confidence service when the WASM resolver
-   * encounters missing materializations.
+   * <p>This constructor uses {@link RemoteResolverFallback} as the default sticky resolve strategy,
+   * which provides fallback to the remote Confidence service when the WASM resolver encounters
+   * missing materializations.
    *
    * <p>The provider will automatically determine the resolution mode (WASM or Java) based on the
    * {@code LOCAL_RESOLVE_MODE} environment variable, defaulting to WASM mode.
@@ -89,7 +89,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @since 0.2.4
    */
   public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
-    this(apiSecret, clientSecret, new ConfidenceResolverFallback(apiSecret));
+    this(apiSecret, clientSecret, new RemoteResolverFallback());
   }
 
   /**

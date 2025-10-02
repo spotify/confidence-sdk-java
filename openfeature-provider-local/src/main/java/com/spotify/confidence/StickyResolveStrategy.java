@@ -1,6 +1,6 @@
 package com.spotify.confidence;
 
 public sealed interface StickyResolveStrategy
-    permits MaterializationRepository, ResolverFallback, ConfidenceResolverFallback {
+    permits MaterializationRepository, ResolverFallback, RemoteResolverFallback {
   void close();
 }
