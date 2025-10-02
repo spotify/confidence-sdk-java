@@ -166,7 +166,9 @@ class WasmResolveApi {
   }
 
   private void flushLogs() {
-    final var respPtr = (int) wasmMsgFlushLogs.apply()[0];
+    final var voidRequest = Messages.Void.getDefaultInstance();
+    final var reqPtr = transferRequest(voidRequest);
+    final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];
     final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
     final var ignore = writeFlagLogs.write(request);
   }

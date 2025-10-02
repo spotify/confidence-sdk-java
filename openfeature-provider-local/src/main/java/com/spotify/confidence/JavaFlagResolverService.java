@@ -62,7 +62,6 @@ record JavaFlagResolverService(
                 responseBuilder.setResolveToken(resolveToken);
               }
               try {
-                // We always send a FlagResolved event, even if no flags were resolved, for billing
                 flagLogger.logResolve(
                     resolveId,
                     resolver.getEvaluationContext(),
@@ -70,7 +69,7 @@ record JavaFlagResolverService(
                     resolver.getClient(),
                     resolvedValues);
               } catch (Exception ex) {
-                logger.warn("Could not send to pubsub", ex);
+                logger.warn("Could not send the log resolve", ex);
               }
               return responseBuilder.build();
             });
