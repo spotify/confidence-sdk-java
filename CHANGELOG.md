@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/spotify/confidence-sdk-java/compare/v0.3.1...v0.4.0) (2025-10-02)
+
+
+### Features
+
+* Add resolve sticky assignments strategy api to the local resolve provider ([#277](https://github.com/spotify/confidence-sdk-java/issues/277)) ([50e4846](https://github.com/spotify/confidence-sdk-java/commit/50e48468b808ef0bfbd0151e0e3aec1c5e68b608))
+
 ## [0.3.1](https://github.com/spotify/confidence-sdk-java/compare/v0.3.0...v0.3.1) (2025-09-18)
 
 
