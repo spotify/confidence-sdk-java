@@ -43,6 +43,11 @@ class SwapWasmResolverApi {
     isPrimary = !isPrimary;
   }
 
+  public void close() {
+    primaryWasmResolverApi.close();
+    secondaryWasmResolverApi.close();
+  }
+
   private final ReentrantLock logResolveLock = new ReentrantLock();
 
   public CompletableFuture<ResolveFlagsResponse> resolveWithSticky(

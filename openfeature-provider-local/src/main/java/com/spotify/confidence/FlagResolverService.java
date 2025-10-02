@@ -6,4 +6,6 @@ import java.util.concurrent.CompletableFuture;
 
 interface FlagResolverService {
   CompletableFuture<ResolveFlagsResponse> resolveFlags(ResolveFlagsRequest request);
+
+  void close();
 }

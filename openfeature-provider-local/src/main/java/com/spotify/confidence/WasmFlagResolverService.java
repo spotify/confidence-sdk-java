@@ -20,4 +20,8 @@ record WasmFlagResolverService(
   private static boolean getFailFast(StickyResolveStrategy stickyResolveStrategy) {
     return stickyResolveStrategy instanceof ResolverFallback;
   }
+
+  public void close() {
+    wasmResolveApi.close();
+  }
 }

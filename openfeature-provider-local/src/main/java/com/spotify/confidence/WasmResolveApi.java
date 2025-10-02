@@ -145,6 +145,10 @@ class WasmResolveApi {
     return Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
   }
 
+  public void close() {
+    logPollExecutor.shutdownNow();
+  }
+
   public void setResolverState(byte[] state, String accountId) {
     final var resolverStateRequest =
         Messages.SetResolverStateRequest.newBuilder()

@@ -64,6 +64,18 @@
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
     </dependency>
+      <!-- gRPC dependencies for HTTP client -->
+      <dependency>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-netty-shaded</artifactId>
+          <exclusions>
+              <exclusion>
+                  <groupId>com.google.guava</groupId>
+                  <artifactId>guava</artifactId>
+              </exclusion>
+          </exclusions>
+      </dependency>
+
       <dependency>
           <groupId>io.grpc</groupId>
           <artifactId>grpc-stub</artifactId>

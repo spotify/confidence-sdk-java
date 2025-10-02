@@ -82,6 +82,9 @@ record JavaFlagResolverService(
         .toList();
   }
 
+  @Override
+  public void close() {}
+
   private ResolvedFlag toResolvedFlag(ResolvedValue resolvedValue) {
     final var builder =
         ResolvedFlag.newBuilder()

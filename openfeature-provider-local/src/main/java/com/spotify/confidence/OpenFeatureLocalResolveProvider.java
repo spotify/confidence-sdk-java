@@ -208,6 +208,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   @Override
   public void shutdown() {
     this.stickyResolveStrategy.close();
+    this.flagResolverService.close();
     FeatureProvider.super.shutdown();
   }
 
