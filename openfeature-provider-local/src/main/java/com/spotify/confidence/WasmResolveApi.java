@@ -10,6 +10,7 @@ import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
 import com.dylibso.chicory.wasm.types.FunctionType;
 import com.dylibso.chicory.wasm.types.ValType;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.GeneratedMessageV3;
@@ -18,25 +19,28 @@ import com.google.protobuf.Timestamp;
 import com.spotify.confidence.flags.resolver.v1.LogMessage;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyResponse;
-import com.spotify.confidence.shaded.flags.admin.v1.Flag;
-import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
-import com.spotify.confidence.shaded.flags.resolver.v1.ResolveTokenV1;
-import com.spotify.confidence.shaded.iam.v1.Client;
-import com.spotify.confidence.shaded.iam.v1.ClientCredential;
+import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
+import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsResponse;
 import com.spotify.confidence.wasm.Messages;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import rust_guest.Types;
+
+@FunctionalInterface
+interface WasmFlagLogger {
+  WriteFlagLogsResponse write(WriteFlagLogsRequest request);
+}
 
 class WasmResolveApi {
 
@@ -47,15 +51,20 @@ class WasmResolveApi {
   // interop
   private final ExportFunction wasmMsgAlloc;
   private final ExportFunction wasmMsgFree;
-  private final FlagLogger flagLogger;
+  private final WasmFlagLogger writeFlagLogs;
 
   // api
   private final ExportFunction wasmMsgGuestSetResolverState;
+  private final ExportFunction wasmMsgFlushLogs;
   private final ExportFunction wasmMsgGuestResolve;
+  private static final ScheduledExecutorService logPollExecutor =
+      Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
   private final ExportFunction wasmMsgGuestResolveWithSticky;
 
-  public WasmResolveApi(FlagLogger flagLogger) {
-    this.flagLogger = flagLogger;
+  public WasmResolveApi(WasmFlagLogger flagLogger) {
+    this.writeFlagLogs = flagLogger;
+    logPollExecutor.scheduleAtFixedRate(
+        this::flushLogs, 10, 10, java.util.concurrent.TimeUnit.SECONDS);
     try (InputStream wasmStream =
         getClass().getClassLoader().getResourceAsStream("wasm/confidence_resolver.wasm")) {
       if (wasmStream == null) {
@@ -66,12 +75,6 @@ class WasmResolveApi {
           Instance.builder(module)
               .withImportValues(
                   ImportValues.builder()
-                      .addFunction(
-                          createImportFunction(
-                              "log_resolve", Types.LogResolveRequest::parseFrom, this::logResolve))
-                      .addFunction(
-                          createImportFunction(
-                              "log_assign", Types.LogAssignRequest::parseFrom, this::logAssign))
                       .addFunction(
                           createImportFunction(
                               "current_time", Messages.Void::parseFrom, this::currentTime))
@@ -94,6 +97,7 @@ class WasmResolveApi {
       wasmMsgAlloc = instance.export("wasm_msg_alloc");
       wasmMsgFree = instance.export("wasm_msg_free");
       wasmMsgGuestSetResolverState = instance.export("wasm_msg_guest_set_resolver_state");
+      wasmMsgFlushLogs = instance.export("wasm_msg_guest_flush_logs");
       wasmMsgGuestResolve = instance.export("wasm_msg_guest_resolve");
       wasmMsgGuestResolveWithSticky = instance.export("wasm_msg_guest_resolve_with_sticky");
     } catch (IOException e) {
@@ -137,89 +141,6 @@ class WasmResolveApi {
     return new long[] {0};
   }
 
-  private GeneratedMessageV3 logAssign(Types.LogAssignRequest logAssignRequest) {
-    flagLogger.logAssigns(
-        logAssignRequest.getResolveId(),
-        logAssignRequest.getSdk(),
-        logAssignRequest.getAssignedFlagsList().stream()
-            .map(
-                f ->
-                    new FlagToApply(
-                        Instant.ofEpochSecond(f.getSkewAdjustedAppliedTime().getSeconds()),
-                        convertAssignedFlag(f.getAssignedFlags())))
-            .toList(),
-        new AccountClient(
-            logAssignRequest.getClient().getAccount().getName(),
-            Client.newBuilder().setName(logAssignRequest.getClient().getClientName()).build(),
-            ClientCredential.newBuilder()
-                .setName(logAssignRequest.getClient().getClientCredentialName())
-                .build()));
-    return Messages.Void.getDefaultInstance();
-  }
-
-  private ResolveTokenV1.AssignedFlag convertAssignedFlag(Types.AssignedFlag assignedFlag) {
-    return ResolveTokenV1.AssignedFlag.newBuilder()
-        .setSegment(assignedFlag.getSegment())
-        .setAssignmentId(assignedFlag.getAssignmentId())
-        .setFlag(assignedFlag.getFlag())
-        .setTargetingKeySelector(assignedFlag.getTargetingKeySelector())
-        .setTargetingKey(assignedFlag.getTargetingKey())
-        .setRule(assignedFlag.getRule())
-        .setReason(assignedFlag.getReason())
-        .addAllFallthroughAssignments(assignedFlag.getFallthroughAssignmentsList())
-        .setVariant(assignedFlag.getVariant())
-        .build();
-  }
-
-  private GeneratedMessageV3 logResolve(Types.LogResolveRequest logResolveRequest) {
-    flagLogger.logResolve(
-        logResolveRequest.getResolveId(),
-        logResolveRequest.getEvaluationContext(),
-        logResolveRequest.getSdk(),
-        new AccountClient(
-            logResolveRequest.getClient().getAccount().getName(),
-            Client.newBuilder().setName(logResolveRequest.getClient().getClientName()).build(),
-            ClientCredential.newBuilder()
-                .setName(logResolveRequest.getClient().getClientCredentialName())
-                .build()),
-        logResolveRequest.getValueList().stream()
-            .map(
-                v ->
-                    new ResolvedValue(
-                        Flag.newBuilder().setName(v.getFlag().getName()).build(),
-                        v.getReason(),
-                        Optional.of(convertAssignmentMatch(v.getAssignmentMatch())),
-                        convertFallthroughRules(v.getFallthroughRulesList())))
-            .toList());
-    return Messages.Void.getDefaultInstance();
-  }
-
-  private List<FallthroughRule> convertFallthroughRules(
-      List<Types.FallthroughRule> fallthroughRulesList) {
-    return fallthroughRulesList.stream()
-        .map(
-            rule ->
-                new FallthroughRule(
-                    Flag.Rule.newBuilder().setName(rule.getName()).build(),
-                    rule.getAssignmentId(),
-                    rule.getTargetingKey()))
-        .toList();
-  }
-
-  private AssignmentMatch convertAssignmentMatch(Types.AssignmentMatch assignmentMatch) {
-    return new AssignmentMatch(
-        assignmentMatch.getAssignmentId(),
-        assignmentMatch.getTargetingKey(),
-        convertVariant(assignmentMatch.getVariant()),
-        Optional.of(assignmentMatch.getVariant().getValue()),
-        Segment.newBuilder().setName(assignmentMatch.getSegment()).build(),
-        Flag.Rule.newBuilder().setName(assignmentMatch.getMatchedRule().getName()).build());
-  }
-
-  private Optional<String> convertVariant(Types.Variant variant) {
-    return Optional.of(variant.getName());
-  }
-
   private Timestamp currentTime(Messages.Void unused) {
     return Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
   }
@@ -238,6 +159,12 @@ class WasmResolveApi {
     final int addr = transfer(request);
     final int respPtr = (int) wasmMsgGuestSetResolverState.apply(addr)[0];
     consumeResponse(respPtr, Messages.Void::parseFrom);
+  }
+
+  private void flushLogs() {
+    final var respPtr = (int) wasmMsgFlushLogs.apply()[0];
+    final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
+    final var ignore = writeFlagLogs.write(request);
   }
 
   public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request) {

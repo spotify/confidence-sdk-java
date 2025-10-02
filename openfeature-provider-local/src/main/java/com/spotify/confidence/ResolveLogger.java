@@ -1,6 +1,7 @@
 package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
+import com.spotify.confidence.shaded.flags.admin.v1.ClientResolveInfo;
 import com.spotify.confidence.shaded.flags.admin.v1.FlagAdminServiceGrpc;
 import com.spotify.confidence.shaded.flags.admin.v1.WriteResolveInfoRequest;
 import java.io.Closeable;
@@ -73,14 +74,14 @@ class ResolveLogger implements Closeable {
                       state.clientResolveInfo().entrySet().stream()
                           .map(
                               entry ->
-                                  WriteResolveInfoRequest.ClientResolveInfo.newBuilder()
+                                  ClientResolveInfo.newBuilder()
                                       .setClient(extractClient(entry.getKey()))
                                       .setClientCredential(entry.getKey())
                                       .addAllSchema(
                                           entry.getValue().schemas().stream()
                                               .map(
                                                   s ->
-                                                      WriteResolveInfoRequest.ClientResolveInfo
+                                                      ClientResolveInfo
                                                           .EvaluationContextSchemaInstance
                                                           .newBuilder()
                                                           .putAllSchema(s.fields())
@@ -93,14 +94,16 @@ class ResolveLogger implements Closeable {
                       state.flagResolveInfo().entrySet().stream()
                           .map(
                               entry ->
-                                  WriteResolveInfoRequest.FlagResolveInfo.newBuilder()
+                                  com.spotify.confidence.shaded.flags.admin.v1.FlagResolveInfo
+                                      .newBuilder()
                                       .setFlag(entry.getKey())
                                       .addAllRuleResolveInfo(
                                           entry.getValue().ruleResolveInfo().entrySet().stream()
                                               .map(
                                                   ruleInfo ->
-                                                      WriteResolveInfoRequest.FlagResolveInfo
-                                                          .RuleResolveInfo.newBuilder()
+                                                      com.spotify.confidence.shaded.flags.admin.v1
+                                                          .FlagResolveInfo.RuleResolveInfo
+                                                          .newBuilder()
                                                           .setRule(ruleInfo.getKey())
                                                           .setCount(
                                                               ruleInfo.getValue().count().get())
@@ -112,7 +115,8 @@ class ResolveLogger implements Closeable {
                                                                   .stream()
                                                                   .map(
                                                                       assignmentEntry ->
-                                                                          WriteResolveInfoRequest
+                                                                          com.spotify.confidence
+                                                                              .shaded.flags.admin.v1
                                                                               .FlagResolveInfo
                                                                               .AssignmentResolveInfo
                                                                               .newBuilder()
@@ -131,8 +135,9 @@ class ResolveLogger implements Closeable {
                                           entry.getValue().variantResolveInfo().entrySet().stream()
                                               .map(
                                                   variantInfo ->
-                                                      WriteResolveInfoRequest.FlagResolveInfo
-                                                          .VariantResolveInfo.newBuilder()
+                                                      com.spotify.confidence.shaded.flags.admin.v1
+                                                          .FlagResolveInfo.VariantResolveInfo
+                                                          .newBuilder()
                                                           .setVariant(variantInfo.getKey())
                                                           .setCount(
                                                               variantInfo.getValue().count().get())

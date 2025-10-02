@@ -5,12 +5,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Struct;
 import com.spotify.confidence.TokenHolder.Token;
-import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.shaded.flags.admin.v1.FlagAdminServiceGrpc;
 import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateServiceGrpc;
 import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateServiceGrpc.ResolverStateServiceBlockingStub;
 import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
+import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsResponse;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc.AuthServiceBlockingStub;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential.ClientSecret;
@@ -88,11 +88,6 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final Token token = tokenHolder.getToken();
     final Channel authenticatedChannel =
         ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
-    final var flagLoggerStub = InternalFlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
-    final long assignLogCapacity =
-        Optional.ofNullable(System.getenv("CONFIDENCE_ASSIGN_LOG_CAPACITY"))
-            .map(Long::parseLong)
-            .orElseGet(() -> (long) (Runtime.getRuntime().maxMemory() / 3.0));
     final ResolverStateServiceBlockingStub resolverStateService =
         ResolverStateServiceGrpc.newBlockingStub(authenticatedChannel);
     final HealthStatusManager healthStatusManager = new HealthStatusManager();
@@ -107,17 +102,11 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
     sidecarFlagsAdminFetcher.reload();
 
-    final var flagsAdminStub = FlagAdminServiceGrpc.newBlockingStub(authenticatedChannel);
-    final AssignLogger assignLogger =
-        AssignLogger.createStarted(
-            flagLoggerStub, ASSIGN_LOG_INTERVAL, metricRegistry, assignLogCapacity);
-    final ResolveLogger resolveLogger =
-        ResolveLogger.createStarted(() -> flagsAdminStub, RESOLVE_INFO_LOG_INTERVAL);
-    final var flagLogger = getFlagLogger(resolveLogger, assignLogger);
+    final var wasmFlagLogger = new GrpcWasmFlagLogger(apiSecret);
     if (isWasm) {
       final SwapWasmResolverApi wasmResolverApi =
           new SwapWasmResolverApi(
-              flagLogger,
+              wasmFlagLogger,
               sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray(),
               sidecarFlagsAdminFetcher.accountId,
               stickyResolveStrategy);
@@ -132,18 +121,29 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
           pollIntervalSeconds,
           TimeUnit.SECONDS);
 
-      return request ->
-          wasmResolverApi.resolveWithSticky(
-              ResolveWithStickyRequest.newBuilder()
-                  .setResolveRequest(request)
-                  .setFailFastOnSticky(getFailFast(stickyResolveStrategy))
-                  .build());
+      return new WasmFlagResolverService(wasmResolverApi, stickyResolveStrategy);
     } else {
       flagsFetcherExecutor.scheduleWithFixedDelay(
           sidecarFlagsAdminFetcher::reload,
           pollIntervalSeconds,
           pollIntervalSeconds,
           TimeUnit.SECONDS);
+      // create java native local resolver
+      final var flagLoggerStub =
+          InternalFlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
+      final long assignLogCapacity =
+          Optional.ofNullable(System.getenv("CONFIDENCE_ASSIGN_LOG_CAPACITY"))
+              .map(Long::parseLong)
+              .orElseGet(() -> (long) (Runtime.getRuntime().maxMemory() / 3.0));
+
+      final var flagsAdminStub = FlagAdminServiceGrpc.newBlockingStub(authenticatedChannel);
+      final AssignLogger assignLogger =
+          AssignLogger.createStarted(
+              flagLoggerStub, ASSIGN_LOG_INTERVAL, metricRegistry, assignLogCapacity);
+      final ResolveLogger resolveLogger =
+          ResolveLogger.createStarted(() -> flagsAdminStub, RESOLVE_INFO_LOG_INTERVAL);
+      final var flagLogger = getFlagLogger(resolveLogger, assignLogger);
+
       return new LocalResolverServiceFactory(
               sidecarFlagsAdminFetcher.stateHolder(),
               resolveTokenConverter,
@@ -170,7 +170,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
             .map(Long::parseLong)
             .orElse(Duration.ofMinutes(5).toSeconds());
     final byte[] resolverStateProtobuf = accountStateProvider.provide();
-    final FlagLogger flagLogger = new NoopFlagLogger();
+    final WasmFlagLogger flagLogger = request -> WriteFlagLogsResponse.getDefaultInstance();
     final SwapWasmResolverApi wasmResolverApi =
         new SwapWasmResolverApi(
             flagLogger, resolverStateProtobuf, accountId, stickyResolveStrategy);
@@ -182,12 +182,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         pollIntervalSeconds,
         TimeUnit.SECONDS);
 
-    return request ->
-        wasmResolverApi.resolveWithSticky(
-            ResolveWithStickyRequest.newBuilder()
-                .setResolveRequest(request)
-                .setFailFastOnSticky(getFailFast(stickyResolveStrategy))
-                .build());
+    return new WasmFlagResolverService(wasmResolverApi, stickyResolveStrategy);
   }
 
   LocalResolverServiceFactory(
@@ -248,12 +243,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   @Override
   public FlagResolverService create(ClientSecret clientSecret) {
     if (wasmResolveApi != null) {
-      return request ->
-          wasmResolveApi.resolveWithSticky(
-              ResolveWithStickyRequest.newBuilder()
-                  .setResolveRequest(request)
-                  .setFailFastOnSticky(getFailFast(stickyResolveStrategy))
-                  .build());
+      return new WasmFlagResolverService(wasmResolveApi, stickyResolveStrategy);
     }
     return createJavaFlagResolverService(clientSecret);
   }
@@ -263,8 +253,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
     final AccountClient accountClient = state.secrets().get(clientSecret);
     if (accountClient == null) {
-      throw new UnauthenticatedException(
-          "Resolver state not set or client secret could not be found");
+      throw new UnauthenticatedException("client secret not found");
     }
 
     final AccountState accountState = state.accountStates().get(accountClient.accountName());

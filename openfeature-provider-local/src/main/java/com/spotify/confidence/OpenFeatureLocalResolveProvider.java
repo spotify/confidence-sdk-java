@@ -229,19 +229,16 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
     try {
       final String requestFlagName = "flags/" + flagPath.getFlag();
 
-      resolveFlagResponse =
-          flagResolverService
-              .resolveFlags(
-                  ResolveFlagsRequest.newBuilder()
-                      .addFlags(requestFlagName)
-                      .setApply(true)
-                      .setClientSecret(clientSecret)
-                      .setEvaluationContext(
-                          Struct.newBuilder()
-                              .putAllFields(evaluationContext.getFieldsMap())
-                              .build())
-                      .build())
-              .get();
+      final var req =
+          ResolveFlagsRequest.newBuilder()
+              .addFlags(requestFlagName)
+              .setApply(true)
+              .setClientSecret(clientSecret)
+              .setEvaluationContext(
+                  Struct.newBuilder().putAllFields(evaluationContext.getFieldsMap()).build())
+              .build();
+
+      resolveFlagResponse = flagResolverService.resolveFlags(req).get();
 
       if (resolveFlagResponse.getResolvedFlagsList().isEmpty()) {
         log.warn("No active flag '{}' was found", flagPath.getFlag());

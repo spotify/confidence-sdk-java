@@ -65,77 +65,78 @@ message WriteResolveInfoRequest {
   // Information about how flags were resolved
   repeated FlagResolveInfo flag_resolve_info = 2;
 
-  // Information about how a single flag has been resolved
-  message FlagResolveInfo {
-    // The flag the info is about
-    string flag = 1 [
-      (google.api.resource_reference).type = "flags.confidence.dev/Flag",
-      (google.api.field_behavior) = REQUIRED
+  // Information about how a client resolved
+}
+
+// Information about how a single flag has been resolved
+message FlagResolveInfo {
+  // The flag the info is about
+  string flag = 1 [
+    (google.api.resource_reference).type = "flags.confidence.dev/Flag",
+    (google.api.field_behavior) = REQUIRED
+  ];
+  // Information about how variants were resolved.
+  repeated VariantResolveInfo variant_resolve_info = 2;
+  // Information about how rules were resolved.
+  repeated RuleResolveInfo rule_resolve_info = 3;
+
+  // Information about how a variant was resolved.
+  message VariantResolveInfo {
+    // If there was a variant assigned, otherwise not set
+    string variant = 1  [
+      (google.api.resource_reference).type = "flags.confidence.dev/Variant",
+      (google.api.field_behavior) = OPTIONAL
     ];
-    // Information about how variants were resolved.
-    repeated VariantResolveInfo variant_resolve_info = 2;
-    // Information about how rules were resolved.
-    repeated RuleResolveInfo rule_resolve_info = 3;
-
-    // Information about how a variant was resolved.
-    message VariantResolveInfo {
-      // If there was a variant assigned, otherwise not set
-      string variant = 1  [
-        (google.api.resource_reference).type = "flags.confidence.dev/Variant",
-        (google.api.field_behavior) = OPTIONAL
-      ];
-      // Number of times the variant was resolved in this period
-      int64 count = 3 [(google.api.field_behavior) = REQUIRED];
-    }
-
-    // Information about how a rule was resolved.
-    message RuleResolveInfo {
-      // The rule that was resolved
-      string rule = 1  [
-        (google.api.resource_reference).type = "flags.confidence.dev/Rule",
-        (google.api.field_behavior) = REQUIRED
-      ];
-      // Number of times the rule was resolved in this period
-      int64 count = 2 [(google.api.field_behavior) = REQUIRED];
-
-      // Resolve counts on each assignment
-      repeated AssignmentResolveInfo assignment_resolve_info = 3 [(google.api.field_behavior) = OPTIONAL];
-    }
-
-    // Information about the assignment that was resolved.
-    message AssignmentResolveInfo {
-      // The assignment id of the resolved value, otherwise not set.
-      string assignment_id = 1 [(google.api.field_behavior) = OPTIONAL];
-
-      // Number of times the assignment id was resolved in this period.
-      int64 count = 2 [(google.api.field_behavior) = REQUIRED];
-    }
+    // Number of times the variant was resolved in this period
+    int64 count = 3 [(google.api.field_behavior) = REQUIRED];
   }
 
-  // Information about how a client resolved
-  message ClientResolveInfo {
-    // Resource reference to a client.
-    string client = 1 [
-      (google.api.resource_reference).type = "iam.confidence.dev/Client",
+  // Information about how a rule was resolved.
+  message RuleResolveInfo {
+    // The rule that was resolved
+    string rule = 1  [
+      (google.api.resource_reference).type = "flags.confidence.dev/Rule",
       (google.api.field_behavior) = REQUIRED
     ];
+    // Number of times the rule was resolved in this period
+    int64 count = 2 [(google.api.field_behavior) = REQUIRED];
 
-    // Resource reference to a credential.
-    string client_credential = 2 [
-      (google.api.resource_reference).type = "iam.confidence.dev/ClientCredential",
-      (google.api.field_behavior) = REQUIRED
-    ];
+    // Resolve counts on each assignment
+    repeated AssignmentResolveInfo assignment_resolve_info = 3 [(google.api.field_behavior) = OPTIONAL];
+  }
 
-    // The different evaluation context schema of the client that have been seen recently.
-    repeated EvaluationContextSchemaInstance schema = 3;
+  // Information about the assignment that was resolved.
+  message AssignmentResolveInfo {
+    // The assignment id of the resolved value, otherwise not set.
+    string assignment_id = 1 [(google.api.field_behavior) = OPTIONAL];
 
-    // An instance of a schema that was seen
-    message EvaluationContextSchemaInstance {
-      // Schema of each field in the evaluation context.
-      map<string, EvaluationContextSchemaField.Kind> schema = 1;
-      // Optional semantic type per field.
-      map<string, ContextFieldSemanticType> semantic_types = 2;
-    }
+    // Number of times the assignment id was resolved in this period.
+    int64 count = 2 [(google.api.field_behavior) = REQUIRED];
+  }
+}
+
+message ClientResolveInfo {
+  // Resource reference to a client.
+  string client = 1 [
+    (google.api.resource_reference).type = "iam.confidence.dev/Client",
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // Resource reference to a credential.
+  string client_credential = 2 [
+    (google.api.resource_reference).type = "iam.confidence.dev/ClientCredential",
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The different evaluation context schema of the client that have been seen recently.
+  repeated EvaluationContextSchemaInstance schema = 3;
+
+  // An instance of a schema that was seen
+  message EvaluationContextSchemaInstance {
+    // Schema of each field in the evaluation context.
+    map<string, EvaluationContextSchemaField.Kind> schema = 1;
+    // Optional semantic type per field.
+    map<string, ContextFieldSemanticType> semantic_types = 2;
   }
 }
 

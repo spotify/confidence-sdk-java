@@ -20,7 +20,7 @@ class SwapWasmResolverApi {
   private Boolean isPrimary = true;
 
   public SwapWasmResolverApi(
-      FlagLogger flagLogger,
+      WasmFlagLogger flagLogger,
       byte[] initialState,
       String accountId,
       StickyResolveStrategy stickyResolveStrategy) {
@@ -162,14 +162,8 @@ class SwapWasmResolverApi {
             final var loadedAssignments =
                 repository.loadMaterializedAssignmentsForUnit(unit, materializationsToRules).get();
             loadedAssignments.forEach(
-                (materialization, info) -> {
-                  final var protoInfo =
-                      com.spotify.confidence.flags.resolver.v1.MaterializationInfo.newBuilder()
-                          .setUnitInInfo(info.isUnitInMaterialization())
-                          .putAllRuleToVariant(info.ruleToVariant())
-                          .build();
-                  materializationContext.putUnitMaterializationInfo(unit, protoInfo);
-                });
+                (materialization, info) ->
+                    materializationContext.putUnitMaterializationInfo(unit, info.toProto()));
           } catch (Exception e) {
             throw new RuntimeException(
                 "Failed to load materialized assignments for unit: " + unit, e);
