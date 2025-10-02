@@ -49,6 +49,7 @@ abstract class ResolveTest extends TestBase {
           .build();
   private static final String segmentA = "segments/seg-a";
   static final ResolverState exampleState;
+  static final ResolverState exampleStateWithMaterialization;
   private static final Map<String, Flag> flags =
       Map.of(
           flag1,
@@ -96,6 +97,64 @@ abstract class ResolveTest extends TestBase {
                               .build())
                       .build())
               .build());
+
+  private static final Map<String, Flag> flagsWithMaterialization =
+      Map.of(
+          flag1,
+          Flag.newBuilder()
+              .setName(flag1)
+              .setState(Flag.State.ACTIVE)
+              .setSchema(schema1)
+              .addVariants(variantOff)
+              .addVariants(variantOn)
+              .addClients(clientName)
+              .addRules(
+                  Flag.Rule.newBuilder()
+                      .setName("MyRule")
+                      .setSegment(segmentA)
+                      .setEnabled(true)
+                      .setMaterializationSpec(
+                          Flag.Rule.MaterializationSpec.newBuilder()
+                              .setReadMaterialization("read-mat")
+                              .setMode(
+                                  Flag.Rule.MaterializationSpec.MaterializationReadMode.newBuilder()
+                                      .setMaterializationMustMatch(true)
+                                      .setSegmentTargetingCanBeIgnored(false)
+                                      .build())
+                              .setWriteMaterialization("write-mat")
+                              .build())
+                      .setAssignmentSpec(
+                          Flag.Rule.AssignmentSpec.newBuilder()
+                              .setBucketCount(2)
+                              .addAssignments(
+                                  Flag.Rule.Assignment.newBuilder()
+                                      .setAssignmentId(flagOff)
+                                      .setVariant(
+                                          Flag.Rule.Assignment.VariantAssignment.newBuilder()
+                                              .setVariant(flagOff)
+                                              .build())
+                                      .addBucketRanges(
+                                          Flag.Rule.BucketRange.newBuilder()
+                                              .setLower(0)
+                                              .setUpper(1)
+                                              .build())
+                                      .build())
+                              .addAssignments(
+                                  Flag.Rule.Assignment.newBuilder()
+                                      .setAssignmentId(flagOn)
+                                      .setVariant(
+                                          Flag.Rule.Assignment.VariantAssignment.newBuilder()
+                                              .setVariant(flagOn)
+                                              .build())
+                                      .addBucketRanges(
+                                          Flag.Rule.BucketRange.newBuilder()
+                                              .setLower(1)
+                                              .setUpper(2)
+                                              .build())
+                                      .build())
+                              .build())
+                      .build())
+              .build());
   protected static final Map<String, Segment> segments =
       Map.of(segmentA, Segment.newBuilder().setName(segmentA).build());
   protected static final Map<String, BitSet> bitsets = Map.of(segmentA, getBitsetAllSet());
@@ -107,6 +166,18 @@ abstract class ResolveTest extends TestBase {
                 account,
                 new AccountState(
                     new Account(account, Region.EU), flags, segments, bitsets, secrets, "abc")),
+            secrets);
+    exampleStateWithMaterialization =
+        new ResolverState(
+            Map.of(
+                account,
+                new AccountState(
+                    new Account(account, Region.EU),
+                    flagsWithMaterialization,
+                    segments,
+                    bitsets,
+                    secrets,
+                    "abc")),
             secrets);
   }
 
@@ -131,7 +202,7 @@ abstract class ResolveTest extends TestBase {
                     Struct.newBuilder().build(),
                     true,
                     "invalid-secret"))
-        .withMessage("Resolver state not set or client secret could not be found");
+        .withMessage("client secret not found");
   }
 
   @Test

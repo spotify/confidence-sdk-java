@@ -7,6 +7,7 @@ import "google/protobuf/struct.proto";
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 
+import "confidence/flags/admin/v1/flags_api.proto";
 import "confidence/flags/resolver/v1/types.proto";
 import "confidence/flags/resolver/v1/events/events.proto";
 
@@ -18,20 +19,32 @@ option java_outer_classname = "InternalApiProto";
 // operations, useful when the resolve engine runs on the customer's premises
 // (e.g. side-car)
 service InternalFlagLoggerService {
+  rpc WriteFlagLogs(WriteFlagLogsRequest) returns (WriteFlagLogsResponse){}
+
   // Writes flag assignment events. Mostly called from the sidecar resolver.
   // (-- api-linter: core::0136::http-uri-suffix=disabled
   //     aip.dev/not-precedent: Disabled because the additional binding. --)
-  rpc WriteFlagAssigned(WriteFlagAssignedRequest) returns (WriteFlagAssignedResponse){
-    option (google.api.http) = {
-      post: "/v1/flagAssigned:write"
-      body: "*"
-      additional_bindings {
-        post: "/v1/flagAssigned:writeArray"
-        body: "flag_assigned"
-      }
-    };
-  }
+  rpc WriteFlagAssigned(WriteFlagAssignedRequest) returns (WriteFlagAssignedResponse){}
 }
+
+message WriteFlagLogsRequest {
+  repeated confidence.flags.resolver.v1.events.FlagAssigned flag_assigned = 1 [
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  TelemetryData telemetry_data = 2 [
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  repeated confidence.flags.admin.v1.ClientResolveInfo client_resolve_info = 3 [
+    (google.api.field_behavior) = OPTIONAL
+  ];
+  repeated confidence.flags.admin.v1.FlagResolveInfo flag_resolve_info = 4 [
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+message WriteFlagLogsResponse {}
 
 // A request to write flag assignments
 message WriteFlagAssignedRequest {

@@ -19,7 +19,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <!-- WASM file version. When updated, make sure to mvn clean to force a new download -->
-    <confidence.resolver.wasm.version>v0.2.0</confidence.resolver.wasm.version>
+    <confidence.resolver.wasm.version>v0.3.1</confidence.resolver.wasm.version>
   </properties>
 
 
@@ -64,6 +64,22 @@
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
     </dependency>
+      <!-- gRPC dependencies for HTTP client -->
+      <dependency>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-netty-shaded</artifactId>
+          <exclusions>
+              <exclusion>
+                  <groupId>com.google.guava</groupId>
+                  <artifactId>guava</artifactId>
+              </exclusion>
+          </exclusions>
+      </dependency>
+
+      <dependency>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-stub</artifactId>
+      </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java-util</artifactId>

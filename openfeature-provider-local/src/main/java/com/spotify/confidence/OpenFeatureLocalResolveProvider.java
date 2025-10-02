@@ -68,6 +68,29 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private static final Logger log =
       org.slf4j.LoggerFactory.getLogger(OpenFeatureLocalResolveProvider.class);
   private final FlagResolverService flagResolverService;
+  private final StickyResolveStrategy stickyResolveStrategy;
+
+  /**
+   * Creates a new OpenFeature provider for local flag resolution with default fallback strategy.
+   *
+   * <p>This constructor uses {@link RemoteResolverFallback} as the default sticky resolve strategy,
+   * which provides fallback to the remote Confidence service when the WASM resolver encounters
+   * missing materializations.
+   *
+   * <p>The provider will automatically determine the resolution mode (WASM or Java) based on the
+   * {@code LOCAL_RESOLVE_MODE} environment variable, defaulting to WASM mode.
+   *
+   * @param apiSecret the API credentials containing client ID and client secret for authenticating
+   *     with the Confidence service. Create using {@code new ApiSecret("client-id",
+   *     "client-secret")}
+   * @param clientSecret the client secret for your application, used for flag resolution
+   *     authentication. This is different from the API secret and is specific to your application
+   *     configuration
+   * @since 0.2.4
+   */
+  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+    this(apiSecret, clientSecret, new RemoteResolverFallback());
+  }
 
   /**
    * Creates a new OpenFeature provider for local flag resolution with configurable exposure
@@ -83,17 +106,23 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @param clientSecret the client secret for your application, used for flag resolution
    *     authentication. This is different from the API secret and is specific to your application
    *     configuration
+   * @param stickyResolveStrategy the strategy to use for handling sticky flag resolution
    * @since 0.2.4
    */
-  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+  public OpenFeatureLocalResolveProvider(
+      ApiSecret apiSecret, String clientSecret, StickyResolveStrategy stickyResolveStrategy) {
     final var env = System.getenv("LOCAL_RESOLVE_MODE");
     if (env != null && env.equals("WASM")) {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, stickyResolveStrategy);
     } else if (env != null && env.equals("JAVA")) {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, false);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, false, stickyResolveStrategy);
     } else {
-      this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, clientSecret, true);
+      this.flagResolverService =
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, stickyResolveStrategy);
     }
+    this.stickyResolveStrategy = stickyResolveStrategy;
     this.clientSecret = clientSecret;
   }
 
@@ -108,9 +137,14 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    */
   @VisibleForTesting
   public OpenFeatureLocalResolveProvider(
-      AccountStateProvider accountStateProvider, String clientSecret) {
+      AccountStateProvider accountStateProvider,
+      String accountId,
+      String clientSecret,
+      StickyResolveStrategy stickyResolveStrategy) {
+    this.stickyResolveStrategy = stickyResolveStrategy;
     this.clientSecret = clientSecret;
-    this.flagResolverService = LocalResolverServiceFactory.from(accountStateProvider);
+    this.flagResolverService =
+        LocalResolverServiceFactory.from(accountStateProvider, accountId, stickyResolveStrategy);
   }
 
   @Override
@@ -172,6 +206,13 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   }
 
   @Override
+  public void shutdown() {
+    this.stickyResolveStrategy.close();
+    this.flagResolverService.close();
+    FeatureProvider.super.shutdown();
+  }
+
+  @Override
   public ProviderEvaluation<Value> getObjectEvaluation(
       String key, Value defaultValue, EvaluationContext ctx) {
 
@@ -189,19 +230,16 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
     try {
       final String requestFlagName = "flags/" + flagPath.getFlag();
 
-      resolveFlagResponse =
-          flagResolverService
-              .resolveFlags(
-                  ResolveFlagsRequest.newBuilder()
-                      .addFlags(requestFlagName)
-                      .setApply(true)
-                      .setClientSecret(clientSecret)
-                      .setEvaluationContext(
-                          Struct.newBuilder()
-                              .putAllFields(evaluationContext.getFieldsMap())
-                              .build())
-                      .build())
-              .get();
+      final var req =
+          ResolveFlagsRequest.newBuilder()
+              .addFlags(requestFlagName)
+              .setApply(true)
+              .setClientSecret(clientSecret)
+              .setEvaluationContext(
+                  Struct.newBuilder().putAllFields(evaluationContext.getFieldsMap()).build())
+              .build();
+
+      resolveFlagResponse = flagResolverService.resolveFlags(req).get();
 
       if (resolveFlagResponse.getResolvedFlagsList().isEmpty()) {
         log.warn("No active flag '{}' was found", flagPath.getFlag());

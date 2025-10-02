@@ -4,8 +4,6 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.util.concurrent.CompletableFuture;
 
-interface FlagResolverService {
-  CompletableFuture<ResolveFlagsResponse> resolveFlags(ResolveFlagsRequest request);
-
-  void close();
+public non-sealed interface ResolverFallback extends StickyResolveStrategy {
+  CompletableFuture<ResolveFlagsResponse> resolve(ResolveFlagsRequest request);
 }

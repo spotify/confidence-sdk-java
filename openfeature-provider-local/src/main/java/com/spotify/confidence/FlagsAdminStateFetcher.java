@@ -47,6 +47,7 @@ class FlagsAdminStateFetcher {
   private final AtomicReference<ResolverStateUriResponse> resolverStateUriResponse =
       new AtomicReference<>();
   private final AtomicReference<Instant> refreshTimeHolder = new AtomicReference<>();
+  String accountId;
 
   public FlagsAdminStateFetcher(
       ResolverStateServiceGrpc.ResolverStateServiceBlockingStub resolverStateService,
@@ -93,7 +94,7 @@ class FlagsAdminStateFetcher {
     }
   }
 
-  private String getResolverFileUri() {
+  private ResolverStateUriResponse getResolverFileUri() {
     final Instant now = Instant.now();
     if (resolverStateUriResponse.get() == null
         || (refreshTimeHolder.get() == null || refreshTimeHolder.get().isBefore(now))) {
@@ -103,7 +104,7 @@ class FlagsAdminStateFetcher {
           Duration.between(now, toInstant(resolverStateUriResponse.get().getExpireTime()));
       refreshTimeHolder.set(now.plusMillis(ttl.toMillis() / 2));
     }
-    return resolverStateUriResponse.get().getSignedUri();
+    return resolverStateUriResponse.get();
   }
 
   private Instant toInstant(Timestamp time) {
@@ -111,7 +112,9 @@ class FlagsAdminStateFetcher {
   }
 
   private AccountState fetchState() {
-    final String uri = getResolverFileUri();
+    final var response = getResolverFileUri();
+    this.accountId = response.getAccount();
+    final var uri = response.getSignedUri();
     final com.spotify.confidence.shaded.flags.admin.v1.ResolverState state;
     final String etag;
     try {
