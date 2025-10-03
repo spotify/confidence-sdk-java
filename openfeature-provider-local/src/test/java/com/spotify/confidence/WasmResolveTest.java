@@ -19,7 +19,6 @@ import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import dev.openfeature.sdk.ImmutableContext;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.Value;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Test;
@@ -145,8 +144,6 @@ public class WasmResolveTest extends ResolveTest {
     assertEquals("on", structure.getValue("data").asString());
 
     // Assert that the materialization repository was called with correct input
-    verify(mockRepository)
-        .loadMaterializedAssignmentsForUnit(
-            eq("test-user"), eq(Map.of("read-mat", List.of("MyRule"))));
+    verify(mockRepository).loadMaterializedAssignmentsForUnit(eq("test-user"), "read-mat");
   }
 }
