@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/spotify/confidence-sdk-java/compare/v0.4.0...v0.5.0) (2025-10-03)
+
+
+### Features
+
+* update sticky proto ([#282](https://github.com/spotify/confidence-sdk-java/issues/282)) ([102b04e](https://github.com/spotify/confidence-sdk-java/commit/102b04e6586ee4c109e7e4e49e0f32ae9ee2b2df))
+
 ## [0.4.0](https://github.com/spotify/confidence-sdk-java/compare/v0.3.1...v0.4.0) (2025-10-02)
 
 
