@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import com.spotify.confidence.flags.resolver.v1.MaterializationMap;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -147,36 +149,46 @@ class SwapWasmResolverApi {
         missingItems.stream()
             .collect(
                 Collectors.groupingBy(
-                    ResolveWithStickyResponse.MissingMaterializationItem::getUnit,
-                    Collectors.toMap(
-                        ResolveWithStickyResponse.MissingMaterializationItem
-                            ::getReadMaterialization,
-                        item -> List.of(item.getRule()),
-                        (existing, replacement) -> {
-                          final var combined = new java.util.ArrayList<>(existing);
-                          combined.addAll(replacement);
-                          return combined;
-                        })));
+                    ResolveWithStickyResponse.MissingMaterializationItem::getUnit));
+
+    final HashMap<String, MaterializationMap> materializationPerUnitMap = new HashMap<>();
 
     // Load materialized assignments for all missing units
-    final var materializationContext = request.getMaterializationContext().toBuilder();
-
     missingByUnit.forEach(
-        (unit, materializationsToRules) -> {
-          try {
-            final var loadedAssignments =
-                repository.loadMaterializedAssignmentsForUnit(unit, materializationsToRules).get();
-            loadedAssignments.forEach(
-                (materialization, info) ->
-                    materializationContext.putUnitMaterializationInfo(unit, info.toProto()));
-          } catch (Exception e) {
-            throw new RuntimeException(
-                "Failed to load materialized assignments for unit: " + unit, e);
-          }
+        (unit, materializationInfoItem) -> {
+          materializationInfoItem.forEach(
+              item -> {
+                final Map<String, MaterializationInfo> loadedAssignments;
+                try {
+                  loadedAssignments =
+                      repository
+                          .loadMaterializedAssignmentsForUnit(unit, item.getReadMaterialization())
+                          .get();
+                } catch (InterruptedException | ExecutionException e) {
+                  throw new RuntimeException(e);
+                }
+                materializationPerUnitMap.put(
+                    unit,
+                    MaterializationMap.newBuilder()
+                        .putAllInfoMap(
+                            loadedAssignments.entrySet().stream()
+                                .collect(
+                                    Collectors.toMap(
+                                        Map.Entry::getKey,
+                                        e -> {
+                                          final var info = e.getValue();
+                                          return com.spotify.confidence.flags.resolver.v1
+                                              .MaterializationInfo.newBuilder()
+                                              .setUnitInInfo(info.isUnitInMaterialization())
+                                              .putAllRuleToVariant(info.ruleToVariant())
+                                              .build();
+                                        })))
+                        .build());
+              });
         });
 
     // Return new request with updated materialization context
-    return request.toBuilder().setMaterializationContext(materializationContext.build()).build();
+    return request.toBuilder().putAllMaterializationsPerUnit(materializationPerUnitMap).build();
   }
 
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,7 +18,6 @@ import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
 import dev.openfeature.sdk.ImmutableContext;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.Value;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Test;
@@ -145,8 +143,6 @@ public class WasmResolveTest extends ResolveTest {
     assertEquals("on", structure.getValue("data").asString());
 
     // Assert that the materialization repository was called with correct input
-    verify(mockRepository)
-        .loadMaterializedAssignmentsForUnit(
-            eq("test-user"), eq(Map.of("read-mat", List.of("MyRule"))));
+    verify(mockRepository).loadMaterializedAssignmentsForUnit("test-user", "read-mat");
   }
 }
