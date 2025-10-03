@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/spotify/confidence-sdk-java/compare/v0.5.0...v0.5.1) (2025-10-03)
+
+
+### Documentation
+
+* readme version update ([#278](https://github.com/spotify/confidence-sdk-java/issues/278)) ([3941940](https://github.com/spotify/confidence-sdk-java/commit/3941940505f77aabe85e2ecc5ddff8d91fd4bd9e))
+
 ## [0.5.0](https://github.com/spotify/confidence-sdk-java/compare/v0.4.0...v0.5.0) (2025-10-03)
 
 
