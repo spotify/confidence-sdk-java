@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -144,6 +143,6 @@ public class WasmResolveTest extends ResolveTest {
     assertEquals("on", structure.getValue("data").asString());
 
     // Assert that the materialization repository was called with correct input
-    verify(mockRepository).loadMaterializedAssignmentsForUnit(eq("test-user"), "read-mat");
+    verify(mockRepository).loadMaterializedAssignmentsForUnit("test-user", "read-mat");
   }
 }

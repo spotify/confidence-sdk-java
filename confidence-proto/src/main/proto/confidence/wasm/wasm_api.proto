@@ -20,10 +20,10 @@ message ResolveWithStickyRequest {
   ResolveFlagsRequest resolve_request = 1;
 
   // Context about the materialization required for the resolve
-  map<string, MaterializationMap> materializations_per_unit = 3;
+  map<string, MaterializationMap> materializations_per_unit = 2;
 
   // if a materialization info is missing, we want to return to the caller immediately
-  bool fail_fast_on_sticky = 8;
+  bool fail_fast_on_sticky = 3;
 }
 
 message MaterializationMap {
@@ -32,13 +32,7 @@ message MaterializationMap {
 }
 
 message MaterializationInfo {
-  // whether the randomization unit is in the materialization
-  // (-- api-linter: core::0140::prepositions=disabled
-  //     aip.dev/not-precedent: relaxed rules for internal events. --)
   bool unit_in_info = 1;
-  // rule name (with flag name embedded) to variant
-  // (-- api-linter: core::0140::prepositions=disabled
-  //     aip.dev/not-precedent: relaxed rules for internal events. --)
   map<string, string> rule_to_variant = 2;
 }
 
