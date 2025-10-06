@@ -46,6 +46,8 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
       Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
   private static final Duration RESOLVE_INFO_LOG_INTERVAL = Duration.ofMinutes(1);
   private final StickyResolveStrategy stickyResolveStrategy;
+  private static final ScheduledExecutorService logPollExecutor =
+      Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
 
   private static ManagedChannel createConfidenceChannel() {
     final String confidenceDomain =
@@ -111,14 +113,19 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
               sidecarFlagsAdminFetcher.accountId,
               stickyResolveStrategy);
       flagsFetcherExecutor.scheduleAtFixedRate(
+          sidecarFlagsAdminFetcher::reload,
+          pollIntervalSeconds,
+          pollIntervalSeconds,
+          TimeUnit.SECONDS);
+
+      logPollExecutor.scheduleAtFixedRate(
           () -> {
-            sidecarFlagsAdminFetcher.reload();
-            wasmResolverApi.updateState(
+            wasmResolverApi.updateStateAndFlushLogs(
                 sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray(),
                 sidecarFlagsAdminFetcher.accountId);
           },
-          pollIntervalSeconds,
-          pollIntervalSeconds,
+          10,
+          10,
           TimeUnit.SECONDS);
 
       return new WasmFlagResolverService(wasmResolverApi, stickyResolveStrategy);
@@ -176,7 +183,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
             flagLogger, resolverStateProtobuf, accountId, stickyResolveStrategy);
     flagsFetcherExecutor.scheduleAtFixedRate(
         () -> {
-          wasmResolverApi.updateState(accountStateProvider.provide(), accountId);
+          wasmResolverApi.updateStateAndFlushLogs(accountStateProvider.provide(), accountId);
         },
         pollIntervalSeconds,
         pollIntervalSeconds,
@@ -236,7 +243,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   @VisibleForTesting
   public void setState(byte[] state, String accountId) {
     if (this.wasmResolveApi != null) {
-      wasmResolveApi.updateState(state, accountId);
+      wasmResolveApi.updateStateAndFlushLogs(state, accountId);
     }
   }
 
