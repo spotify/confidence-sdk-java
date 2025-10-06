@@ -10,7 +10,6 @@ import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
 import com.dylibso.chicory.wasm.types.FunctionType;
 import com.dylibso.chicory.wasm.types.ValType;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.GeneratedMessageV3;
@@ -29,8 +28,6 @@ import java.io.InputStream;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -57,14 +54,10 @@ class WasmResolveApi {
   private final ExportFunction wasmMsgGuestSetResolverState;
   private final ExportFunction wasmMsgFlushLogs;
   private final ExportFunction wasmMsgGuestResolve;
-  private static final ScheduledExecutorService logPollExecutor =
-      Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
   private final ExportFunction wasmMsgGuestResolveWithSticky;
 
   public WasmResolveApi(WasmFlagLogger flagLogger) {
     this.writeFlagLogs = flagLogger;
-    logPollExecutor.scheduleAtFixedRate(
-        this::flushLogs, 10, 10, java.util.concurrent.TimeUnit.SECONDS);
     try (InputStream wasmStream =
         getClass().getClassLoader().getResourceAsStream("wasm/confidence_resolver.wasm")) {
       if (wasmStream == null) {
@@ -145,10 +138,6 @@ class WasmResolveApi {
     return Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
   }
 
-  public void close() {
-    logPollExecutor.shutdownNow();
-  }
-
   public void setResolverState(byte[] state, String accountId) {
     final var resolverStateRequest =
         Messages.SetResolverStateRequest.newBuilder()
@@ -165,7 +154,7 @@ class WasmResolveApi {
     consumeResponse(respPtr, Messages.Void::parseFrom);
   }
 
-  private void flushLogs() {
+  public void flushLogs() {
     final var voidRequest = Messages.Void.getDefaultInstance();
     final var reqPtr = transferRequest(voidRequest);
     final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];

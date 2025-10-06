@@ -34,21 +34,20 @@ class SwapWasmResolverApi {
     this.wasmResolverApiRef.set(primaryWasmResolverApi);
   }
 
-  public void updateState(byte[] state, String accountId) {
+  public void updateStateAndFlushLogs(byte[] state, String accountId) {
     if (isPrimary) {
       this.secondaryWasmResolverApi.setResolverState(state, accountId);
       this.wasmResolverApiRef.set(secondaryWasmResolverApi);
+      this.primaryWasmResolverApi.flushLogs();
     } else {
       this.primaryWasmResolverApi.setResolverState(state, accountId);
       this.wasmResolverApiRef.set(primaryWasmResolverApi);
+      this.secondaryWasmResolverApi.flushLogs();
     }
     isPrimary = !isPrimary;
   }
 
-  public void close() {
-    primaryWasmResolverApi.close();
-    secondaryWasmResolverApi.close();
-  }
+  public void close() {}
 
   private final ReentrantLock logResolveLock = new ReentrantLock();
 
