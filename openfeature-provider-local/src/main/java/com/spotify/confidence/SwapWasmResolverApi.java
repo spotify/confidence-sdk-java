@@ -167,23 +167,21 @@ class SwapWasmResolverApi {
                 } catch (InterruptedException | ExecutionException e) {
                   throw new RuntimeException(e);
                 }
-                materializationPerUnitMap.put(
+                materializationPerUnitMap.computeIfAbsent(
                     unit,
-                    MaterializationMap.newBuilder()
-                        .putAllInfoMap(
-                            loadedAssignments.entrySet().stream()
-                                .collect(
-                                    Collectors.toMap(
-                                        Map.Entry::getKey,
-                                        e -> {
-                                          final var info = e.getValue();
-                                          return com.spotify.confidence.flags.resolver.v1
-                                              .MaterializationInfo.newBuilder()
-                                              .setUnitInInfo(info.isUnitInMaterialization())
-                                              .putAllRuleToVariant(info.ruleToVariant())
-                                              .build();
-                                        })))
-                        .build());
+                    k -> MaterializationMap.newBuilder().putAllInfoMap(new HashMap<>()).build());
+                materializationPerUnitMap.computeIfPresent(
+                    unit,
+                    (k, v) -> {
+                      final Map<
+                              String, com.spotify.confidence.flags.resolver.v1.MaterializationInfo>
+                          map = new HashMap<>();
+                      loadedAssignments.forEach(
+                          (s, materializationInfo) -> {
+                            map.put(s, materializationInfo.toProto());
+                          });
+                      return v.toBuilder().putAllInfoMap(map).build();
+                    });
               });
         });
 
