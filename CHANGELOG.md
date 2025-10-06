@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/spotify/confidence-sdk-java/compare/v0.5.1...v0.5.2) (2025-10-06)
+
+
+### Bug Fixes
+
+* move flush out of wasm resolver api ([#288](https://github.com/spotify/confidence-sdk-java/issues/288)) ([eaceaef](https://github.com/spotify/confidence-sdk-java/commit/eaceaefec8d6d6da72e836d728af9b18155a5970))
+
 ## [0.5.1](https://github.com/spotify/confidence-sdk-java/compare/v0.5.0...v0.5.1) (2025-10-06)
 
 
