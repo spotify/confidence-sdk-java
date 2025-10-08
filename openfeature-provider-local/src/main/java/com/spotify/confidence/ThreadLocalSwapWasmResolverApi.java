@@ -7,12 +7,16 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Pre-initialized resolver instances mapped by thread ID to CPU core count. This eliminates both
  * lock contention and lazy initialization overhead.
  */
 class ThreadLocalSwapWasmResolverApi implements ResolverApi {
+  private static final Logger logger =
+      LoggerFactory.getLogger(ThreadLocalSwapWasmResolverApi.class);
   private final WasmFlagLogger flagLogger;
   private final StickyResolveStrategy stickyResolveStrategy;
   private final RetryStrategy retryStrategy;
@@ -37,6 +41,8 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
 
     // Pre-create instances based on CPU core count for optimal performance
     this.numInstances = Runtime.getRuntime().availableProcessors();
+    logger.info(
+        "Initialized ThreadLocalSwapWasmResolverApi with {} available processors", numInstances);
     IntStream.range(0, numInstances)
         .forEach(
             i -> {
