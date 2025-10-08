@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/spotify/confidence-sdk-java/compare/v0.5.2...v0.6.0) (2025-10-08)
+
+
+### Features
+
+* thread local local wasm resolver ([#291](https://github.com/spotify/confidence-sdk-java/issues/291)) ([e45cb14](https://github.com/spotify/confidence-sdk-java/commit/e45cb14c64b6d09df699fbec7a0b37f807367017))
+
+
+### Bug Fixes
+
+* remove logs for not supporting sticky assignments in fetching the state ([#293](https://github.com/spotify/confidence-sdk-java/issues/293)) ([c549718](https://github.com/spotify/confidence-sdk-java/commit/c5497186b628f25147067675ec34a472e642e6e8))
+
 ## [0.5.2](https://github.com/spotify/confidence-sdk-java/compare/v0.5.1...v0.5.2) (2025-10-06)
 
 
