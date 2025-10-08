@@ -6,11 +6,11 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 /**
- * Thread-local wrapper for SwapWasmResolverApi that provides each thread with its own instance.
- * This eliminates contention on the locks inside SwapWasmResolverApi when called from multiple
- * threads.
+ * Pre-initialized resolver instances mapped by thread ID to CPU core count. This eliminates both
+ * lock contention and lazy initialization overhead.
  */
 class ThreadLocalSwapWasmResolverApi implements ResolverApi {
   private final WasmFlagLogger flagLogger;
@@ -19,10 +19,9 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
   private volatile byte[] currentState;
   private volatile String currentAccountId;
 
-  // Track all thread-local instances for state updates and cleanup
-  private final Map<Thread, SwapWasmResolverApi> instances = new ConcurrentHashMap<>();
-
-  private final ThreadLocal<SwapWasmResolverApi> threadLocalResolver;
+  // Pre-initialized resolver instances mapped by core index
+  private final Map<Integer, SwapWasmResolverApi> resolverInstances = new ConcurrentHashMap<>();
+  private final int numInstances;
 
   public ThreadLocalSwapWasmResolverApi(
       WasmFlagLogger flagLogger,
@@ -36,9 +35,11 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
     this.currentState = initialState;
     this.currentAccountId = accountId;
 
-    this.threadLocalResolver =
-        ThreadLocal.withInitial(
-            () -> {
+    // Pre-create instances based on CPU core count for optimal performance
+    this.numInstances = Runtime.getRuntime().availableProcessors();
+    IntStream.range(0, numInstances)
+        .forEach(
+            i -> {
               final var instance =
                   new SwapWasmResolverApi(
                       this.flagLogger,
@@ -46,13 +47,12 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
                       this.currentAccountId,
                       this.stickyResolveStrategy,
                       this.retryStrategy);
-              instances.put(Thread.currentThread(), instance);
-              return instance;
+              resolverInstances.put(i, instance);
             });
   }
 
   /**
-   * Updates state and flushes logs for all thread-local resolver instances. This method is
+   * Updates state and flushes logs for all pre-initialized resolver instances. This method is
    * typically called by a scheduled task to refresh the resolver state.
    */
   @Override
@@ -60,40 +60,47 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
     this.currentState = state;
     this.currentAccountId = accountId;
 
-    // Update all existing thread-local instances
-    instances.values().forEach(resolver -> resolver.updateStateAndFlushLogs(state, accountId));
-
-    // Clean up instances for threads that no longer exist
-    instances
-        .entrySet()
-        .removeIf(
-            entry -> {
-              if (!entry.getKey().isAlive()) {
-                entry.getValue().close();
-                return true;
-              }
-              return false;
-            });
+    // Update all pre-initialized resolver instances
+    resolverInstances
+        .values()
+        .forEach(resolver -> resolver.updateStateAndFlushLogs(state, accountId));
   }
 
-  /** Delegates resolveWithSticky to the thread-local SwapWasmResolverApi instance. */
+  /**
+   * Maps the current thread to a resolver instance based on thread ID. Uses modulo operation to
+   * distribute threads across available instances.
+   */
+  private SwapWasmResolverApi getResolverForCurrentThread() {
+    int threadId = (int) Thread.currentThread().getId();
+    int instanceIndex = threadId % numInstances;
+    return resolverInstances.get(instanceIndex);
+  }
+
+  /** Delegates resolveWithSticky to the assigned SwapWasmResolverApi instance. */
   @Override
   public CompletableFuture<ResolveFlagsResponse> resolveWithSticky(
       ResolveWithStickyRequest request) {
-    return threadLocalResolver.get().resolveWithSticky(request);
+    return getResolverForCurrentThread().resolveWithSticky(request);
   }
 
-  /** Delegates resolve to the thread-local SwapWasmResolverApi instance. */
+  /** Delegates resolve to the assigned SwapWasmResolverApi instance. */
   @Override
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    return threadLocalResolver.get().resolve(request);
+    return getResolverForCurrentThread().resolve(request);
   }
 
-  /** Closes all thread-local resolver instances and clears the tracking map. */
+  /**
+   * Returns the number of pre-initialized resolver instances. This is primarily for debugging and
+   * monitoring purposes.
+   */
+  public int getInstanceCount() {
+    return resolverInstances.size();
+  }
+
+  /** Closes all pre-initialized resolver instances and clears the map. */
   @Override
   public void close() {
-    instances.values().forEach(SwapWasmResolverApi::close);
-    instances.clear();
-    threadLocalResolver.remove();
+    resolverInstances.values().forEach(SwapWasmResolverApi::close);
+    resolverInstances.clear();
   }
 }
