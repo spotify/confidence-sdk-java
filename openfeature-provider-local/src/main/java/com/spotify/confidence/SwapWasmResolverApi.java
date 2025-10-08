@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-class SwapWasmResolverApi {
+class SwapWasmResolverApi implements ResolverApi {
   private final AtomicReference<WasmResolveApi> wasmResolverApiRef = new AtomicReference<>();
   private final WasmResolveApi primaryWasmResolverApi;
   private final WasmResolveApi secondaryWasmResolverApi;
@@ -34,6 +34,7 @@ class SwapWasmResolverApi {
     this.wasmResolverApiRef.set(primaryWasmResolverApi);
   }
 
+  @Override
   public void updateStateAndFlushLogs(byte[] state, String accountId) {
     if (isPrimary) {
       this.secondaryWasmResolverApi.setResolverState(state, accountId);
@@ -47,10 +48,12 @@ class SwapWasmResolverApi {
     isPrimary = !isPrimary;
   }
 
+  @Override
   public void close() {}
 
   private final ReentrantLock logResolveLock = new ReentrantLock();
 
+  @Override
   public CompletableFuture<ResolveFlagsResponse> resolveWithSticky(
       ResolveWithStickyRequest request) {
     logResolveLock.lock();
@@ -188,6 +191,7 @@ class SwapWasmResolverApi {
     return request.toBuilder().putAllMaterializationsPerUnit(materializationPerUnitMap).build();
   }
 
+  @Override
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
     logResolveLock.lock();
     final var response = wasmResolverApiRef.get().resolve(request);
