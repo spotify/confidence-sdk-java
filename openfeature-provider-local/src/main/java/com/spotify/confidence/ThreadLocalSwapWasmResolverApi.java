@@ -71,8 +71,8 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
    * distribute threads across available instances.
    */
   private SwapWasmResolverApi getResolverForCurrentThread() {
-    int threadId = (int) Thread.currentThread().getId();
-    int instanceIndex = threadId % numInstances;
+    final int threadId = (int) Thread.currentThread().getId();
+    final int instanceIndex = threadId % numInstances;
     return resolverInstances.get(instanceIndex);
   }
 

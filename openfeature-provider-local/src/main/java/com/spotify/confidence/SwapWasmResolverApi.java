@@ -16,10 +16,9 @@ import java.util.stream.Collectors;
 
 class SwapWasmResolverApi implements ResolverApi {
   private final AtomicReference<WasmResolveApi> wasmResolverApiRef = new AtomicReference<>();
-  private final WasmResolveApi primaryWasmResolverApi;
-  private final WasmResolveApi secondaryWasmResolverApi;
   private final StickyResolveStrategy stickyResolveStrategy;
-  private Boolean isPrimary = true;
+  private final WasmFlagLogger flagLogger;
+  private final RetryStrategy retryStrategy;
 
   public SwapWasmResolverApi(
       WasmFlagLogger flagLogger,
@@ -28,29 +27,40 @@ class SwapWasmResolverApi implements ResolverApi {
       StickyResolveStrategy stickyResolveStrategy,
       RetryStrategy retryStrategy) {
     this.stickyResolveStrategy = stickyResolveStrategy;
-    this.primaryWasmResolverApi = new WasmResolveApi(flagLogger, retryStrategy);
-    this.primaryWasmResolverApi.setResolverState(initialState, accountId);
-    this.secondaryWasmResolverApi = new WasmResolveApi(flagLogger, retryStrategy);
-    this.secondaryWasmResolverApi.setResolverState(initialState, accountId);
-    this.wasmResolverApiRef.set(primaryWasmResolverApi);
+    this.flagLogger = flagLogger;
+    this.retryStrategy = retryStrategy;
+
+    // Create initial instance
+    final WasmResolveApi initialInstance = new WasmResolveApi(flagLogger, retryStrategy);
+    initialInstance.setResolverState(initialState, accountId);
+    this.wasmResolverApiRef.set(initialInstance);
   }
 
   @Override
   public void updateStateAndFlushLogs(byte[] state, String accountId) {
-    if (isPrimary) {
-      this.secondaryWasmResolverApi.setResolverState(state, accountId);
-      this.wasmResolverApiRef.set(secondaryWasmResolverApi);
-      this.primaryWasmResolverApi.flushLogs();
-    } else {
-      this.primaryWasmResolverApi.setResolverState(state, accountId);
-      this.wasmResolverApiRef.set(primaryWasmResolverApi);
-      this.secondaryWasmResolverApi.flushLogs();
+    logResolveLock.lock();
+    // Create new instance with updated state
+    final WasmResolveApi newInstance = new WasmResolveApi(flagLogger, retryStrategy);
+    newInstance.setResolverState(state, accountId);
+
+    // Get current instance before switching
+    final WasmResolveApi oldInstance = wasmResolverApiRef.getAndSet(newInstance);
+
+    // Flush logs from the old instance (this allows it to be GC'd after method completion)
+    if (oldInstance != null) {
+      oldInstance.flushLogs();
     }
-    isPrimary = !isPrimary;
+    logResolveLock.unlock();
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    final WasmResolveApi currentInstance = wasmResolverApiRef.get();
+    if (currentInstance != null) {
+      // Note: WasmResolveApi doesn't have a close method, so this is a no-op for now
+      // but the instance will be GC'd naturally
+    }
+  }
 
   private final ReentrantLock logResolveLock = new ReentrantLock();
 

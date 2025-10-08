@@ -158,11 +158,11 @@ class WasmResolveApi {
   }
 
   public void flushLogs() {
-    //    final var voidRequest = Messages.Void.getDefaultInstance();
-    //    final var reqPtr = transferRequest(voidRequest);
-    //    final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];
-    //    final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
-    //    final var ignore = writeFlagLogs.write(request);
+    final var voidRequest = Messages.Void.getDefaultInstance();
+    final var reqPtr = transferRequest(voidRequest);
+    final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];
+    final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
+    final var ignore = writeFlagLogs.write(request);
   }
 
   public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request) {
