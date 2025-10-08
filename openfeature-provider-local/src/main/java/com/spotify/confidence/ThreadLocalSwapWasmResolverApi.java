@@ -87,7 +87,7 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
    * instances.
    */
   private SwapWasmResolverApi getResolverForCurrentThread() {
-    int instanceIndex = threadInstanceIndex.get();
+    final int instanceIndex = threadInstanceIndex.get();
     return resolverInstances.get(instanceIndex);
   }
 
