@@ -75,7 +75,6 @@ class FlagsAdminStateFetcher {
 
     try {
       final AccountState newAccountState = fetchState();
-      newAccountState.flags().forEach(this::logIfSticky);
       newAccountStates.put(accountName, newAccountState);
       secrets.putAll(newAccountState.secrets());
     } catch (Exception e) {
@@ -85,13 +84,6 @@ class FlagsAdminStateFetcher {
 
     stateHolder.set(new ResolverState(newAccountStates, secrets));
     healthStatus.setStatus(HealthCheckResponse.ServingStatus.SERVING);
-  }
-
-  private void logIfSticky(String s, Flag flag) {
-    if (flag.getRulesList().stream().anyMatch(Flag.Rule::hasMaterializationSpec)) {
-      logger.warn(
-          "Flag {} is sticky, sticky assignments are not supported in the local resolve", s);
-    }
   }
 
   private ResolverStateUriResponse getResolverFileUri() {
