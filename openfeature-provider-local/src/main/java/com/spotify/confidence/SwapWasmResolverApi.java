@@ -25,11 +25,12 @@ class SwapWasmResolverApi implements ResolverApi {
       WasmFlagLogger flagLogger,
       byte[] initialState,
       String accountId,
-      StickyResolveStrategy stickyResolveStrategy) {
+      StickyResolveStrategy stickyResolveStrategy,
+      RetryStrategy retryStrategy) {
     this.stickyResolveStrategy = stickyResolveStrategy;
-    this.primaryWasmResolverApi = new WasmResolveApi(flagLogger);
+    this.primaryWasmResolverApi = new WasmResolveApi(flagLogger, retryStrategy);
     this.primaryWasmResolverApi.setResolverState(initialState, accountId);
-    this.secondaryWasmResolverApi = new WasmResolveApi(flagLogger);
+    this.secondaryWasmResolverApi = new WasmResolveApi(flagLogger, retryStrategy);
     this.secondaryWasmResolverApi.setResolverState(initialState, accountId);
     this.wasmResolverApiRef.set(primaryWasmResolverApi);
   }

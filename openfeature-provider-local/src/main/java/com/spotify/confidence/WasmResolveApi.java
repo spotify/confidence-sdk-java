@@ -6,7 +6,6 @@ import com.dylibso.chicory.runtime.ImportFunction;
 import com.dylibso.chicory.runtime.ImportValues;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.runtime.Memory;
-import com.dylibso.chicory.wasm.ChicoryException;
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
 import com.dylibso.chicory.wasm.types.FunctionType;
@@ -33,8 +32,6 @@ import java.util.function.Function;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import rust_guest.Types;
 
 @FunctionalInterface
@@ -43,7 +40,6 @@ interface WasmFlagLogger {
 }
 
 class WasmResolveApi {
-  private static final Logger logger = LoggerFactory.getLogger(WasmResolveApi.class);
   private final FunctionType HOST_FN_TYPE =
       FunctionType.of(List.of(ValType.I32), List.of(ValType.I32));
   private final Instance instance;
@@ -59,12 +55,11 @@ class WasmResolveApi {
   private final ExportFunction wasmMsgGuestResolve;
   private final ExportFunction wasmMsgGuestResolveWithSticky;
 
-  // Retry configuration
-  private static final int MAX_RETRIES = 4;
-  private static final long INITIAL_BACKOFF_MS = 2;
-  private static final double BACKOFF_MULTIPLIER = 2.0;
+  // Retry strategy
+  private final RetryStrategy retryStrategy;
 
-  public WasmResolveApi(WasmFlagLogger flagLogger) {
+  public WasmResolveApi(WasmFlagLogger flagLogger, RetryStrategy retryStrategy) {
+    this.retryStrategy = retryStrategy;
     this.writeFlagLogs = flagLogger;
     try (InputStream wasmStream =
         getClass().getClassLoader().getResourceAsStream("wasm/confidence_resolver.wasm")) {
@@ -146,42 +141,6 @@ class WasmResolveApi {
     return Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
   }
 
-  /**
-   * Executes an operation with exponential backoff retry strategy. Only retries for Chicory WASM
-   * runtime exceptions: ChicoryException, TrapException, and WasmRuntimeException.
-   *
-   * @param operation The operation to execute
-   * @param operationName Name of the operation for error messages
-   * @param <T> Return type of the operation
-   * @return The result of the operation
-   * @throws RuntimeException if all retries are exhausted or for non-retryable exceptions
-   */
-  private <T> T executeWithRetry(java.util.function.Supplier<T> operation, String operationName) {
-    RuntimeException lastException = null;
-    long backoffMs = INITIAL_BACKOFF_MS;
-
-    for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        return operation.get();
-      } catch (ChicoryException e) {
-        logger.warn("{} attempt {} failed: {}", operationName, attempt + 1, e.getMessage());
-        lastException = e;
-        if (attempt < MAX_RETRIES) {
-          try {
-            Thread.sleep(backoffMs);
-          } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(operationName + " interrupted during retry backoff", ie);
-          }
-          backoffMs = (long) (backoffMs * BACKOFF_MULTIPLIER);
-        }
-      }
-    }
-
-    throw new RuntimeException(
-        operationName + " failed after " + (MAX_RETRIES + 1) + " attempts", lastException);
-  }
-
   public void setResolverState(byte[] state, String accountId) {
     final var resolverStateRequest =
         Messages.SetResolverStateRequest.newBuilder()
@@ -207,7 +166,7 @@ class WasmResolveApi {
   }
 
   public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request) {
-    return executeWithRetry(
+    return retryStrategy.execute(
         () -> {
           final int reqPtr = transferRequest(request);
           final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
@@ -217,7 +176,7 @@ class WasmResolveApi {
   }
 
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    return executeWithRetry(
+    return retryStrategy.execute(
         () -> {
           final int reqPtr = transferRequest(request);
           final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];

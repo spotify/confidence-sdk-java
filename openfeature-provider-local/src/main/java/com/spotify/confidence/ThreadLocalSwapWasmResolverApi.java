@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 class ThreadLocalSwapWasmResolverApi implements ResolverApi {
   private final WasmFlagLogger flagLogger;
   private final StickyResolveStrategy stickyResolveStrategy;
+  private final RetryStrategy retryStrategy;
   private volatile byte[] currentState;
   private volatile String currentAccountId;
 
@@ -27,9 +28,11 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
       WasmFlagLogger flagLogger,
       byte[] initialState,
       String accountId,
-      StickyResolveStrategy stickyResolveStrategy) {
+      StickyResolveStrategy stickyResolveStrategy,
+      RetryStrategy retryStrategy) {
     this.flagLogger = flagLogger;
     this.stickyResolveStrategy = stickyResolveStrategy;
+    this.retryStrategy = retryStrategy;
     this.currentState = initialState;
     this.currentAccountId = accountId;
 
@@ -41,7 +44,8 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
                       this.flagLogger,
                       this.currentState,
                       this.currentAccountId,
-                      this.stickyResolveStrategy);
+                      this.stickyResolveStrategy,
+                      this.retryStrategy);
               instances.put(Thread.currentThread(), instance);
               return instance;
             });
