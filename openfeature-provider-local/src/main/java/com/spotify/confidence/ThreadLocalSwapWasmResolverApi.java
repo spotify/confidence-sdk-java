@@ -6,6 +6,7 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,14 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
   // Pre-initialized resolver instances mapped by core index
   private final Map<Integer, SwapWasmResolverApi> resolverInstances = new ConcurrentHashMap<>();
   private final int numInstances;
+  private final AtomicInteger nextInstanceIndex = new AtomicInteger(0);
+  private final ThreadLocal<Integer> threadInstanceIndex =
+      new ThreadLocal<>() {
+        @Override
+        protected Integer initialValue() {
+          return nextInstanceIndex.getAndIncrement() % numInstances;
+        }
+      };
 
   public ThreadLocalSwapWasmResolverApi(
       WasmFlagLogger flagLogger,
@@ -73,12 +82,12 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
   }
 
   /**
-   * Maps the current thread to a resolver instance based on thread ID. Uses modulo operation to
-   * distribute threads across available instances.
+   * Maps the current thread to a resolver instance using round-robin assignment. Each thread gets
+   * assigned to an instance index when first accessed, ensuring even distribution across available
+   * instances.
    */
   private SwapWasmResolverApi getResolverForCurrentThread() {
-    final int threadId = (int) Thread.currentThread().getId();
-    final int instanceIndex = threadId % numInstances;
+    int instanceIndex = threadInstanceIndex.get();
     return resolverInstances.get(instanceIndex);
   }
 
