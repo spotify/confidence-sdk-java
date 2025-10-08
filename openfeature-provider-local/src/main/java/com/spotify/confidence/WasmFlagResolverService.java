@@ -6,7 +6,7 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.util.concurrent.CompletableFuture;
 
 record WasmFlagResolverService(
-    SwapWasmResolverApi wasmResolveApi, StickyResolveStrategy stickyResolveStrategy)
+    ResolverApi wasmResolveApi, StickyResolveStrategy stickyResolveStrategy)
     implements FlagResolverService {
   @Override
   public CompletableFuture<ResolveFlagsResponse> resolveFlags(ResolveFlagsRequest request) {

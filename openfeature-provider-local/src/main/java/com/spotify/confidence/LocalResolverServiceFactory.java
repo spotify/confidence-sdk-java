@@ -35,7 +35,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private final AtomicReference<ResolverState> resolverStateHolder;
   private final ResolveTokenConverter resolveTokenConverter;
 
-  private final SwapWasmResolverApi wasmResolveApi;
+  private final ResolverApi wasmResolveApi;
   private final Supplier<Instant> timeSupplier;
   private final Supplier<String> resolveIdSupplier;
   private final FlagLogger flagLogger;
@@ -67,22 +67,27 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
       ApiSecret apiSecret,
       String clientSecret,
       boolean isWasm,
-      StickyResolveStrategy stickyResolveStrategy) {
-    return createFlagResolverService(apiSecret, clientSecret, isWasm, stickyResolveStrategy);
+      StickyResolveStrategy stickyResolveStrategy,
+      RetryStrategy retryStrategy) {
+    return createFlagResolverService(
+        apiSecret, clientSecret, isWasm, stickyResolveStrategy, retryStrategy);
   }
 
   static FlagResolverService from(
       AccountStateProvider accountStateProvider,
       String accountId,
-      StickyResolveStrategy stickyResolveStrategy) {
-    return createFlagResolverService(accountStateProvider, accountId, stickyResolveStrategy);
+      StickyResolveStrategy stickyResolveStrategy,
+      RetryStrategy retryStrategy) {
+    return createFlagResolverService(
+        accountStateProvider, accountId, stickyResolveStrategy, retryStrategy);
   }
 
   private static FlagResolverService createFlagResolverService(
       ApiSecret apiSecret,
       String clientSecret,
       boolean isWasm,
-      StickyResolveStrategy stickyResolveStrategy) {
+      StickyResolveStrategy stickyResolveStrategy,
+      RetryStrategy retryStrategy) {
     final var channel = createConfidenceChannel();
     final AuthServiceBlockingStub authService = AuthServiceGrpc.newBlockingStub(channel);
     final TokenHolder tokenHolder =
@@ -106,12 +111,13 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
     final var wasmFlagLogger = new GrpcWasmFlagLogger(apiSecret);
     if (isWasm) {
-      final SwapWasmResolverApi wasmResolverApi =
-          new SwapWasmResolverApi(
+      final ResolverApi wasmResolverApi =
+          new ThreadLocalSwapWasmResolverApi(
               wasmFlagLogger,
               sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray(),
               sidecarFlagsAdminFetcher.accountId,
-              stickyResolveStrategy);
+              stickyResolveStrategy,
+              retryStrategy);
       flagsFetcherExecutor.scheduleAtFixedRate(
           sidecarFlagsAdminFetcher::reload,
           pollIntervalSeconds,
@@ -167,7 +173,8 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private static FlagResolverService createFlagResolverService(
       AccountStateProvider accountStateProvider,
       String accountId,
-      StickyResolveStrategy stickyResolveStrategy) {
+      StickyResolveStrategy stickyResolveStrategy,
+      RetryStrategy retryStrategy) {
     final var mode = System.getenv("LOCAL_RESOLVE_MODE");
     if (!(mode == null || mode.equals("WASM"))) {
       throw new RuntimeException("Only WASM mode supported with AccountStateProvider");
@@ -178,9 +185,9 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
             .orElse(Duration.ofMinutes(5).toSeconds());
     final byte[] resolverStateProtobuf = accountStateProvider.provide();
     final WasmFlagLogger flagLogger = request -> WriteFlagLogsResponse.getDefaultInstance();
-    final SwapWasmResolverApi wasmResolverApi =
-        new SwapWasmResolverApi(
-            flagLogger, resolverStateProtobuf, accountId, stickyResolveStrategy);
+    final ResolverApi wasmResolverApi =
+        new ThreadLocalSwapWasmResolverApi(
+            flagLogger, resolverStateProtobuf, accountId, stickyResolveStrategy, retryStrategy);
     flagsFetcherExecutor.scheduleAtFixedRate(
         () -> {
           wasmResolverApi.updateStateAndFlushLogs(accountStateProvider.provide(), accountId);
@@ -208,7 +215,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   LocalResolverServiceFactory(
-      SwapWasmResolverApi wasmResolveApi,
+      ResolverApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       FlagLogger flagLogger,
@@ -224,7 +231,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   LocalResolverServiceFactory(
-      SwapWasmResolverApi wasmResolveApi,
+      ResolverApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       Supplier<Instant> timeSupplier,

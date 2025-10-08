@@ -45,7 +45,11 @@ public class TestBase {
     if (isWasm) {
       final var wasmResolverApi =
           new SwapWasmResolverApi(
-              request -> null, desiredState.toProto().toByteArray(), "", mockFallback);
+              request -> null,
+              desiredState.toProto().toByteArray(),
+              "",
+              mockFallback,
+              new NoRetryStrategy());
       resolverServiceFactory =
           new LocalResolverServiceFactory(
               wasmResolverApi, resolverState, resolveTokenConverter, mock(), mockFallback);

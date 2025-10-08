@@ -40,7 +40,6 @@ interface WasmFlagLogger {
 }
 
 class WasmResolveApi {
-
   private final FunctionType HOST_FN_TYPE =
       FunctionType.of(List.of(ValType.I32), List.of(ValType.I32));
   private final Instance instance;
@@ -56,7 +55,11 @@ class WasmResolveApi {
   private final ExportFunction wasmMsgGuestResolve;
   private final ExportFunction wasmMsgGuestResolveWithSticky;
 
-  public WasmResolveApi(WasmFlagLogger flagLogger) {
+  // Retry strategy
+  private final RetryStrategy retryStrategy;
+
+  public WasmResolveApi(WasmFlagLogger flagLogger, RetryStrategy retryStrategy) {
+    this.retryStrategy = retryStrategy;
     this.writeFlagLogs = flagLogger;
     try (InputStream wasmStream =
         getClass().getClassLoader().getResourceAsStream("wasm/confidence_resolver.wasm")) {
@@ -163,15 +166,23 @@ class WasmResolveApi {
   }
 
   public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request) {
-    final int reqPtr = transferRequest(request);
-    final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
-    return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
+    return retryStrategy.execute(
+        () -> {
+          final int reqPtr = transferRequest(request);
+          final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
+          return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
+        },
+        "resolveWithSticky");
   }
 
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    final int reqPtr = transferRequest(request);
-    final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
-    return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
+    return retryStrategy.execute(
+        () -> {
+          final int reqPtr = transferRequest(request);
+          final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
+          return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
+        },
+        "resolve");
   }
 
   private <T extends GeneratedMessageV3> T consumeResponse(int addr, ParserFn<T> codec) {
