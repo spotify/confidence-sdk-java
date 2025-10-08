@@ -33,6 +33,8 @@ import java.util.function.Function;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rust_guest.Types;
 
 @FunctionalInterface
@@ -41,7 +43,7 @@ interface WasmFlagLogger {
 }
 
 class WasmResolveApi {
-
+  private static final Logger logger = LoggerFactory.getLogger(WasmResolveApi.class);
   private final FunctionType HOST_FN_TYPE =
       FunctionType.of(List.of(ValType.I32), List.of(ValType.I32));
   private final Instance instance;
@@ -162,6 +164,7 @@ class WasmResolveApi {
       try {
         return operation.get();
       } catch (ChicoryException e) {
+        logger.warn("{} attempt {} failed: {}", operationName, attempt + 1, e.getMessage());
         lastException = e;
         if (attempt < MAX_RETRIES) {
           try {
