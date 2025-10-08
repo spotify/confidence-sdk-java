@@ -6,6 +6,7 @@ import com.dylibso.chicory.runtime.ImportFunction;
 import com.dylibso.chicory.runtime.ImportValues;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.runtime.Memory;
+import com.dylibso.chicory.wasm.ChicoryException;
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
 import com.dylibso.chicory.wasm.types.FunctionType;
@@ -55,6 +56,11 @@ class WasmResolveApi {
   private final ExportFunction wasmMsgFlushLogs;
   private final ExportFunction wasmMsgGuestResolve;
   private final ExportFunction wasmMsgGuestResolveWithSticky;
+
+  // Retry configuration
+  private static final int MAX_RETRIES = 4;
+  private static final long INITIAL_BACKOFF_MS = 2;
+  private static final double BACKOFF_MULTIPLIER = 2.0;
 
   public WasmResolveApi(WasmFlagLogger flagLogger) {
     this.writeFlagLogs = flagLogger;
@@ -138,6 +144,41 @@ class WasmResolveApi {
     return Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
   }
 
+  /**
+   * Executes an operation with exponential backoff retry strategy. Only retries for Chicory WASM
+   * runtime exceptions: ChicoryException, TrapException, and WasmRuntimeException.
+   *
+   * @param operation The operation to execute
+   * @param operationName Name of the operation for error messages
+   * @param <T> Return type of the operation
+   * @return The result of the operation
+   * @throws RuntimeException if all retries are exhausted or for non-retryable exceptions
+   */
+  private <T> T executeWithRetry(java.util.function.Supplier<T> operation, String operationName) {
+    RuntimeException lastException = null;
+    long backoffMs = INITIAL_BACKOFF_MS;
+
+    for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return operation.get();
+      } catch (ChicoryException e) {
+        lastException = e;
+        if (attempt < MAX_RETRIES) {
+          try {
+            Thread.sleep(backoffMs);
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(operationName + " interrupted during retry backoff", ie);
+          }
+          backoffMs = (long) (backoffMs * BACKOFF_MULTIPLIER);
+        }
+      }
+    }
+
+    throw new RuntimeException(
+        operationName + " failed after " + (MAX_RETRIES + 1) + " attempts", lastException);
+  }
+
   public void setResolverState(byte[] state, String accountId) {
     final var resolverStateRequest =
         Messages.SetResolverStateRequest.newBuilder()
@@ -163,15 +204,23 @@ class WasmResolveApi {
   }
 
   public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request) {
-    final int reqPtr = transferRequest(request);
-    final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
-    return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
+    return executeWithRetry(
+        () -> {
+          final int reqPtr = transferRequest(request);
+          final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
+          return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
+        },
+        "resolveWithSticky");
   }
 
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    final int reqPtr = transferRequest(request);
-    final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
-    return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
+    return executeWithRetry(
+        () -> {
+          final int reqPtr = transferRequest(request);
+          final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
+          return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
+        },
+        "resolve");
   }
 
   private <T extends GeneratedMessageV3> T consumeResponse(int addr, ParserFn<T> codec) {
