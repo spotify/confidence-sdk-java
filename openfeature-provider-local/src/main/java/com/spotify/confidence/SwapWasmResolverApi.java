@@ -46,9 +46,9 @@ class SwapWasmResolverApi implements ResolverApi {
     // Get current instance before switching
     final WasmResolveApi oldInstance = wasmResolverApiRef.getAndSet(newInstance);
 
-    // Flush logs from the old instance (this allows it to be GC'd after method completion)
     if (oldInstance != null) {
       oldInstance.flushLogs();
+      oldInstance.isIsFlushed(true);
     }
     logResolveLock.unlock();
   }
@@ -75,7 +75,8 @@ class SwapWasmResolverApi implements ResolverApi {
 
   private CompletableFuture<ResolveFlagsResponse> resolveWithStickyInternal(
       ResolveWithStickyRequest request) {
-    final var response = wasmResolverApiRef.get().resolveWithSticky(request);
+    final var instance = wasmResolverApiRef.get();
+    final var response = instance.resolveWithSticky(request);
 
     switch (response.getResolveResultCase()) {
       case SUCCESS -> {
@@ -83,6 +84,9 @@ class SwapWasmResolverApi implements ResolverApi {
         // Store updates if present
         if (!success.getUpdatesList().isEmpty()) {
           storeUpdates(success.getUpdatesList());
+        }
+        if (instance.isFlushed()) {
+          CompletableFuture.runAsync(instance::flushLogs);
         }
         return CompletableFuture.completedFuture(success.getResponse());
       }
@@ -205,7 +209,11 @@ class SwapWasmResolverApi implements ResolverApi {
   @Override
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
     logResolveLock.lock();
-    final var response = wasmResolverApiRef.get().resolve(request);
+    final var instance = wasmResolverApiRef.get();
+    final var response = instance.resolve(request);
+    if (instance.isFlushed()) {
+      CompletableFuture.runAsync(instance::flushLogs);
+    }
     logResolveLock.unlock();
     return response;
   }

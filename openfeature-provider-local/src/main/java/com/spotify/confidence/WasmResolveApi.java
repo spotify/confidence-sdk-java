@@ -51,6 +51,7 @@ class WasmResolveApi {
 
   // Retry strategy
   private final RetryStrategy retryStrategy;
+  private boolean isFlushed;
 
   public WasmResolveApi(WasmFlagLogger flagLogger, RetryStrategy retryStrategy) {
     this.retryStrategy = retryStrategy;
@@ -217,6 +218,14 @@ class WasmResolveApi {
             return new long[] {transferResponseError(e.getMessage())};
           }
         });
+  }
+
+  public void isIsFlushed(boolean b) {
+    this.isFlushed = true;
+  }
+
+  public boolean isFlushed() {
+    return isFlushed;
   }
 
   private interface ParserFn<T> {
