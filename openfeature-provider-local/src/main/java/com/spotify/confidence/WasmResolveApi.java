@@ -11,8 +11,7 @@ import com.dylibso.chicory.wasm.WasmModule;
 import com.dylibso.chicory.wasm.types.FunctionType;
 import com.dylibso.chicory.wasm.types.ValType;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.BytesValue;
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
 import com.spotify.confidence.flags.resolver.v1.LogMessage;
@@ -25,14 +24,9 @@ import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsResponse;
 import com.spotify.confidence.wasm.Messages;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Function;
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import rust_guest.Types;
 
 @FunctionalInterface
 interface WasmFlagLogger {
@@ -82,11 +76,6 @@ class WasmResolveApi {
                               "wasm_msg_current_thread_id",
                               FunctionType.of(List.of(), List.of(ValType.I32)),
                               this::currentThreadId))
-                      .addFunction(
-                          createImportFunction(
-                              "encrypt_resolve_token",
-                              Types.EncryptionRequest::parseFrom,
-                              this::encryptResolveToken))
                       .build())
               .withMachineFactory(MachineFactoryCompiler::compile)
               .build();
@@ -101,36 +90,9 @@ class WasmResolveApi {
     }
   }
 
-  private GeneratedMessageV3 log(LogMessage message) {
+  private GeneratedMessage log(LogMessage message) {
     System.out.println(message.getMessage());
     return Messages.Void.getDefaultInstance();
-  }
-
-  private GeneratedMessageV3 encryptResolveToken(Types.EncryptionRequest encryptionRequest) {
-    try {
-      final byte[] tokenData = encryptionRequest.getTokenData().toByteArray();
-      final byte[] encryptionKey = encryptionRequest.getEncryptionKey().toByteArray();
-      if (encryptionKey.length != 16) {
-        throw new IllegalArgumentException("Encryption key must be exactly 16 bytes for AES-128");
-      }
-      final byte[] iv = new byte[16];
-      new SecureRandom().nextBytes(iv);
-      final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-      final SecretKeySpec secretKey = new SecretKeySpec(encryptionKey, "AES");
-      final IvParameterSpec ivSpec = new IvParameterSpec(iv);
-
-      cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
-      final byte[] encryptedData = cipher.doFinal(tokenData);
-
-      final byte[] result = new byte[iv.length + encryptedData.length];
-      System.arraycopy(iv, 0, result, 0, iv.length);
-      System.arraycopy(encryptedData, 0, result, iv.length, encryptedData.length);
-
-      return BytesValue.newBuilder().setValue(ByteString.copyFrom(result)).build();
-
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to encrypt resolve token", e);
-    }
   }
 
   private long[] currentThreadId(Instance instance, long... longs) {
@@ -185,7 +147,7 @@ class WasmResolveApi {
         "resolve");
   }
 
-  private <T extends GeneratedMessageV3> T consumeResponse(int addr, ParserFn<T> codec) {
+  private <T extends GeneratedMessage> T consumeResponse(int addr, ParserFn<T> codec) {
     try {
       final Messages.Response response = Messages.Response.parseFrom(consume(addr));
       if (response.hasError()) {
@@ -198,7 +160,7 @@ class WasmResolveApi {
     }
   }
 
-  private <T extends GeneratedMessageV3> T consumeRequest(int addr, ParserFn<T> codec) {
+  private <T extends GeneratedMessage> T consumeRequest(int addr, ParserFn<T> codec) {
     try {
       final Messages.Request request = Messages.Request.parseFrom(consume(addr));
       return codec.apply(request.getData().toByteArray());
@@ -207,13 +169,13 @@ class WasmResolveApi {
     }
   }
 
-  private int transferRequest(GeneratedMessageV3 message) {
+  private int transferRequest(GeneratedMessage message) {
     final byte[] request =
         Messages.Request.newBuilder().setData(message.toByteString()).build().toByteArray();
     return transfer(request);
   }
 
-  private int transferResponseSuccess(GeneratedMessageV3 response) {
+  private int transferResponseSuccess(GeneratedMessage response) {
     final byte[] wrapperBytes =
         Messages.Response.newBuilder().setData(response.toByteString()).build().toByteArray();
     return transfer(wrapperBytes);
@@ -240,8 +202,8 @@ class WasmResolveApi {
     return addr;
   }
 
-  private <T extends GeneratedMessageV3> ImportFunction createImportFunction(
-      String name, ParserFn<T> reqCodec, Function<T, GeneratedMessageV3> impl) {
+  private <T extends GeneratedMessage> ImportFunction createImportFunction(
+      String name, ParserFn<T> reqCodec, Function<T, GeneratedMessage> impl) {
     return new ImportFunction(
         "wasm_msg",
         "wasm_msg_host_" + name,
@@ -249,7 +211,7 @@ class WasmResolveApi {
         (instance1, args) -> {
           try {
             final T message = consumeRequest((int) args[0], reqCodec);
-            final GeneratedMessageV3 response = impl.apply(message);
+            final GeneratedMessage response = impl.apply(message);
             return new long[] {transferResponseSuccess(response)};
           } catch (Exception e) {
             return new long[] {transferResponseError(e.getMessage())};
