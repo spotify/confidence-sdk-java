@@ -6,10 +6,10 @@ import javax.annotation.Nonnull;
 
 public non-sealed interface MaterializationRepository extends StickyResolveStrategy {
   @Nonnull
-  CompletableFuture<@Nonnull Map<String, MaterializationInfo>> loadMaterializedAssignmentsForUnit(
+  CompletableFuture<Map<String, MaterializationInfo>> loadMaterializedAssignmentsForUnit(
       @Nonnull String unit, @Nonnull String materialization);
 
   @Nonnull
   CompletableFuture<Void> storeAssignment(
-      @Nonnull String unit, @Nonnull Map<String, MaterializationInfo> assignments);
+      @Nonnull String unit, Map<String, MaterializationInfo> assignments);
 }
