@@ -15,14 +15,15 @@ A high-performance OpenFeature provider for [Confidence](https://confidence.spot
 ## Installation
 
 Add this dependency to your `pom.xml`:
-
+<!-- x-release-please-start-version -->
 ```xml
 <dependency>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>openfeature-provider-local</artifactId>
-    <version>0.2.4</version>
+    <version>0.6.1-SNAPSHOT</version>
 </dependency>
 ```
+<!---x-release-please-end-->
 
 ## Quick Start
 

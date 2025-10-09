@@ -12,6 +12,7 @@
       "extra-files": [
         "pom.xml",
         "README.md",
+        "openfeature-provider-local/README.md",
         "openfeature-provider/pom.xml",
         "sdk-java/pom.xml",
         "sdk-java/src/main/java/com/spotify/confidence/ConfidenceUtils.java"
