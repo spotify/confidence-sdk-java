@@ -17,6 +17,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 
 /**
@@ -89,7 +90,8 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    *     configuration
    * @since 0.2.4
    */
-  public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
+  public OpenFeatureLocalResolveProvider(
+      @Nonnull ApiSecret apiSecret, @Nonnull String clientSecret) {
     this(apiSecret, clientSecret, new RemoteResolverFallback(), new NoRetryStrategy());
   }
 
@@ -110,7 +112,9 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @since 0.2.4
    */
   public OpenFeatureLocalResolveProvider(
-      ApiSecret apiSecret, String clientSecret, StickyResolveStrategy stickyResolveStrategy) {
+      @Nonnull ApiSecret apiSecret,
+      @Nonnull String clientSecret,
+      @Nonnull StickyResolveStrategy stickyResolveStrategy) {
     this(apiSecret, clientSecret, stickyResolveStrategy, new NoRetryStrategy());
   }
 
@@ -133,10 +137,10 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @since 0.2.4
    */
   public OpenFeatureLocalResolveProvider(
-      ApiSecret apiSecret,
-      String clientSecret,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
+      @Nonnull ApiSecret apiSecret,
+      @Nonnull String clientSecret,
+      @Nonnull StickyResolveStrategy stickyResolveStrategy,
+      @Nonnull RetryStrategy retryStrategy) {
     final var env = System.getenv("LOCAL_RESOLVE_MODE");
     if (env != null && env.equals("WASM")) {
       this.flagResolverService =
@@ -166,10 +170,10 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    */
   @VisibleForTesting
   public OpenFeatureLocalResolveProvider(
-      AccountStateProvider accountStateProvider,
-      String accountId,
-      String clientSecret,
-      StickyResolveStrategy stickyResolveStrategy) {
+      @Nonnull AccountStateProvider accountStateProvider,
+      @Nonnull String accountId,
+      @Nonnull String clientSecret,
+      @Nonnull StickyResolveStrategy stickyResolveStrategy) {
     this(
         accountStateProvider,
         accountId,
@@ -191,11 +195,11 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    */
   @VisibleForTesting
   public OpenFeatureLocalResolveProvider(
-      AccountStateProvider accountStateProvider,
-      String accountId,
-      String clientSecret,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
+      @Nonnull AccountStateProvider accountStateProvider,
+      @Nonnull String accountId,
+      @Nonnull String clientSecret,
+      @Nonnull StickyResolveStrategy stickyResolveStrategy,
+      @Nonnull RetryStrategy retryStrategy) {
     this.stickyResolveStrategy = stickyResolveStrategy;
     this.clientSecret = clientSecret;
     this.flagResolverService =

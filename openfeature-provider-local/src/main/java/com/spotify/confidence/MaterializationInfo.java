@@ -2,9 +2,10 @@ package com.spotify.confidence;
 
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 public record MaterializationInfo(
-    boolean isUnitInMaterialization, Map<String, String> ruleToVariant) {
+    boolean isUnitInMaterialization, @Nonnull Map<String, String> ruleToVariant) {
   public Optional<String> getVariantForRule(String rule) {
     return Optional.ofNullable(ruleToVariant.get(rule));
   }
