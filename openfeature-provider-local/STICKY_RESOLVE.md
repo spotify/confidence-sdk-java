@@ -54,104 +54,12 @@ record MaterializationInfo(
 
 ### In-Memory (Testing/Development)
 
-```java
-public class InMemoryMaterializationRepository implements MaterializationRepository {
-  private final Map<String, Map<String, MaterializationInfo>> storage = new ConcurrentHashMap<>();
+[Here is an example](src/test/java/com/spotify/confidence/InMemoryMaterializationRepoExample.java) on how to implement a simple in-memory `MaterializationRepository`. The same approach can be used with other more persistent storages (like Redis or similar) which is highly recommended for production use cases. 
 
-  @Override
-  public CompletableFuture<Map<String, MaterializationInfo>> loadMaterializedAssignmentsForUnit(
-      String unit, String materialization) {
-    return CompletableFuture.supplyAsync(() -> {
-      Map<String, MaterializationInfo> unitAssignments = storage.get(unit);
-      if (unitAssignments == null || !unitAssignments.containsKey(materialization)) {
-        return Map.of();
-      }
-      return Map.of(materialization, unitAssignments.get(materialization));
-    });
-  }
-
-  @Override
-  public CompletableFuture<Void> storeAssignment(
-      String unit, Map<String, MaterializationInfo> assignments) {
-    return CompletableFuture.runAsync(() -> {
-      storage.compute(unit, (key, existing) -> {
-        if (existing == null) {
-          return new ConcurrentHashMap<>(assignments);
-        }
-        existing.putAll(assignments);
-        return existing;
-      });
-    });
-  }
-
-  @Override
-  public void close() {
-    storage.clear();
-  }
-}
-```
-
-### Redis (Production)
+#### Usage
 
 ```java
-public class RedisMaterializationRepository implements MaterializationRepository {
-  private final JedisPool jedisPool;
-  private final ObjectMapper objectMapper = new ObjectMapper();
-  private static final int TTL_SECONDS = 90 * 24 * 60 * 60; // 90 days
-
-  public RedisMaterializationRepository(JedisPool jedisPool) {
-    this.jedisPool = jedisPool;
-  }
-
-  @Override
-  public CompletableFuture<Map<String, MaterializationInfo>> loadMaterializedAssignmentsForUnit(
-      String unit, String materialization) {
-    return CompletableFuture.supplyAsync(() -> {
-      try (var jedis = jedisPool.getResource()) {
-        String key = "sticky:" + unit + ":" + materialization;
-        String value = jedis.get(key);
-
-        if (value == null) return Map.of();
-
-        // Renew TTL on read (matching Confidence behavior)
-        jedis.expire(key, TTL_SECONDS);
-
-        MaterializationInfo info = objectMapper.readValue(value, MaterializationInfo.class);
-        return Map.of(materialization, info);
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to load from Redis", e);
-      }
-    });
-  }
-
-  @Override
-  public CompletableFuture<Void> storeAssignment(
-      String unit, Map<String, MaterializationInfo> assignments) {
-    return CompletableFuture.runAsync(() -> {
-      try (var jedis = jedisPool.getResource()) {
-        for (var entry : assignments.entrySet()) {
-          String key = "sticky:" + unit + ":" + entry.getKey();
-          String value = objectMapper.writeValueAsString(entry.getValue());
-          jedis.setex(key, TTL_SECONDS, value);
-        }
-      } catch (Exception e) {
-        // Don't fail resolve on storage errors
-        System.err.println("Failed to store to Redis: " + e.getMessage());
-      }
-    });
-  }
-
-  @Override
-  public void close() {
-    jedisPool.close();
-  }
-}
-```
-
-### Usage
-
-```java
-MaterializationRepository repository = new RedisMaterializationRepository(jedisPool);
+MaterializationRepository repository = new InMemoryMaterializationRepoExample();
 
 OpenFeatureLocalResolveProvider provider = new OpenFeatureLocalResolveProvider(
     apiSecret,
@@ -174,7 +82,7 @@ OpenFeatureLocalResolveProvider provider = new OpenFeatureLocalResolveProvider(
 |----------|----------|------------|
 | **RemoteResolverFallback** (default) | Most apps | Simple, managed by Confidence. Network calls when needed. |
 | **MaterializationRepository** (in-memory) | Single-instance apps, testing | Fast, no network. Lost on restart. |
-| **MaterializationRepository** (Redis/DB) | High-traffic apps, offline scenarios | No network calls. Requires storage infra. |
+| **MaterializationRepository** (Redis/DB) | Distributed/Multi instance apps | No network calls. Requires storage infra. |
 
 **Start with the default.** Only implement custom storage if you need to eliminate network calls or work offline.
 
