@@ -3,6 +3,8 @@ package com.spotify.confidence;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.futures.CompletableFutures;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,18 +54,24 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
     this.numInstances = Runtime.getRuntime().availableProcessors();
     logger.info(
         "Initialized ThreadLocalSwapWasmResolverApi with {} available processors", numInstances);
+    final var futures = new ArrayList<CompletableFuture<Void>>(numInstances);
+
     IntStream.range(0, numInstances)
         .forEach(
-            i -> {
-              final var instance =
-                  new SwapWasmResolverApi(
-                      this.flagLogger,
-                      this.currentState,
-                      this.currentAccountId,
-                      this.stickyResolveStrategy,
-                      this.retryStrategy);
-              resolverInstances.put(i, instance);
-            });
+            i ->
+                futures.add(
+                    CompletableFuture.runAsync(
+                        () -> {
+                          final var instance =
+                              new SwapWasmResolverApi(
+                                  this.flagLogger,
+                                  this.currentState,
+                                  this.currentAccountId,
+                                  this.stickyResolveStrategy,
+                                  this.retryStrategy);
+                          resolverInstances.put(i, instance);
+                        })));
+    CompletableFutures.allAsList(futures).join();
   }
 
   /**
@@ -75,10 +83,11 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
     this.currentState = state;
     this.currentAccountId = accountId;
 
-    // Update all pre-initialized resolver instances
-    resolverInstances
-        .values()
-        .forEach(resolver -> resolver.updateStateAndFlushLogs(state, accountId));
+    final var futures =
+        resolverInstances.values().stream()
+            .map(v -> CompletableFuture.runAsync(() -> v.updateStateAndFlushLogs(state, accountId)))
+            .toList();
+    CompletableFutures.allAsList(futures).join();
   }
 
   /**
