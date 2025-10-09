@@ -1,8 +1,8 @@
 package com.spotify.confidence;
 
 import com.google.common.annotations.Beta;
-import javax.annotation.Nonnull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * Interface for sending events to Confidence with context. Extends {@link Contextual} to provide

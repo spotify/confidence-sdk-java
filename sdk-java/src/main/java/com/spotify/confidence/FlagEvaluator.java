@@ -1,7 +1,7 @@
 package com.spotify.confidence;
 
-import javax.annotation.Nonnull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * Interface for evaluating feature flags with context. Extends {@link Contextual} to provide

@@ -1,8 +1,8 @@
 package com.spotify.confidence;
 
 import com.google.common.annotations.Beta;
-import javax.annotation.Nonnull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * Interface for managing contextual data in Confidence SDK. Provides methods to set, update, and

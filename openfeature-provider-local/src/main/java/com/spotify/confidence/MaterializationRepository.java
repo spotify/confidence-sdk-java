@@ -1,8 +1,8 @@
 package com.spotify.confidence;
 
-import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nonnull;
 
 public non-sealed interface MaterializationRepository extends StickyResolveStrategy {
   @Nonnull

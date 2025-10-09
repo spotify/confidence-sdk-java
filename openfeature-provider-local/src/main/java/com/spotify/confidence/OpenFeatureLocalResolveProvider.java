@@ -90,7 +90,8 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    *     configuration
    * @since 0.2.4
    */
-  public OpenFeatureLocalResolveProvider(@Nonnull ApiSecret apiSecret, @Nonnull String clientSecret) {
+  public OpenFeatureLocalResolveProvider(
+      @Nonnull ApiSecret apiSecret, @Nonnull String clientSecret) {
     this(apiSecret, clientSecret, new RemoteResolverFallback(), new NoRetryStrategy());
   }
 
@@ -111,7 +112,9 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @since 0.2.4
    */
   public OpenFeatureLocalResolveProvider(
-      @Nonnull ApiSecret apiSecret, @Nonnull String clientSecret, @Nonnull StickyResolveStrategy stickyResolveStrategy) {
+      @Nonnull ApiSecret apiSecret,
+      @Nonnull String clientSecret,
+      @Nonnull StickyResolveStrategy stickyResolveStrategy) {
     this(apiSecret, clientSecret, stickyResolveStrategy, new NoRetryStrategy());
   }
 

@@ -1,8 +1,8 @@
 package com.spotify.confidence;
 
-import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 public record MaterializationInfo(
     boolean isUnitInMaterialization, @Nonnull Map<String, String> ruleToVariant) {
