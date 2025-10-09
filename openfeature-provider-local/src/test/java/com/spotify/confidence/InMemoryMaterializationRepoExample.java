@@ -1,7 +1,5 @@
-package org.example;
+package com.spotify.confidence;
 
-import com.spotify.confidence.MaterializationInfo;
-import com.spotify.confidence.MaterializationRepository;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -11,7 +9,8 @@ import org.slf4j.LoggerFactory;
 
 public class InMemoryMaterializationRepoExample implements MaterializationRepository {
 
-  private static final Logger logger = LoggerFactory.getLogger(InMemoryMaterializationRepo.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(InMemoryMaterializationRepoExample.class);
   private final Map<String, Map<String, MaterializationInfo>> storage = new ConcurrentHashMap<>();
 
   /**
