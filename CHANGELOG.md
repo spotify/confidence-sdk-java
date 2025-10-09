@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/spotify/confidence-sdk-java/compare/v0.6.0...v0.6.1) (2025-10-09)
+
+
+### Bug Fixes
+
+* bump proto remove unused function ([#298](https://github.com/spotify/confidence-sdk-java/issues/298)) ([064c6d6](https://github.com/spotify/confidence-sdk-java/commit/064c6d6dcdcd1afab014f1205b3cc402aec3ab09))
+
 ## [0.6.0](https://github.com/spotify/confidence-sdk-java/compare/v0.5.2...v0.6.0) (2025-10-08)
 
 
