@@ -1,5 +1,7 @@
 package com.spotify.confidence;
 
+import javax.annotation.Nonnull;
+
 /**
  * Functional interface for providing AccountState instances.
  *
@@ -19,5 +21,6 @@ public interface AccountStateProvider {
    * @return the AccountState protobuf containing flag configurations and metadata
    * @throws RuntimeException if the AccountState cannot be provided
    */
+  @Nonnull
   byte[] provide();
 }

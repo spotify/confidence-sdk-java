@@ -1,5 +1,7 @@
 package com.spotify.confidence;
 
+import javax.annotation.Nonnull;
+
 /**
  * API credentials for authenticating with the Confidence service.
  *
@@ -10,4 +12,4 @@ package com.spotify.confidence;
  * @param clientSecret the client secret for your Confidence application
  * @since 0.2.4
  */
-public record ApiSecret(String clientId, String clientSecret) {}
+public record ApiSecret(@Nonnull String clientId, @Nonnull String clientSecret) {}

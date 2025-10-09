@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
@@ -15,7 +16,8 @@ public interface FlagEvaluator extends Contextual {
    * @param <T> The type of the flag value
    * @return The evaluated flag value or the default value if evaluation fails
    */
-  <T> T getValue(String key, T defaultValue);
+  @Nonnull
+  <T> T getValue(@Nonnull String key, @Nonnull T defaultValue);
 
   /**
    * Gets a detailed evaluation of a feature flag for the current context.
@@ -25,7 +27,8 @@ public interface FlagEvaluator extends Contextual {
    * @param <T> The type of the flag value
    * @return A {@link FlagEvaluation} containing the evaluated value and evaluation details
    */
-  <T> FlagEvaluation<T> getEvaluation(String key, T defaultValue);
+  @Nonnull
+  <T> FlagEvaluation<T> getEvaluation(@Nonnull String key, @Nonnull T defaultValue);
 
   /**
    * Creates a new instance with the specified context.
@@ -33,8 +36,9 @@ public interface FlagEvaluator extends Contextual {
    * @param context The new context to set
    * @return A new instance with the specified context
    */
+  @Nonnull
   @Override
-  FlagEvaluator withContext(ConfidenceValue.Struct context);
+  FlagEvaluator withContext(@Nonnull ConfidenceValue.Struct context);
 
   /**
    * Creates a new instance with the specified context map.
@@ -42,8 +46,9 @@ public interface FlagEvaluator extends Contextual {
    * @param context Map of context key-value pairs
    * @return A new instance with the specified context
    */
+  @Nonnull
   @Override
-  default FlagEvaluator withContext(Map<String, ConfidenceValue> context) {
+  default FlagEvaluator withContext(@Nonnull Map<String, ConfidenceValue> context) {
     return withContext(ConfidenceValue.Struct.of(context));
   }
 }

@@ -21,6 +21,7 @@ import io.grpc.StatusRuntimeException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 
 /** OpenFeature Provider for feature flagging with the Confidence platform */
@@ -33,7 +34,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    *
    * @param confidenceBuilder a Confidence.Builder
    */
-  public ConfidenceFeatureProvider(Confidence.Builder confidenceBuilder) {
+  public ConfidenceFeatureProvider(@Nonnull Confidence.Builder confidenceBuilder) {
     this.confidence = confidenceBuilder.buildForProvider();
   }
 
@@ -45,7 +46,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    *     #ConfidenceFeatureProvider(Confidence.Builder)} instead.
    */
   @Deprecated()
-  public ConfidenceFeatureProvider(Confidence confidence) {
+  public ConfidenceFeatureProvider(@Nonnull Confidence confidence) {
     this.confidence = confidence;
   }
 
@@ -61,7 +62,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    *     #ConfidenceFeatureProvider(Confidence.Builder)} instead.
    */
   @Deprecated()
-  public ConfidenceFeatureProvider(String clientSecret, ManagedChannel managedChannel) {
+  public ConfidenceFeatureProvider(@Nonnull String clientSecret, @Nonnull ManagedChannel managedChannel) {
     this(Confidence.builder(clientSecret).flagResolverManagedChannel(managedChannel));
   }
 
@@ -73,7 +74,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    *     #ConfidenceFeatureProvider(Confidence.Builder)} instead.
    */
   @Deprecated()
-  public ConfidenceFeatureProvider(String clientSecret) {
+  public ConfidenceFeatureProvider(@Nonnull String clientSecret) {
     this(clientSecret, ManagedChannelBuilder.forAddress("edge-grpc.spotify.com", 443).build());
   }
 
@@ -88,7 +89,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
    *     #ConfidenceFeatureProvider(Confidence.Builder)} instead.
    */
   @Deprecated()
-  public ConfidenceFeatureProvider(String clientSecret, String host, int port) {
+  public ConfidenceFeatureProvider(@Nonnull String clientSecret, @Nonnull String host, int port) {
     this(clientSecret, ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
   }
 
