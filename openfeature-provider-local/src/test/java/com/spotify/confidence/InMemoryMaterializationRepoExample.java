@@ -21,8 +21,8 @@ public class InMemoryMaterializationRepoExample implements MaterializationReposi
    * @return A map containing the key and a default MaterializationInfo object.
    */
   private static Map<String, MaterializationInfo> createEmptyMap(String key) {
-    MaterializationInfo emptyInfo = new MaterializationInfo(false, new HashMap<>());
-    Map<String, MaterializationInfo> map = new HashMap<>();
+    final MaterializationInfo emptyInfo = new MaterializationInfo(false, new HashMap<>());
+    final Map<String, MaterializationInfo> map = new HashMap<>();
     map.put(key, emptyInfo);
     return map;
   }
@@ -30,10 +30,10 @@ public class InMemoryMaterializationRepoExample implements MaterializationReposi
   @Override
   public CompletableFuture<Map<String, MaterializationInfo>> loadMaterializedAssignmentsForUnit(
       String unit, String materialization) {
-    Map<String, MaterializationInfo> unitAssignments = storage.get(unit);
+    final Map<String, MaterializationInfo> unitAssignments = storage.get(unit);
     if (unitAssignments != null) {
       if (unitAssignments.containsKey(materialization)) {
-        Map<String, MaterializationInfo> result = new HashMap<>();
+        final Map<String, MaterializationInfo> result = new HashMap<>();
         result.put(materialization, unitAssignments.get(materialization));
         logger.debug("Cache hit for unit: {}, materialization: {}", unit, materialization);
         return CompletableFuture.supplyAsync(() -> result);
@@ -67,7 +67,7 @@ public class InMemoryMaterializationRepoExample implements MaterializationReposi
           } else {
             // If an entry exists, merge the new assignments into it.
             // This is equivalent to Kotlin's 'existingEntry.plus(assignments ?: emptyMap())'.
-            Map<String, MaterializationInfo> newEntry = new HashMap<>(existingEntry);
+            final Map<String, MaterializationInfo> newEntry = new HashMap<>(existingEntry);
             if (assignments != null) {
               newEntry.putAll(assignments);
             }
@@ -75,7 +75,7 @@ public class InMemoryMaterializationRepoExample implements MaterializationReposi
           }
         });
 
-    int assignmentCount = (assignments != null) ? assignments.size() : 0;
+    final int assignmentCount = (assignments != null) ? assignments.size() : 0;
     logger.debug("Stored {} assignments for unit: {}", assignmentCount, unit);
 
     return CompletableFuture.completedFuture(null);
