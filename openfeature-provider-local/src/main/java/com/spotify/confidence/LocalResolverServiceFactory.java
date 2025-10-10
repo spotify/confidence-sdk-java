@@ -177,7 +177,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         Optional.ofNullable(System.getenv("CONFIDENCE_RESOLVER_POLL_INTERVAL_SECONDS"))
             .map(Long::parseLong)
             .orElse(Duration.ofMinutes(5).toSeconds());
-    AtomicReference<byte[]> resolverStateProtobuf =
+    final AtomicReference<byte[]> resolverStateProtobuf =
         new AtomicReference<>(accountStateProvider.provide());
     final WasmFlagLogger flagLogger = request -> WriteFlagLogsResponse.getDefaultInstance();
     final ResolverApi wasmResolverApi =
