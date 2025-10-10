@@ -19,7 +19,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <!-- WASM file version. When updated, make sure to mvn clean to force a new download -->
-    <confidence.resolver.wasm.version>v0.4.0</confidence.resolver.wasm.version>
+    <confidence.resolver.wasm.version>v0.5.0</confidence.resolver.wasm.version>
   </properties>
 
 
