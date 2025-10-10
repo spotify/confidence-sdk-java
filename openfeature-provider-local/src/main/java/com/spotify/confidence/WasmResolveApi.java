@@ -40,6 +40,7 @@ class WasmResolveApi {
   private final FunctionType HOST_FN_TYPE =
       FunctionType.of(List.of(ValType.I32), List.of(ValType.I32));
   private final Instance instance;
+  private boolean isConsumed = false;
 
   // interop
   private final ExportFunction wasmMsgAlloc;
@@ -127,6 +128,7 @@ class WasmResolveApi {
       final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];
       final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
       writeFlagLogs.write(request);
+      isConsumed = true;
     } finally {
       wasmLock.readLock().unlock();
     }
@@ -134,7 +136,7 @@ class WasmResolveApi {
 
   public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request)
       throws IsClosedException {
-    if (!wasmLock.writeLock().tryLock()) {
+    if (!wasmLock.writeLock().tryLock() || isConsumed) {
       throw new IsClosedException();
     }
     try {
