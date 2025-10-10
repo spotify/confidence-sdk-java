@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/spotify/confidence-sdk-java/compare/v0.6.1...v0.6.2) (2025-10-10)
+
+
+### Bug Fixes
+
+* parallel set state ([#301](https://github.com/spotify/confidence-sdk-java/issues/301)) ([0071949](https://github.com/spotify/confidence-sdk-java/commit/0071949500a84cbd904c22e501329d58ea43ecf7))
+
 ## [0.6.1](https://github.com/spotify/confidence-sdk-java/compare/v0.6.0...v0.6.1) (2025-10-09)
 
 
