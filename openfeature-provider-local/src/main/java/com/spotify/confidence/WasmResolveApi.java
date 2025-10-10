@@ -120,7 +120,7 @@ class WasmResolveApi {
   }
 
   public void close() {
-    wasmLock.writeLock().lock();
+    wasmLock.readLock().lock();
     try {
       final var voidRequest = Messages.Void.getDefaultInstance();
       final var reqPtr = transferRequest(voidRequest);
@@ -128,13 +128,13 @@ class WasmResolveApi {
       final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
       writeFlagLogs.write(request);
     } finally {
-      wasmLock.writeLock().unlock();
+      wasmLock.readLock().unlock();
     }
   }
 
   public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request)
       throws IsClosedException {
-    if (!wasmLock.readLock().tryLock()) {
+    if (!wasmLock.writeLock().tryLock()) {
       throw new IsClosedException();
     }
     try {
@@ -142,12 +142,12 @@ class WasmResolveApi {
       final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
       return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
     } finally {
-      wasmLock.readLock().unlock();
+      wasmLock.writeLock().unlock();
     }
   }
 
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) throws IsClosedException {
-    if (!wasmLock.readLock().tryLock()) {
+    if (!wasmLock.writeLock().tryLock()) {
       throw new IsClosedException();
     }
     try {
@@ -155,7 +155,7 @@ class WasmResolveApi {
       final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
       return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
     } finally {
-      wasmLock.readLock().unlock();
+      wasmLock.writeLock().unlock();
     }
   }
 
