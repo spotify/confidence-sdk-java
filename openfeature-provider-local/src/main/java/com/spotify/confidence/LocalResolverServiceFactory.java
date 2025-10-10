@@ -35,7 +35,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private final AtomicReference<ResolverState> resolverStateHolder;
   private final ResolveTokenConverter resolveTokenConverter;
 
-  private final ResolverApi wasmResolveApi;
+  private final RotatingWasmResolverApi wasmResolveApi;
   private final Supplier<Instant> timeSupplier;
   private final Supplier<String> resolveIdSupplier;
   private final FlagLogger flagLogger;
@@ -107,8 +107,8 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
     final var wasmFlagLogger = new GrpcWasmFlagLogger(apiSecret);
     if (isWasm) {
-      final ResolverApi wasmResolverApi =
-          new ThreadLocalSwapWasmResolverApi(
+      final RotatingWasmResolverApi wasmResolverApi =
+          new ConcurrentRotatingResolverApi(
               wasmFlagLogger,
               sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray(),
               sidecarFlagsAdminFetcher.accountId,
@@ -121,7 +121,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
 
       logPollExecutor.scheduleAtFixedRate(
           () -> {
-            wasmResolverApi.updateStateAndFlushLogs(
+            wasmResolverApi.rotate(
                 sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray(),
                 sidecarFlagsAdminFetcher.accountId);
           },
@@ -180,8 +180,8 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final AtomicReference<byte[]> resolverStateProtobuf =
         new AtomicReference<>(accountStateProvider.provide());
     final WasmFlagLogger flagLogger = request -> WriteFlagLogsResponse.getDefaultInstance();
-    final ResolverApi wasmResolverApi =
-        new ThreadLocalSwapWasmResolverApi(
+    final RotatingWasmResolverApi wasmResolverApi =
+        new ConcurrentRotatingResolverApi(
             flagLogger, resolverStateProtobuf.get(), accountId, stickyResolveStrategy);
     flagsFetcherExecutor.scheduleAtFixedRate(
         () -> resolverStateProtobuf.set(accountStateProvider.provide()),
@@ -189,7 +189,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         pollIntervalSeconds,
         TimeUnit.SECONDS);
     logPollExecutor.scheduleAtFixedRate(
-        () -> wasmResolverApi.updateStateAndFlushLogs(resolverStateProtobuf.get(), accountId),
+        () -> wasmResolverApi.rotate(resolverStateProtobuf.get(), accountId),
         POLL_LOG_INTERVAL.getSeconds(),
         POLL_LOG_INTERVAL.getSeconds(),
         TimeUnit.SECONDS);
@@ -212,7 +212,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   LocalResolverServiceFactory(
-      ResolverApi wasmResolveApi,
+      RotatingWasmResolverApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       FlagLogger flagLogger,
@@ -228,7 +228,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   }
 
   LocalResolverServiceFactory(
-      ResolverApi wasmResolveApi,
+      RotatingWasmResolverApi wasmResolveApi,
       AtomicReference<ResolverState> resolverStateHolder,
       ResolveTokenConverter resolveTokenConverter,
       Supplier<Instant> timeSupplier,
@@ -247,7 +247,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   @VisibleForTesting
   public void setState(byte[] state, String accountId) {
     if (this.wasmResolveApi != null) {
-      wasmResolveApi.updateStateAndFlushLogs(state, accountId);
+      wasmResolveApi.rotate(state, accountId);
     }
   }
 

@@ -1,7 +1,6 @@
 package com.spotify.confidence;
 
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
-import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.futures.CompletableFutures;
 import java.util.ArrayList;
@@ -17,16 +16,16 @@ import org.slf4j.LoggerFactory;
  * Pre-initialized resolver instances mapped by thread ID to CPU core count. This eliminates both
  * lock contention and lazy initialization overhead.
  */
-class ThreadLocalSwapWasmResolverApi implements ResolverApi {
-  private static final Logger logger =
-      LoggerFactory.getLogger(ThreadLocalSwapWasmResolverApi.class);
+class ConcurrentRotatingResolverApi implements RotatingWasmResolverApi {
+  private static final Logger logger = LoggerFactory.getLogger(ConcurrentRotatingResolverApi.class);
   private final WasmFlagLogger flagLogger;
   private final StickyResolveStrategy stickyResolveStrategy;
   private volatile byte[] currentState;
   private volatile String currentAccountId;
 
   // Pre-initialized resolver instances mapped by core index
-  private final Map<Integer, SwapWasmResolverApi> resolverInstances = new ConcurrentHashMap<>();
+  private final Map<Integer, SingleRotatingWasmResolverApi> resolverInstances =
+      new ConcurrentHashMap<>();
   private final int numInstances;
   private final AtomicInteger nextInstanceIndex = new AtomicInteger(0);
   private final ThreadLocal<Integer> threadInstanceIndex =
@@ -37,7 +36,7 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
         }
       };
 
-  public ThreadLocalSwapWasmResolverApi(
+  public ConcurrentRotatingResolverApi(
       WasmFlagLogger flagLogger,
       byte[] initialState,
       String accountId,
@@ -60,7 +59,7 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
                     CompletableFuture.runAsync(
                         () -> {
                           final var instance =
-                              new SwapWasmResolverApi(
+                              new SingleRotatingWasmResolverApi(
                                   this.flagLogger,
                                   this.currentState,
                                   this.currentAccountId,
@@ -75,13 +74,13 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
    * typically called by a scheduled task to refresh the resolver state.
    */
   @Override
-  public void updateStateAndFlushLogs(byte[] state, String accountId) {
+  public void rotate(byte[] state, String accountId) {
     this.currentState = state;
     this.currentAccountId = accountId;
 
     final var futures =
         resolverInstances.values().stream()
-            .map(v -> CompletableFuture.runAsync(() -> v.updateStateAndFlushLogs(state, accountId)))
+            .map(v -> CompletableFuture.runAsync(() -> v.rotate(state, accountId)))
             .toList();
     CompletableFutures.allAsList(futures).join();
   }
@@ -91,36 +90,21 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
    * assigned to an instance index when first accessed, ensuring even distribution across available
    * instances.
    */
-  private SwapWasmResolverApi getResolverForCurrentThread() {
+  private SingleRotatingWasmResolverApi getResolverForCurrentThread() {
     final int instanceIndex = threadInstanceIndex.get();
     return resolverInstances.get(instanceIndex);
   }
 
   /** Delegates resolveWithSticky to the assigned SwapWasmResolverApi instance. */
   @Override
-  public CompletableFuture<ResolveFlagsResponse> resolveWithSticky(
-      ResolveWithStickyRequest request) {
-    return getResolverForCurrentThread().resolveWithSticky(request);
-  }
-
-  /** Delegates resolve to the assigned SwapWasmResolverApi instance. */
-  @Override
-  public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
+  public CompletableFuture<ResolveFlagsResponse> resolve(ResolveWithStickyRequest request) {
     return getResolverForCurrentThread().resolve(request);
-  }
-
-  /**
-   * Returns the number of pre-initialized resolver instances. This is primarily for debugging and
-   * monitoring purposes.
-   */
-  public int getInstanceCount() {
-    return resolverInstances.size();
   }
 
   /** Closes all pre-initialized resolver instances and clears the map. */
   @Override
   public void close() {
-    resolverInstances.values().forEach(SwapWasmResolverApi::close);
+    resolverInstances.values().forEach(SingleRotatingWasmResolverApi::close);
     resolverInstances.clear();
   }
 }

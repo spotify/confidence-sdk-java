@@ -6,11 +6,11 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.util.concurrent.CompletableFuture;
 
 record WasmFlagResolverService(
-    ResolverApi wasmResolveApi, StickyResolveStrategy stickyResolveStrategy)
+    RotatingWasmResolverApi wasmResolveApi, StickyResolveStrategy stickyResolveStrategy)
     implements FlagResolverService {
   @Override
   public CompletableFuture<ResolveFlagsResponse> resolveFlags(ResolveFlagsRequest request) {
-    return wasmResolveApi.resolveWithSticky(
+    return wasmResolveApi.resolve(
         ResolveWithStickyRequest.newBuilder()
             .setResolveRequest(request)
             .setFailFastOnSticky(getFailFast(stickyResolveStrategy))
