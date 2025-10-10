@@ -42,6 +42,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private static final MetricRegistry metricRegistry = new MetricRegistry();
   private static final String CONFIDENCE_DOMAIN = "edge-grpc.spotify.com";
   private static final Duration ASSIGN_LOG_INTERVAL = Duration.ofSeconds(10);
+  private static final Duration POLL_LOG_INTERVAL = Duration.ofSeconds(10);
   private static final ScheduledExecutorService flagsFetcherExecutor =
       Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setDaemon(true).build());
   private static final Duration RESOLVE_INFO_LOG_INTERVAL = Duration.ofMinutes(1);
@@ -124,8 +125,8 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
                 sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray(),
                 sidecarFlagsAdminFetcher.accountId);
           },
-          10,
-          10,
+          POLL_LOG_INTERVAL.getSeconds(),
+          POLL_LOG_INTERVAL.getSeconds(),
           TimeUnit.SECONDS);
 
       return new WasmFlagResolverService(wasmResolverApi, stickyResolveStrategy);
@@ -176,19 +177,22 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         Optional.ofNullable(System.getenv("CONFIDENCE_RESOLVER_POLL_INTERVAL_SECONDS"))
             .map(Long::parseLong)
             .orElse(Duration.ofMinutes(5).toSeconds());
-    final byte[] resolverStateProtobuf = accountStateProvider.provide();
+    AtomicReference<byte[]> resolverStateProtobuf =
+        new AtomicReference<>(accountStateProvider.provide());
     final WasmFlagLogger flagLogger = request -> WriteFlagLogsResponse.getDefaultInstance();
     final ResolverApi wasmResolverApi =
         new ThreadLocalSwapWasmResolverApi(
-            flagLogger, resolverStateProtobuf, accountId, stickyResolveStrategy);
+            flagLogger, resolverStateProtobuf.get(), accountId, stickyResolveStrategy);
     flagsFetcherExecutor.scheduleAtFixedRate(
-        () -> {
-          wasmResolverApi.updateStateAndFlushLogs(accountStateProvider.provide(), accountId);
-        },
+        () -> resolverStateProtobuf.set(accountStateProvider.provide()),
         pollIntervalSeconds,
         pollIntervalSeconds,
         TimeUnit.SECONDS);
-
+    logPollExecutor.scheduleAtFixedRate(
+        () -> wasmResolverApi.updateStateAndFlushLogs(resolverStateProtobuf.get(), accountId),
+        POLL_LOG_INTERVAL.getSeconds(),
+        POLL_LOG_INTERVAL.getSeconds(),
+        TimeUnit.SECONDS);
     return new WasmFlagResolverService(wasmResolverApi, stickyResolveStrategy);
   }
 

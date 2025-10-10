@@ -41,7 +41,7 @@ class SwapWasmResolverApi implements ResolverApi {
     // Get current instance before switching
     final WasmResolveApi oldInstance = wasmResolverApiRef.getAndSet(newInstance);
     if (oldInstance != null) {
-      oldInstance.flushLogs();
+      oldInstance.close();
     }
   }
 
@@ -55,7 +55,7 @@ class SwapWasmResolverApi implements ResolverApi {
     final ResolveWithStickyResponse response;
     try {
       response = instance.resolveWithSticky(request);
-    } catch (IsFlushedException e) {
+    } catch (IsClosedException e) {
       return resolveWithSticky(request);
     }
 
@@ -189,7 +189,7 @@ class SwapWasmResolverApi implements ResolverApi {
     final var instance = wasmResolverApiRef.get();
     try {
       return instance.resolve(request);
-    } catch (IsFlushedException e) {
+    } catch (IsClosedException e) {
       return resolve(request);
     }
   }

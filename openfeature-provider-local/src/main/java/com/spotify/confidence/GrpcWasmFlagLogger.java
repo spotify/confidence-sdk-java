@@ -2,7 +2,6 @@ package com.spotify.confidence;
 
 import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
-import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsResponse;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptors;
@@ -16,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class GrpcWasmFlagLogger implements WasmFlagLogger {
   private static final String CONFIDENCE_DOMAIN = "edge-grpc.spotify.com";
   private static final Logger logger = LoggerFactory.getLogger(GrpcWasmFlagLogger.class);
-  private final InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub stub;
+  private final InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceFutureStub stub;
 
   public GrpcWasmFlagLogger(ApiSecret apiSecret) {
     final var channel = createConfidenceChannel();
@@ -27,12 +26,12 @@ public class GrpcWasmFlagLogger implements WasmFlagLogger {
     final TokenHolder.Token token = tokenHolder.getToken();
     final Channel authenticatedChannel =
         ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
-    this.stub = InternalFlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
+    this.stub = InternalFlagLoggerServiceGrpc.newFutureStub(authenticatedChannel);
   }
 
   @Override
-  public WriteFlagLogsResponse write(WriteFlagLogsRequest request) {
-    return stub.writeFlagLogs(request);
+  public void write(WriteFlagLogsRequest request) {
+    final var ignore = stub.writeFlagLogs(request);
   }
 
   private static ManagedChannel createConfidenceChannel() {

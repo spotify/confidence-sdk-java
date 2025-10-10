@@ -20,20 +20,20 @@ import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
-import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsResponse;
 import com.spotify.confidence.wasm.Messages;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
-class IsFlushedException extends Exception {}
+class IsClosedException extends Exception {}
 
 @FunctionalInterface
 interface WasmFlagLogger {
-  WriteFlagLogsResponse write(WriteFlagLogsRequest request);
+  void write(WriteFlagLogsRequest request);
 }
 
 class WasmResolveApi {
@@ -51,8 +51,7 @@ class WasmResolveApi {
   private final ExportFunction wasmMsgFlushLogs;
   private final ExportFunction wasmMsgGuestResolve;
   private final ExportFunction wasmMsgGuestResolveWithSticky;
-  private final ReentrantLock logResolveLock = new ReentrantLock();
-  private boolean isFlushed;
+  private final ReadWriteLock wasmLock = new ReentrantReadWriteLock();
 
   public WasmResolveApi(WasmFlagLogger flagLogger) {
     this.writeFlagLogs = flagLogger;
@@ -120,38 +119,44 @@ class WasmResolveApi {
     consumeResponse(respPtr, Messages.Void::parseFrom);
   }
 
-  public void flushLogs() {
-    logResolveLock.lock();
-    final var voidRequest = Messages.Void.getDefaultInstance();
-    final var reqPtr = transferRequest(voidRequest);
-    final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];
-    final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
-    final var ignore = writeFlagLogs.write(request);
-    isFlushed = true;
-    logResolveLock.unlock();
+  public void close() {
+    wasmLock.writeLock().lock();
+    try {
+      final var voidRequest = Messages.Void.getDefaultInstance();
+      final var reqPtr = transferRequest(voidRequest);
+      final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];
+      final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
+      writeFlagLogs.write(request);
+    } finally {
+      wasmLock.writeLock().unlock();
+    }
   }
 
   public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request)
-      throws IsFlushedException {
-    logResolveLock.lock();
-    if (isFlushed) {
-      throw new IsFlushedException();
+      throws IsClosedException {
+    if (!wasmLock.readLock().tryLock()) {
+      throw new IsClosedException();
     }
-    final int reqPtr = transferRequest(request);
-    final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
-    logResolveLock.unlock();
-    return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
+    try {
+      final int reqPtr = transferRequest(request);
+      final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
+      return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
+    } finally {
+      wasmLock.readLock().unlock();
+    }
   }
 
-  public ResolveFlagsResponse resolve(ResolveFlagsRequest request) throws IsFlushedException {
-    logResolveLock.lock();
-    if (isFlushed) {
-      throw new IsFlushedException();
+  public ResolveFlagsResponse resolve(ResolveFlagsRequest request) throws IsClosedException {
+    if (!wasmLock.readLock().tryLock()) {
+      throw new IsClosedException();
     }
-    final int reqPtr = transferRequest(request);
-    final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
-    logResolveLock.unlock();
-    return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
+    try {
+      final int reqPtr = transferRequest(request);
+      final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
+      return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
+    } finally {
+      wasmLock.readLock().unlock();
+    }
   }
 
   private <T extends GeneratedMessage> T consumeResponse(int addr, ParserFn<T> codec) {
