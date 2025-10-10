@@ -4,51 +4,13 @@ package confidence.flags.admin.v1;
 
 import "google/protobuf/timestamp.proto";
 import "google/api/resource.proto";
-import "google/api/annotations.proto";
 import "confidence/iam/iam.proto";
-import "google/api/field_behavior.proto";
 
 import "confidence/flags/admin/v1/types.proto";
 
 option java_package = "com.spotify.confidence.shaded.flags.admin.v1";
 option java_multiple_files = true;
 option java_outer_classname = "ResolverProto";
-
-// Service for fetching the state for resolving flags
-service ResolverStateService {
-  // Gets the full state for running a resolver
-  rpc FullResolverState(ResolverStateRequest) returns (stream ResolverState) {
-    option (google.api.http) = {
-      get: "/v1/resolverState:full"
-    };
-  }
-
-  // Gets a signed uri that can be used to download the current resolver state
-  rpc ResolverStateUri(ResolverStateUriRequest) returns (ResolverStateUriResponse){
-    option (google.api.http) = {
-      get: "/v1/resolverState:resolverStateUri"
-    };
-  }
-}
-
-// Request to fetch resolver state uri
-message ResolverStateUriRequest {
-
-}
-
-// Response of fetching resolver state uri
-message ResolverStateUriResponse {
-  // The signed uri that can be used to fetch state
-  string signed_uri = 1;
-  // At what time the state uri expires
-  google.protobuf.Timestamp expire_time = 2;
-  string account = 3;
-
-}
-
-// Request to get the resolver state for the whole account
-message ResolverStateRequest {
-}
 
 // The full state for operating a flags resolver
 message ResolverState {
