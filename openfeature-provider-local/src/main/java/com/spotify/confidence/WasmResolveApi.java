@@ -17,19 +17,13 @@ import com.google.protobuf.Timestamp;
 import com.spotify.confidence.flags.resolver.v1.LogMessage;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyResponse;
-import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
-import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
 import com.spotify.confidence.wasm.Messages;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
-
-class IsClosedException extends Exception {}
 
 @FunctionalInterface
 interface WasmFlagLogger {
@@ -49,9 +43,7 @@ class WasmResolveApi {
   // api
   private final ExportFunction wasmMsgGuestSetResolverState;
   private final ExportFunction wasmMsgFlushLogs;
-  private final ExportFunction wasmMsgGuestResolve;
   private final ExportFunction wasmMsgGuestResolveWithSticky;
-  private final ReadWriteLock wasmLock = new ReentrantReadWriteLock();
 
   public WasmResolveApi(WasmFlagLogger flagLogger) {
     this.writeFlagLogs = flagLogger;
@@ -83,7 +75,6 @@ class WasmResolveApi {
       wasmMsgFree = instance.export("wasm_msg_free");
       wasmMsgGuestSetResolverState = instance.export("wasm_msg_guest_set_resolver_state");
       wasmMsgFlushLogs = instance.export("wasm_msg_guest_flush_logs");
-      wasmMsgGuestResolve = instance.export("wasm_msg_guest_resolve");
       wasmMsgGuestResolveWithSticky = instance.export("wasm_msg_guest_resolve_with_sticky");
     } catch (IOException e) {
       throw new RuntimeException("Failed to load WASM module", e);
@@ -119,44 +110,18 @@ class WasmResolveApi {
     consumeResponse(respPtr, Messages.Void::parseFrom);
   }
 
-  public void close() {
-    wasmLock.readLock().lock();
-    try {
-      final var voidRequest = Messages.Void.getDefaultInstance();
-      final var reqPtr = transferRequest(voidRequest);
-      final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];
-      final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
-      writeFlagLogs.write(request);
-    } finally {
-      wasmLock.readLock().unlock();
-    }
+  public void flush() {
+    final var voidRequest = Messages.Void.getDefaultInstance();
+    final var reqPtr = transferRequest(voidRequest);
+    final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];
+    final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
+    writeFlagLogs.write(request);
   }
 
-  public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request)
-      throws IsClosedException {
-    if (!wasmLock.writeLock().tryLock()) {
-      throw new IsClosedException();
-    }
-    try {
-      final int reqPtr = transferRequest(request);
-      final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
-      return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
-    } finally {
-      wasmLock.writeLock().unlock();
-    }
-  }
-
-  public ResolveFlagsResponse resolve(ResolveFlagsRequest request) throws IsClosedException {
-    if (!wasmLock.writeLock().tryLock()) {
-      throw new IsClosedException();
-    }
-    try {
-      final int reqPtr = transferRequest(request);
-      final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
-      return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
-    } finally {
-      wasmLock.writeLock().unlock();
-    }
+  public ResolveWithStickyResponse resolve(ResolveWithStickyRequest request) {
+    final int reqPtr = transferRequest(request);
+    final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
+    return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
   }
 
   private <T extends GeneratedMessage> T consumeResponse(int addr, ParserFn<T> codec) {

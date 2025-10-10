@@ -3,61 +3,28 @@ package com.spotify.confidence;
 import com.spotify.confidence.flags.resolver.v1.MaterializationMap;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyResponse;
-import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-class SwapWasmResolverApi implements ResolverApi {
-  private final AtomicReference<WasmResolveApi> wasmResolverApiRef = new AtomicReference<>();
+class StickyResolverApi implements ResolverApi {
+  private final WasmResolveApi wasmResolverApi;
   private final StickyResolveStrategy stickyResolveStrategy;
-  private final WasmFlagLogger flagLogger;
 
-  public SwapWasmResolverApi(
-      WasmFlagLogger flagLogger,
-      byte[] initialState,
-      String accountId,
-      StickyResolveStrategy stickyResolveStrategy) {
+  public StickyResolverApi(
+      WasmResolveApi wasmResolverApi, StickyResolveStrategy stickyResolveStrategy) {
+    this.wasmResolverApi = wasmResolverApi;
     this.stickyResolveStrategy = stickyResolveStrategy;
-    this.flagLogger = flagLogger;
-
-    // Create initial instance
-    final WasmResolveApi initialInstance = new WasmResolveApi(flagLogger);
-    initialInstance.setResolverState(initialState, accountId);
-    this.wasmResolverApiRef.set(initialInstance);
   }
 
   @Override
-  public void updateStateAndFlushLogs(byte[] state, String accountId) {
-    // Create new instance with updated state
-    final WasmResolveApi newInstance = new WasmResolveApi(flagLogger);
-    newInstance.setResolverState(state, accountId);
-
-    // Get current instance before switching
-    final WasmResolveApi oldInstance = wasmResolverApiRef.getAndSet(newInstance);
-    if (oldInstance != null) {
-      oldInstance.close();
-    }
-  }
-
-  @Override
-  public void close() {}
-
-  @Override
-  public CompletableFuture<ResolveFlagsResponse> resolveWithSticky(
-      ResolveWithStickyRequest request) {
-    final var instance = wasmResolverApiRef.get();
+  public CompletableFuture<ResolveFlagsResponse> resolve(ResolveWithStickyRequest request) {
     final ResolveWithStickyResponse response;
-    try {
-      response = instance.resolveWithSticky(request);
-    } catch (IsClosedException e) {
-      return resolveWithSticky(request);
-    }
+    response = wasmResolverApi.resolve(request);
 
     switch (response.getResolveResultCase()) {
       case SUCCESS -> {
@@ -81,7 +48,7 @@ class SwapWasmResolverApi implements ResolverApi {
           final var currentRequest =
               handleMissingMaterializations(
                   request, missingMaterializations.getItemsList(), repository);
-          return resolveWithSticky(currentRequest);
+          return resolve(currentRequest);
         }
 
         throw new RuntimeException(
@@ -185,12 +152,7 @@ class SwapWasmResolverApi implements ResolverApi {
   }
 
   @Override
-  public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    final var instance = wasmResolverApiRef.get();
-    try {
-      return instance.resolve(request);
-    } catch (IsClosedException e) {
-      return resolve(request);
-    }
+  public void flush() {
+    wasmResolverApi.flush();
   }
 }

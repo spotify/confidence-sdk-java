@@ -44,7 +44,7 @@ public class TestBase {
     final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
     if (isWasm) {
       final var wasmResolverApi =
-          new SwapWasmResolverApi(
+          new SingleRotatingWasmResolverApi(
               request -> {}, desiredState.toProto().toByteArray(), "", mockFallback);
       resolverServiceFactory =
           new LocalResolverServiceFactory(
