@@ -90,28 +90,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @since 0.2.4
    */
   public OpenFeatureLocalResolveProvider(ApiSecret apiSecret, String clientSecret) {
-    this(apiSecret, clientSecret, new RemoteResolverFallback(), new NoRetryStrategy());
-  }
-
-  /**
-   * Creates a new OpenFeature provider for local flag resolution with configurable sticky resolve
-   * strategy and no retry.
-   *
-   * <p>The provider will automatically determine the resolution mode (WASM or Java) based on the
-   * {@code LOCAL_RESOLVE_MODE} environment variable, defaulting to WASM mode.
-   *
-   * @param apiSecret the API credentials containing client ID and client secret for authenticating
-   *     with the Confidence service. Create using {@code new ApiSecret("client-id",
-   *     "client-secret")}
-   * @param clientSecret the client secret for your application, used for flag resolution
-   *     authentication. This is different from the API secret and is specific to your application
-   *     configuration
-   * @param stickyResolveStrategy the strategy to use for handling sticky flag resolution
-   * @since 0.2.4
-   */
-  public OpenFeatureLocalResolveProvider(
-      ApiSecret apiSecret, String clientSecret, StickyResolveStrategy stickyResolveStrategy) {
-    this(apiSecret, clientSecret, stickyResolveStrategy, new NoRetryStrategy());
+    this(apiSecret, clientSecret, new RemoteResolverFallback());
   }
 
   /**
@@ -128,54 +107,23 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    *     authentication. This is different from the API secret and is specific to your application
    *     configuration
    * @param stickyResolveStrategy the strategy to use for handling sticky flag resolution
-   * @param retryStrategy the retry strategy for WASM operations (use {@link NoRetryStrategy} to
-   *     disable retries or {@link ExponentialRetryStrategy} for exponential backoff)
    * @since 0.2.4
    */
   public OpenFeatureLocalResolveProvider(
-      ApiSecret apiSecret,
-      String clientSecret,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
+      ApiSecret apiSecret, String clientSecret, StickyResolveStrategy stickyResolveStrategy) {
     final var env = System.getenv("LOCAL_RESOLVE_MODE");
     if (env != null && env.equals("WASM")) {
       this.flagResolverService =
-          LocalResolverServiceFactory.from(
-              apiSecret, clientSecret, true, stickyResolveStrategy, retryStrategy);
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, stickyResolveStrategy);
     } else if (env != null && env.equals("JAVA")) {
       this.flagResolverService =
-          LocalResolverServiceFactory.from(
-              apiSecret, clientSecret, false, stickyResolveStrategy, retryStrategy);
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, false, stickyResolveStrategy);
     } else {
       this.flagResolverService =
-          LocalResolverServiceFactory.from(
-              apiSecret, clientSecret, true, stickyResolveStrategy, retryStrategy);
+          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, stickyResolveStrategy);
     }
     this.stickyResolveStrategy = stickyResolveStrategy;
     this.clientSecret = clientSecret;
-  }
-
-  /**
-   * To be used for testing purposes only! This constructor allows to inject flags state for testing
-   * the WASM resolver (no Java supported) No resolve/assign logging is forwarded to production No
-   * need to supply ApiSecret
-   *
-   * @param accountStateProvider a functional interface that provides AccountState instances
-   * @param clientSecret the flag client key used to filter the flags
-   * @since 0.2.4
-   */
-  @VisibleForTesting
-  public OpenFeatureLocalResolveProvider(
-      AccountStateProvider accountStateProvider,
-      String accountId,
-      String clientSecret,
-      StickyResolveStrategy stickyResolveStrategy) {
-    this(
-        accountStateProvider,
-        accountId,
-        clientSecret,
-        stickyResolveStrategy,
-        new NoRetryStrategy());
   }
 
   /**
@@ -186,7 +134,6 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * @param accountId the account ID
    * @param clientSecret the flag client key used to filter the flags
    * @param stickyResolveStrategy the strategy to use for handling sticky flag resolution
-   * @param retryStrategy the retry strategy for WASM operations
    * @since 0.2.4
    */
   @VisibleForTesting
@@ -194,13 +141,11 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
       AccountStateProvider accountStateProvider,
       String accountId,
       String clientSecret,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
+      StickyResolveStrategy stickyResolveStrategy) {
     this.stickyResolveStrategy = stickyResolveStrategy;
     this.clientSecret = clientSecret;
     this.flagResolverService =
-        LocalResolverServiceFactory.from(
-            accountStateProvider, accountId, stickyResolveStrategy, retryStrategy);
+        LocalResolverServiceFactory.from(accountStateProvider, accountId, stickyResolveStrategy);
   }
 
   @Override

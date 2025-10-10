@@ -11,71 +11,53 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 class SwapWasmResolverApi implements ResolverApi {
   private final AtomicReference<WasmResolveApi> wasmResolverApiRef = new AtomicReference<>();
   private final StickyResolveStrategy stickyResolveStrategy;
   private final WasmFlagLogger flagLogger;
-  private final RetryStrategy retryStrategy;
 
   public SwapWasmResolverApi(
       WasmFlagLogger flagLogger,
       byte[] initialState,
       String accountId,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
+      StickyResolveStrategy stickyResolveStrategy) {
     this.stickyResolveStrategy = stickyResolveStrategy;
     this.flagLogger = flagLogger;
-    this.retryStrategy = retryStrategy;
 
     // Create initial instance
-    final WasmResolveApi initialInstance = new WasmResolveApi(flagLogger, retryStrategy);
+    final WasmResolveApi initialInstance = new WasmResolveApi(flagLogger);
     initialInstance.setResolverState(initialState, accountId);
     this.wasmResolverApiRef.set(initialInstance);
   }
 
   @Override
   public void updateStateAndFlushLogs(byte[] state, String accountId) {
-    logResolveLock.lock();
     // Create new instance with updated state
-    final WasmResolveApi newInstance = new WasmResolveApi(flagLogger, retryStrategy);
+    final WasmResolveApi newInstance = new WasmResolveApi(flagLogger);
     newInstance.setResolverState(state, accountId);
 
     // Get current instance before switching
     final WasmResolveApi oldInstance = wasmResolverApiRef.getAndSet(newInstance);
-
-    // Flush logs from the old instance (this allows it to be GC'd after method completion)
     if (oldInstance != null) {
-      oldInstance.flushLogs();
+      oldInstance.close();
     }
-    logResolveLock.unlock();
   }
 
   @Override
-  public void close() {
-    final WasmResolveApi currentInstance = wasmResolverApiRef.get();
-    if (currentInstance != null) {
-      // Note: WasmResolveApi doesn't have a close method, so this is a no-op for now
-      // but the instance will be GC'd naturally
-    }
-  }
-
-  private final ReentrantLock logResolveLock = new ReentrantLock();
+  public void close() {}
 
   @Override
   public CompletableFuture<ResolveFlagsResponse> resolveWithSticky(
       ResolveWithStickyRequest request) {
-    logResolveLock.lock();
-    final var response = resolveWithStickyInternal(request);
-    logResolveLock.unlock();
-    return response;
-  }
-
-  private CompletableFuture<ResolveFlagsResponse> resolveWithStickyInternal(
-      ResolveWithStickyRequest request) {
-    final var response = wasmResolverApiRef.get().resolveWithSticky(request);
+    final var instance = wasmResolverApiRef.get();
+    final ResolveWithStickyResponse response;
+    try {
+      response = instance.resolveWithSticky(request);
+    } catch (IsClosedException e) {
+      return resolveWithSticky(request);
+    }
 
     switch (response.getResolveResultCase()) {
       case SUCCESS -> {
@@ -99,7 +81,7 @@ class SwapWasmResolverApi implements ResolverApi {
           final var currentRequest =
               handleMissingMaterializations(
                   request, missingMaterializations.getItemsList(), repository);
-          return resolveWithStickyInternal(currentRequest);
+          return resolveWithSticky(currentRequest);
         }
 
         throw new RuntimeException(
@@ -204,9 +186,11 @@ class SwapWasmResolverApi implements ResolverApi {
 
   @Override
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    logResolveLock.lock();
-    final var response = wasmResolverApiRef.get().resolve(request);
-    logResolveLock.unlock();
-    return response;
+    final var instance = wasmResolverApiRef.get();
+    try {
+      return instance.resolve(request);
+    } catch (IsClosedException e) {
+      return resolve(request);
+    }
   }
 }

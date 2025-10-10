@@ -153,11 +153,11 @@ public class WasmResolveTest extends ResolveTest {
     verify(mockRepository).loadMaterializedAssignmentsForUnit("test-user", "read-mat");
   }
 
-  // add @Test and run it locally for load test
+  // add @Test and run it locally for load testing
   public void testConcurrentResolveLoadTest() throws InterruptedException {
     // Test configuration
     final int totalResolves = 1000_000;
-    final int numThreads = 8;
+    final int numThreads = 10;
     final int resolvesPerThread = totalResolves / numThreads;
 
     // Create the provider using normal exampleState (not with materialization)
