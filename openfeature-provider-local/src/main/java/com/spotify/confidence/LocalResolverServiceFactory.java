@@ -67,27 +67,22 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
       ApiSecret apiSecret,
       String clientSecret,
       boolean isWasm,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
-    return createFlagResolverService(
-        apiSecret, clientSecret, isWasm, stickyResolveStrategy, retryStrategy);
+      StickyResolveStrategy stickyResolveStrategy) {
+    return createFlagResolverService(apiSecret, clientSecret, isWasm, stickyResolveStrategy);
   }
 
   static FlagResolverService from(
       AccountStateProvider accountStateProvider,
       String accountId,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
-    return createFlagResolverService(
-        accountStateProvider, accountId, stickyResolveStrategy, retryStrategy);
+      StickyResolveStrategy stickyResolveStrategy) {
+    return createFlagResolverService(accountStateProvider, accountId, stickyResolveStrategy);
   }
 
   private static FlagResolverService createFlagResolverService(
       ApiSecret apiSecret,
       String clientSecret,
       boolean isWasm,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
+      StickyResolveStrategy stickyResolveStrategy) {
     final var channel = createConfidenceChannel();
     final AuthServiceBlockingStub authService = AuthServiceGrpc.newBlockingStub(channel);
     final TokenHolder tokenHolder =
@@ -116,8 +111,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
               wasmFlagLogger,
               sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray(),
               sidecarFlagsAdminFetcher.accountId,
-              stickyResolveStrategy,
-              retryStrategy);
+              stickyResolveStrategy);
       flagsFetcherExecutor.scheduleAtFixedRate(
           sidecarFlagsAdminFetcher::reload,
           pollIntervalSeconds,
@@ -173,8 +167,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
   private static FlagResolverService createFlagResolverService(
       AccountStateProvider accountStateProvider,
       String accountId,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
+      StickyResolveStrategy stickyResolveStrategy) {
     final var mode = System.getenv("LOCAL_RESOLVE_MODE");
     if (!(mode == null || mode.equals("WASM"))) {
       throw new RuntimeException("Only WASM mode supported with AccountStateProvider");
@@ -187,7 +180,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final WasmFlagLogger flagLogger = request -> WriteFlagLogsResponse.getDefaultInstance();
     final ResolverApi wasmResolverApi =
         new ThreadLocalSwapWasmResolverApi(
-            flagLogger, resolverStateProtobuf, accountId, stickyResolveStrategy, retryStrategy);
+            flagLogger, resolverStateProtobuf, accountId, stickyResolveStrategy);
     flagsFetcherExecutor.scheduleAtFixedRate(
         () -> {
           wasmResolverApi.updateStateAndFlushLogs(accountStateProvider.provide(), accountId);

@@ -11,72 +11,53 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 class SwapWasmResolverApi implements ResolverApi {
   private final AtomicReference<WasmResolveApi> wasmResolverApiRef = new AtomicReference<>();
   private final StickyResolveStrategy stickyResolveStrategy;
   private final WasmFlagLogger flagLogger;
-  private final RetryStrategy retryStrategy;
 
   public SwapWasmResolverApi(
       WasmFlagLogger flagLogger,
       byte[] initialState,
       String accountId,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
+      StickyResolveStrategy stickyResolveStrategy) {
     this.stickyResolveStrategy = stickyResolveStrategy;
     this.flagLogger = flagLogger;
-    this.retryStrategy = retryStrategy;
 
     // Create initial instance
-    final WasmResolveApi initialInstance = new WasmResolveApi(flagLogger, retryStrategy);
+    final WasmResolveApi initialInstance = new WasmResolveApi(flagLogger);
     initialInstance.setResolverState(initialState, accountId);
     this.wasmResolverApiRef.set(initialInstance);
   }
 
   @Override
   public void updateStateAndFlushLogs(byte[] state, String accountId) {
-    logResolveLock.lock();
     // Create new instance with updated state
-    final WasmResolveApi newInstance = new WasmResolveApi(flagLogger, retryStrategy);
+    final WasmResolveApi newInstance = new WasmResolveApi(flagLogger);
     newInstance.setResolverState(state, accountId);
 
     // Get current instance before switching
     final WasmResolveApi oldInstance = wasmResolverApiRef.getAndSet(newInstance);
-
     if (oldInstance != null) {
       oldInstance.flushLogs();
-      oldInstance.isIsFlushed(true);
     }
-    logResolveLock.unlock();
   }
 
   @Override
-  public void close() {
-    final WasmResolveApi currentInstance = wasmResolverApiRef.get();
-    if (currentInstance != null) {
-      // Note: WasmResolveApi doesn't have a close method, so this is a no-op for now
-      // but the instance will be GC'd naturally
-    }
-  }
-
-  private final ReentrantLock logResolveLock = new ReentrantLock();
+  public void close() {}
 
   @Override
   public CompletableFuture<ResolveFlagsResponse> resolveWithSticky(
       ResolveWithStickyRequest request) {
-    logResolveLock.lock();
-    final var response = resolveWithStickyInternal(request);
-    logResolveLock.unlock();
-    return response;
-  }
-
-  private CompletableFuture<ResolveFlagsResponse> resolveWithStickyInternal(
-      ResolveWithStickyRequest request) {
     final var instance = wasmResolverApiRef.get();
-    final var response = instance.resolveWithSticky(request);
+    final ResolveWithStickyResponse response;
+    try {
+      response = instance.resolveWithSticky(request);
+    } catch (IsFlushedException e) {
+      return resolveWithSticky(request);
+    }
 
     switch (response.getResolveResultCase()) {
       case SUCCESS -> {
@@ -84,9 +65,6 @@ class SwapWasmResolverApi implements ResolverApi {
         // Store updates if present
         if (!success.getUpdatesList().isEmpty()) {
           storeUpdates(success.getUpdatesList());
-        }
-        if (instance.isFlushed()) {
-          CompletableFuture.runAsync(instance::flushLogs);
         }
         return CompletableFuture.completedFuture(success.getResponse());
       }
@@ -103,7 +81,7 @@ class SwapWasmResolverApi implements ResolverApi {
           final var currentRequest =
               handleMissingMaterializations(
                   request, missingMaterializations.getItemsList(), repository);
-          return resolveWithStickyInternal(currentRequest);
+          return resolveWithSticky(currentRequest);
         }
 
         throw new RuntimeException(
@@ -208,13 +186,11 @@ class SwapWasmResolverApi implements ResolverApi {
 
   @Override
   public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    logResolveLock.lock();
     final var instance = wasmResolverApiRef.get();
-    final var response = instance.resolve(request);
-    if (instance.isFlushed()) {
-      CompletableFuture.runAsync(instance::flushLogs);
+    try {
+      return instance.resolve(request);
+    } catch (IsFlushedException e) {
+      return resolve(request);
     }
-    logResolveLock.unlock();
-    return response;
   }
 }

@@ -156,8 +156,8 @@ public class WasmResolveTest extends ResolveTest {
   // add @Test and run it locally for load test
   public void testConcurrentResolveLoadTest() throws InterruptedException {
     // Test configuration
-    final int totalResolves = 1000_000;
-    final int numThreads = 8;
+    final int totalResolves = 10000_000;
+    final int numThreads = 10;
     final int resolvesPerThread = totalResolves / numThreads;
 
     // Create the provider using normal exampleState (not with materialization)

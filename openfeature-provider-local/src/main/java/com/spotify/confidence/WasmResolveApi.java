@@ -26,7 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+
+class IsFlushedException extends Exception {}
 
 @FunctionalInterface
 interface WasmFlagLogger {
@@ -48,13 +51,10 @@ class WasmResolveApi {
   private final ExportFunction wasmMsgFlushLogs;
   private final ExportFunction wasmMsgGuestResolve;
   private final ExportFunction wasmMsgGuestResolveWithSticky;
-
-  // Retry strategy
-  private final RetryStrategy retryStrategy;
+  private final ReentrantLock logResolveLock = new ReentrantLock();
   private boolean isFlushed;
 
-  public WasmResolveApi(WasmFlagLogger flagLogger, RetryStrategy retryStrategy) {
-    this.retryStrategy = retryStrategy;
+  public WasmResolveApi(WasmFlagLogger flagLogger) {
     this.writeFlagLogs = flagLogger;
     try (InputStream wasmStream =
         getClass().getClassLoader().getResourceAsStream("wasm/confidence_resolver.wasm")) {
@@ -121,31 +121,37 @@ class WasmResolveApi {
   }
 
   public void flushLogs() {
+    logResolveLock.lock();
     final var voidRequest = Messages.Void.getDefaultInstance();
     final var reqPtr = transferRequest(voidRequest);
     final var respPtr = (int) wasmMsgFlushLogs.apply(reqPtr)[0];
     final var request = consumeResponse(respPtr, WriteFlagLogsRequest::parseFrom);
     final var ignore = writeFlagLogs.write(request);
+    isFlushed = true;
+    logResolveLock.unlock();
   }
 
-  public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request) {
-    return retryStrategy.execute(
-        () -> {
-          final int reqPtr = transferRequest(request);
-          final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
-          return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
-        },
-        "resolveWithSticky");
+  public ResolveWithStickyResponse resolveWithSticky(ResolveWithStickyRequest request)
+      throws IsFlushedException {
+    logResolveLock.lock();
+    if (isFlushed) {
+      throw new IsFlushedException();
+    }
+    final int reqPtr = transferRequest(request);
+    final int respPtr = (int) wasmMsgGuestResolveWithSticky.apply(reqPtr)[0];
+    logResolveLock.unlock();
+    return consumeResponse(respPtr, ResolveWithStickyResponse::parseFrom);
   }
 
-  public ResolveFlagsResponse resolve(ResolveFlagsRequest request) {
-    return retryStrategy.execute(
-        () -> {
-          final int reqPtr = transferRequest(request);
-          final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
-          return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
-        },
-        "resolve");
+  public ResolveFlagsResponse resolve(ResolveFlagsRequest request) throws IsFlushedException {
+    logResolveLock.lock();
+    if (isFlushed) {
+      throw new IsFlushedException();
+    }
+    final int reqPtr = transferRequest(request);
+    final int respPtr = (int) wasmMsgGuestResolve.apply(reqPtr)[0];
+    logResolveLock.unlock();
+    return consumeResponse(respPtr, ResolveFlagsResponse::parseFrom);
   }
 
   private <T extends GeneratedMessage> T consumeResponse(int addr, ParserFn<T> codec) {
@@ -218,14 +224,6 @@ class WasmResolveApi {
             return new long[] {transferResponseError(e.getMessage())};
           }
         });
-  }
-
-  public void isIsFlushed(boolean b) {
-    this.isFlushed = true;
-  }
-
-  public boolean isFlushed() {
-    return isFlushed;
   }
 
   private interface ParserFn<T> {

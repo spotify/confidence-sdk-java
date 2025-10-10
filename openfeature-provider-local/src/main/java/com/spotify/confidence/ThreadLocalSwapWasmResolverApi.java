@@ -22,7 +22,6 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
       LoggerFactory.getLogger(ThreadLocalSwapWasmResolverApi.class);
   private final WasmFlagLogger flagLogger;
   private final StickyResolveStrategy stickyResolveStrategy;
-  private final RetryStrategy retryStrategy;
   private volatile byte[] currentState;
   private volatile String currentAccountId;
 
@@ -42,11 +41,9 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
       WasmFlagLogger flagLogger,
       byte[] initialState,
       String accountId,
-      StickyResolveStrategy stickyResolveStrategy,
-      RetryStrategy retryStrategy) {
+      StickyResolveStrategy stickyResolveStrategy) {
     this.flagLogger = flagLogger;
     this.stickyResolveStrategy = stickyResolveStrategy;
-    this.retryStrategy = retryStrategy;
     this.currentState = initialState;
     this.currentAccountId = accountId;
 
@@ -67,8 +64,7 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
                                   this.flagLogger,
                                   this.currentState,
                                   this.currentAccountId,
-                                  this.stickyResolveStrategy,
-                                  this.retryStrategy);
+                                  this.stickyResolveStrategy);
                           resolverInstances.put(i, instance);
                         })));
     CompletableFutures.allAsList(futures).join();
