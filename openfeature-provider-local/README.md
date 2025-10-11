@@ -90,6 +90,27 @@ You need two types of credentials:
 
 Both can be obtained from your Confidence dashboard.
 
+## Sticky Resolve
+
+The provider supports **Sticky Resolve** for consistent variant assignments across flag evaluations. This ensures users receive the same variant even when their targeting attributes change, and enables pausing experiment intake.
+
+**By default, sticky assignments are managed by Confidence servers.** When sticky assignment data is needed, the provider makes a network call to Confidence, which maintains the sticky repository server-side with automatic 90-day TTL management. This is a fully supported production approach that requires no additional setup.
+
+
+Optionally, you can implement a custom `MaterializationRepository` to manage sticky assignments in your own storage (Redis, database, etc.) to eliminate network calls and improve latency:
+
+```java
+// Optional: Custom storage for sticky assignments
+MaterializationRepository repository = new RedisMaterializationRepository(jedisPool, "myapp");
+OpenFeatureLocalResolveProvider provider = new OpenFeatureLocalResolveProvider(
+    apiSecret,
+    clientSecret,
+    repository
+);
+```
+
+For detailed information on how sticky resolve works and how to implement custom storage backends, see [STICKY_RESOLVE.md](STICKY_RESOLVE.md).
+
 ## Requirements
 
 - Java 17+
