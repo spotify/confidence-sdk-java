@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.3](https://github.com/spotify/confidence-sdk-java/compare/v0.6.2...v0.6.3) (2025-10-12)
+
+
+### Bug Fixes
+
+* make flag wasm logger wait ([#307](https://github.com/spotify/confidence-sdk-java/issues/307)) ([aeca792](https://github.com/spotify/confidence-sdk-java/commit/aeca79243d88201188c313dbd66c5f7171dd3527))
+
 ## [0.6.2](https://github.com/spotify/confidence-sdk-java/compare/v0.6.1...v0.6.2) (2025-10-10)
 
 
