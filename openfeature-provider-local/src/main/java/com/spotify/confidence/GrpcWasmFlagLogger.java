@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class GrpcWasmFlagLogger implements WasmFlagLogger {
   private static final String CONFIDENCE_DOMAIN = "edge-grpc.spotify.com";
   private static final Logger logger = LoggerFactory.getLogger(GrpcWasmFlagLogger.class);
-  private final InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceFutureStub stub;
+  private final InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub stub;
 
   public GrpcWasmFlagLogger(ApiSecret apiSecret) {
     final var channel = createConfidenceChannel();
@@ -23,14 +23,17 @@ public class GrpcWasmFlagLogger implements WasmFlagLogger {
         AuthServiceGrpc.newBlockingStub(channel);
     final TokenHolder tokenHolder =
         new TokenHolder(apiSecret.clientId(), apiSecret.clientSecret(), authService);
-    final TokenHolder.Token token = tokenHolder.getToken();
     final Channel authenticatedChannel =
         ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
-    this.stub = InternalFlagLoggerServiceGrpc.newFutureStub(authenticatedChannel);
+    this.stub = InternalFlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
   }
 
   @Override
   public void write(WriteFlagLogsRequest request) {
+    if (request.getClientResolveInfoList().isEmpty() && request.getFlagAssignedList().isEmpty()) {
+      logger.debug("Skipping empty flag log request");
+      return;
+    }
     final var ignore = stub.writeFlagLogs(request);
   }
 
