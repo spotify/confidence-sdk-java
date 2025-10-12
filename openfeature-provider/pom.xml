@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>confidence-sdk-java</artifactId>
-    <version>0.6.3-SNAPSHOT</version>
+    <version>0.6.3</version>
   </parent>
   <!---x-release-please-end-->
   <artifactId>openfeature-provider</artifactId>
@@ -71,24 +71,24 @@
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>sdk-java</artifactId>
-      <version>0.6.3-SNAPSHOT</version>
+      <version>0.6.3</version>
     </dependency>
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>sdk-java</artifactId>
-      <version>0.6.3-SNAPSHOT</version>
+      <version>0.6.3</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>openfeature-provider-shared</artifactId>
-      <version>0.6.3-SNAPSHOT</version>
+      <version>0.6.3</version>
     </dependency>
     <dependency>
       <groupId>com.spotify.confidence</groupId>
       <artifactId>confidence-proto</artifactId>
-      <version>0.6.3-SNAPSHOT</version>
+      <version>0.6.3</version>
     </dependency>
     <!---x-release-please-end-->
     
