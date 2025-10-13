@@ -30,29 +30,6 @@ final class EvalUtil {
 
   private EvalUtil() {}
 
-  static Value getAttributeValue(Struct struct, String attributeName) {
-    final String[] attributePath = attributeName.split("\\.");
-    return getAttributeValue(struct, attributePath, 0);
-  }
-
-  private static Value getAttributeValue(Struct struct, String[] attributePath, int pos) {
-    final Map<String, Value> fieldsMap = struct.getFieldsMap();
-    final String fieldName = attributePath[pos];
-    if (!fieldsMap.containsKey(fieldName)) {
-      return Values.ofNull();
-    }
-
-    final Value value = fieldsMap.get(fieldName);
-    if (pos == attributePath.length - 1) {
-      return value;
-    } else if (value.hasStructValue()) {
-      return getAttributeValue(value.getStructValue(), attributePath, pos + 1);
-    }
-
-    // non-struct value addressed with .-operator
-    return Values.ofNull();
-  }
-
   /**
    * Tries to parse the a {@link Value} to an expected targeting type value. If the expected type is
    * not set, or there is no meaningful conversion to the expected type, this function will return
@@ -145,19 +122,6 @@ final class EvalUtil {
     return Targeting.Value.newBuilder()
         .setTimestampValue(Timestamps.fromMillis(instant.toEpochMilli()))
         .build();
-  }
-
-  static boolean isInRange(Targeting.RangeRule rangeRule, Targeting.Value value) {
-    if (value == null) {
-      return false;
-    }
-
-    try {
-      return Util.hasOverlap(value, rangeRule);
-    } catch (IllegalArgumentException e) {
-      // the supplied value type might not match the type in the rule
-      return false;
-    }
   }
 
   static Struct expandToSchema(Struct struct, FlagSchema.StructFlagSchema schema) {

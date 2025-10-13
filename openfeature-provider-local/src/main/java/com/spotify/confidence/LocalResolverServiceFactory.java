@@ -65,7 +65,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     final ResolverApi wasmResolverApi =
         new ThreadLocalSwapWasmResolverApi(
             wasmFlagLogger,
-            sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray(),
+            sidecarFlagsAdminFetcher.rawStateHolder().get(),
             sidecarFlagsAdminFetcher.accountId,
             stickyResolveStrategy);
     flagsFetcherExecutor.scheduleAtFixedRate(
@@ -77,7 +77,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     logPollExecutor.scheduleAtFixedRate(
         () ->
             wasmResolverApi.updateStateAndFlushLogs(
-                sidecarFlagsAdminFetcher.rawStateHolder().get().toByteArray(),
+                sidecarFlagsAdminFetcher.rawStateHolder().get(),
                 sidecarFlagsAdminFetcher.accountId),
         POLL_LOG_INTERVAL.getSeconds(),
         POLL_LOG_INTERVAL.getSeconds(),
