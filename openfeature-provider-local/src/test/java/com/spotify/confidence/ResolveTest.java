@@ -11,7 +11,6 @@ import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
-import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
@@ -48,8 +47,8 @@ abstract class ResolveTest extends TestBase {
                   .build())
           .build();
   private static final String segmentA = "segments/seg-a";
-  static final ResolverState exampleState;
-  static final ResolverState exampleStateWithMaterialization;
+  static final byte[] exampleStateBytes;
+  static final byte[] exampleStateWithMaterializationBytes;
   private static final Map<String, Flag> flags =
       Map.of(
           flag1,
@@ -157,32 +156,14 @@ abstract class ResolveTest extends TestBase {
               .build());
   protected static final Map<String, Segment> segments =
       Map.of(segmentA, Segment.newBuilder().setName(segmentA).build());
-  protected static final Map<String, BitSet> bitsets = Map.of(segmentA, getBitsetAllSet());
 
   static {
-    exampleState =
-        new ResolverState(
-            Map.of(
-                account,
-                new AccountState(
-                    new Account(account, Region.EU), flags, segments, bitsets, secrets, "abc")),
-            secrets);
-    exampleStateWithMaterialization =
-        new ResolverState(
-            Map.of(
-                account,
-                new AccountState(
-                    new Account(account, Region.EU),
-                    flagsWithMaterialization,
-                    segments,
-                    bitsets,
-                    secrets,
-                    "abc")),
-            secrets);
+    exampleStateBytes = buildResolverStateBytes(flags);
+    exampleStateWithMaterializationBytes = buildResolverStateBytes(flagsWithMaterialization);
   }
 
   protected ResolveTest(boolean isWasm) {
-    super(exampleState);
+    super(exampleStateBytes);
   }
 
   @BeforeAll
@@ -297,5 +278,30 @@ abstract class ResolveTest extends TestBase {
     assertThat(response.getResolvedFlagsList()).hasSize(1);
     assertEquals(
         ResolveReason.RESOLVE_REASON_TARGETING_KEY_ERROR, response.getResolvedFlags(0).getReason());
+  }
+
+  private static byte[] buildResolverStateBytes(Map<String, Flag> flagsMap) {
+    final var builder = com.spotify.confidence.shaded.flags.admin.v1.ResolverState.newBuilder();
+    builder.addAllFlags(flagsMap.values());
+    builder.addAllSegmentsNoBitsets(segments.values());
+    // All-one bitset for each segment
+    segments
+        .keySet()
+        .forEach(
+            name ->
+                builder.addBitsets(
+                    com.spotify.confidence.shaded.flags.admin.v1.ResolverState.PackedBitset
+                        .newBuilder()
+                        .setSegment(name)
+                        .setFullBitset(true)
+                        .build()));
+    builder.addClients(
+        com.spotify.confidence.shaded.iam.v1.Client.newBuilder().setName(clientName).build());
+    builder.addClientCredentials(
+        com.spotify.confidence.shaded.iam.v1.ClientCredential.newBuilder()
+            .setName(credentialName)
+            .setClientSecret(TestBase.secret)
+            .build());
+    return builder.build().toByteArray();
   }
 }

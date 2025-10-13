@@ -21,8 +21,4 @@ class HealthStatus {
     this.status.set(status);
     healthStatusManager.setStatus(SERVICE_NAME_ALL_SERVICES, status);
   }
-
-  HealthCheckResponse.ServingStatus get() {
-    return status.get();
-  }
 }

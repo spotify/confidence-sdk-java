@@ -32,24 +32,6 @@ class DefaultDeadlineClientInterceptor implements ClientInterceptor {
     this.duration = duration;
   }
 
-  /**
-   * Get the current default deadline duration.
-   *
-   * @return the current default deadline duration
-   */
-  Duration getDuration() {
-    return duration;
-  }
-
-  /**
-   * Set a new default deadline duration.
-   *
-   * @param duration the new default deadline duration
-   */
-  void setDuration(Duration duration) {
-    this.duration = duration;
-  }
-
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
       MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {

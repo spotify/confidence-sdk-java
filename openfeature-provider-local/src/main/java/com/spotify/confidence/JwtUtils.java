@@ -9,11 +9,7 @@ import io.grpc.Metadata;
 import java.util.Optional;
 
 class JwtUtils {
-  public static final String AUTH0_ISSUER = "https://auth.confidence.dev/";
-  public static final String[] AUTH0_ISSUERS =
-      new String[] {"https://konfidens.eu.auth0.com/", AUTH0_ISSUER};
 
-  public static final String BEARER_TYPE = "Bearer";
   public static final Metadata.Key<String> AUTHORIZATION_METADATA_KEY =
       Metadata.Key.of("Authorization", ASCII_STRING_MARSHALLER);
 
@@ -36,10 +32,6 @@ class JwtUtils {
     } else {
       return Optional.of(jwt.getClaim(claim));
     }
-  }
-
-  public static boolean isValidToken(String token) {
-    return token.startsWith(BEARER_TYPE);
   }
 
   public static String getTokenAsHeader(String rawToken) {

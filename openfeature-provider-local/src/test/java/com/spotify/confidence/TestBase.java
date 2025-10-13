@@ -10,21 +10,16 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
-import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 
 public class TestBase {
-  protected static final AtomicReference<ResolverState> resolverState =
-      new AtomicReference<>(new ResolverState(Map.of(), Map.of()));
-
   protected final ResolverFallback mockFallback = mock(ResolverFallback.class);
   protected static final ClientCredential.ClientSecret secret =
       ClientCredential.ClientSecret.newBuilder().setSecret("very-secret").build();
-  protected final ResolverState desiredState;
+  protected final byte[] desiredStateBytes;
   protected static LocalResolverServiceFactory resolverServiceFactory;
   static final String account = "accounts/foo";
   static final String clientName = "clients/client";
@@ -40,8 +35,8 @@ public class TestBase {
                   .setClientSecret(secret)
                   .build()));
 
-  protected TestBase(ResolverState state) {
-    this.desiredState = state;
+  protected TestBase(byte[] stateBytes) {
+    this.desiredStateBytes = stateBytes;
     final var wasmResolverApi =
         new SwapWasmResolverApi(
             new WasmFlagLogger() {
@@ -51,7 +46,7 @@ public class TestBase {
               @Override
               public void shutdown() {}
             },
-            desiredState.toProto().toByteArray(),
+            desiredStateBytes,
             "",
             mockFallback);
     resolverServiceFactory = new LocalResolverServiceFactory(wasmResolverApi, mockFallback);
@@ -60,9 +55,7 @@ public class TestBase {
   protected static void setup() {}
 
   @BeforeEach
-  protected void setUp() {
-    resolverState.set(desiredState);
-  }
+  protected void setUp() {}
 
   protected ResolveFlagsResponse resolveWithContext(
       List<String> flags,
@@ -127,12 +120,5 @@ public class TestBase {
   protected ResolveFlagsResponse resolveWithContext(
       List<String> flags, String username, String structFieldName, Struct struct, boolean apply) {
     return resolveWithContext(flags, username, structFieldName, struct, apply, secret.getSecret());
-  }
-
-  protected static BitSet getBitsetAllSet() {
-    final BitSet bitset = new BitSet(1000000);
-    bitset.flip(0, bitset.size());
-
-    return bitset;
   }
 }

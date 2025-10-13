@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -29,7 +28,6 @@ import org.slf4j.LoggerFactory;
 class AssignLogger implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(AssignLogger.class);
 
-  private static final Logger LOG = LoggerFactory.getLogger(AssignLogger.class);
   // Max size minus some wiggle room
   private static final int GRPC_MESSAGE_MAX_SIZE = 4194304 - 1048576;
 
@@ -61,31 +59,6 @@ class AssignLogger implements Closeable {
 
   private Long timeSinceLastAssigned() {
     return Duration.between(lastFlagAssigned, Instant.now()).toMillis();
-  }
-
-  static AssignLogger createStarted(
-      InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub flagLoggerStub,
-      Duration checkpointInterval,
-      MetricRegistry metricRegistry,
-      long capacity) {
-    final Timer timer = new Timer("assign-logger-timer", true);
-    final AssignLogger assignLogger =
-        new AssignLogger(flagLoggerStub, timer, metricRegistry, capacity);
-
-    timer.scheduleAtFixedRate(
-        new TimerTask() {
-          @Override
-          public void run() {
-            try {
-              assignLogger.checkpoint();
-            } catch (Exception e) {
-              LOG.error("Failed to checkpoint assignments", e);
-            }
-          }
-        },
-        checkpointInterval.toMillis(),
-        checkpointInterval.toMillis());
-    return assignLogger;
   }
 
   @VisibleForTesting
