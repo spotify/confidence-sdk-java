@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package confidence.flags.resolver.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.spotify.confidence.shaded.flags.resolver.v1";
+option java_multiple_files = true;
+option java_outer_classname = "ResolverStateProto";
+
+// Service for fetching resolver state metadata (e.g., a signed URI to the state file)
+service ResolverStateService {
+  // Gets a signed uri that can be used to download the current resolver state
+  rpc ResolverStateUri(ResolverStateUriRequest) returns (ResolverStateUriResponse) {
+  }
+}
+
+// Request to fetch resolver state uri
+message ResolverStateUriRequest {}
+
+// Response of fetching resolver state uri
+message ResolverStateUriResponse {
+  // The signed uri that can be used to fetch state
+  string signed_uri = 1;
+  // At what time the state uri expires
+  google.protobuf.Timestamp expire_time = 2;
+  // The account the referenced state belongs to
+  string account = 3;
+}
+
+
