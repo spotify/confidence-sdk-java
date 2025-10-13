@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
@@ -16,6 +17,11 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@FunctionalInterface
+interface FlagLogWriter {
+  void write(WriteFlagLogsRequest request);
+}
+
 public class GrpcWasmFlagLogger implements WasmFlagLogger {
   private static final String CONFIDENCE_DOMAIN = "edge-grpc.spotify.com";
   private static final Logger logger = LoggerFactory.getLogger(GrpcWasmFlagLogger.class);
@@ -23,6 +29,21 @@ public class GrpcWasmFlagLogger implements WasmFlagLogger {
   private static final int MAX_FLAG_ASSIGNED_PER_CHUNK = 1000;
   private final InternalFlagLoggerServiceGrpc.InternalFlagLoggerServiceBlockingStub stub;
   private final ExecutorService executorService;
+  private final FlagLogWriter writer;
+
+  @VisibleForTesting
+  public GrpcWasmFlagLogger(ApiSecret apiSecret, FlagLogWriter writer) {
+    final var channel = createConfidenceChannel();
+    final AuthServiceGrpc.AuthServiceBlockingStub authService =
+        AuthServiceGrpc.newBlockingStub(channel);
+    final TokenHolder tokenHolder =
+        new TokenHolder(apiSecret.clientId(), apiSecret.clientSecret(), authService);
+    final Channel authenticatedChannel =
+        ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
+    this.stub = InternalFlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
+    this.executorService = Executors.newCachedThreadPool();
+    this.writer = writer;
+  }
 
   public GrpcWasmFlagLogger(ApiSecret apiSecret) {
     final var channel = createConfidenceChannel();
@@ -34,6 +55,19 @@ public class GrpcWasmFlagLogger implements WasmFlagLogger {
         ClientInterceptors.intercept(channel, new JwtAuthClientInterceptor(tokenHolder));
     this.stub = InternalFlagLoggerServiceGrpc.newBlockingStub(authenticatedChannel);
     this.executorService = Executors.newCachedThreadPool();
+    this.writer =
+        request ->
+            executorService.submit(
+                () -> {
+                  try {
+                    final var ignore = stub.writeFlagLogs(request);
+                    logger.debug(
+                        "Successfully sent flag log with {} entries",
+                        request.getFlagAssignedCount());
+                  } catch (Exception e) {
+                    logger.error("Failed to write flag logs", e);
+                  }
+                });
   }
 
   @Override
@@ -92,16 +126,7 @@ public class GrpcWasmFlagLogger implements WasmFlagLogger {
   }
 
   private void sendAsync(WriteFlagLogsRequest request) {
-    executorService.submit(
-        () -> {
-          try {
-            stub.writeFlagLogs(request);
-            logger.debug(
-                "Successfully sent flag log with {} entries", request.getFlagAssignedCount());
-          } catch (Exception e) {
-            logger.error("Failed to write flag logs", e);
-          }
-        });
+    writer.write(request);
   }
 
   /**
