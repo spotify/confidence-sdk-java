@@ -1,10 +1,11 @@
-package com.spotify.confidence;
+package com.spotify.confidence.expressions;
 
 import static com.google.protobuf.util.Timestamps.toNanos;
 
+import com.spotify.confidence.SemanticVersion;
 import com.spotify.confidence.shaded.flags.types.v1.Targeting;
 
-interface Ord {
+public interface Ord {
 
   boolean lt(Targeting.Value a, Targeting.Value b);
 

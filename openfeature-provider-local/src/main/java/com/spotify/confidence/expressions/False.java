@@ -1,17 +1,17 @@
-package com.spotify.confidence;
+package com.spotify.confidence.expressions;
 
 import java.util.Set;
 
-record True() implements Expr {
+record False() implements Expr {
 
   @Override
   public Type type() {
-    return Type.TRUE;
+    return Type.FALSE;
   }
 
   @Override
   public String name() {
-    return "T";
+    return "F";
   }
 
   @Override

@@ -1,5 +1,11 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.expressions.Expr.Type.AND;
+import static com.spotify.confidence.expressions.Expr.Type.FALSE;
+import static com.spotify.confidence.expressions.Expr.Type.NOT;
+import static com.spotify.confidence.expressions.Expr.Type.OR;
+import static com.spotify.confidence.expressions.Expr.Type.REF;
+import static com.spotify.confidence.expressions.Expr.Type.TRUE;
 import static com.spotify.confidence.shaded.flags.types.v1.Targeting.RangeRule.EndCase.END_EXCLUSIVE;
 import static com.spotify.confidence.shaded.flags.types.v1.Targeting.RangeRule.EndCase.END_INCLUSIVE;
 import static com.spotify.confidence.shaded.flags.types.v1.Targeting.RangeRule.EndCase.END_NOT_SET;
@@ -8,6 +14,9 @@ import static com.spotify.confidence.shaded.flags.types.v1.Targeting.RangeRule.S
 import static com.spotify.confidence.shaded.flags.types.v1.Targeting.RangeRule.StartCase.START_NOT_SET;
 import static java.util.stream.Collectors.toList;
 
+import com.spotify.confidence.expressions.Eq;
+import com.spotify.confidence.expressions.Expr;
+import com.spotify.confidence.expressions.Ord;
 import com.spotify.confidence.shaded.flags.types.v1.Targeting.EqRule;
 import com.spotify.confidence.shaded.flags.types.v1.Targeting.RangeRule;
 import com.spotify.confidence.shaded.flags.types.v1.Targeting.SetRule;
@@ -17,11 +26,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-final class Util {
+public final class Util {
 
   private Util() {}
 
-  static boolean evalExpression(Expr expr, Set<String> trueRefs) {
+  public static boolean evalExpression(Expr expr, Set<String> trueRefs) {
     return switch (expr.type()) {
       case TRUE -> true;
       case FALSE -> false;

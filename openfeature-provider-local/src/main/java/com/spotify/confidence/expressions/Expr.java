@@ -1,4 +1,4 @@
-package com.spotify.confidence;
+package com.spotify.confidence.expressions;
 
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /* Expr ADT written with Java 15 sealed interfaces and records */
-sealed interface Expr extends Comparable<Expr> permits AndOr, False, Not, Ref, True {
+public sealed interface Expr extends Comparable<Expr> permits AndOr, False, Not, Ref, True {
 
   Expr T = new True();
   Expr F = new False();

@@ -1,11 +1,11 @@
-package com.spotify.confidence;
+package com.spotify.confidence.expressions;
 
-import static com.spotify.confidence.Expr.and;
-import static com.spotify.confidence.Expr.not;
-import static com.spotify.confidence.Expr.or;
+import static com.spotify.confidence.expressions.Expr.and;
+import static com.spotify.confidence.expressions.Expr.not;
+import static com.spotify.confidence.expressions.Expr.or;
 import static java.util.stream.Collectors.toList;
 
-import com.spotify.confidence.Expr.Type;
+import com.spotify.confidence.expressions.Expr.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

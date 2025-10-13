@@ -2,6 +2,7 @@ package com.spotify.confidence;
 
 import static com.spotify.confidence.Randomizer.MEGA_SALT;
 
+import com.spotify.confidence.expressions.TargetingExpr;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential.ClientSecret;

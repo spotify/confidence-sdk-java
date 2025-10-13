@@ -1,11 +1,11 @@
-package com.spotify.confidence;
+package com.spotify.confidence.expressions;
 
 import com.spotify.confidence.shaded.flags.types.v1.Targeting;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.OptionalLong;
 
-interface Eq {
+public interface Eq {
 
   double EPSILON = 0.00000001d;
 

@@ -1,11 +1,11 @@
-package com.spotify.confidence;
+package com.spotify.confidence.expressions;
 
-import static com.spotify.confidence.Expr.T;
-import static com.spotify.confidence.Expr.and;
-import static com.spotify.confidence.Expr.not;
-import static com.spotify.confidence.Expr.or;
-import static com.spotify.confidence.Expr.ref;
 import static com.spotify.confidence.Util.evalExpression;
+import static com.spotify.confidence.expressions.Expr.T;
+import static com.spotify.confidence.expressions.Expr.and;
+import static com.spotify.confidence.expressions.Expr.not;
+import static com.spotify.confidence.expressions.Expr.or;
+import static com.spotify.confidence.expressions.Expr.ref;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-class TargetingExpr {
+public class TargetingExpr {
 
   private final Expr expression;
   private final Map<String, Criterion> refs;
@@ -30,11 +30,11 @@ class TargetingExpr {
     this.refs = requireNonNull(refs);
   }
 
-  Map<String, Criterion> refs() {
+  public Map<String, Criterion> refs() {
     return refs;
   }
 
-  boolean eval(Set<String> trueRefs) {
+  public boolean eval(Set<String> trueRefs) {
     return evalExpression(expression, trueRefs);
   }
 
@@ -43,7 +43,7 @@ class TargetingExpr {
     return "TargetingExpr{" + "expression=" + expression + '}';
   }
 
-  static TargetingExpr fromTargeting(final Targeting targeting) {
+  public static TargetingExpr fromTargeting(final Targeting targeting) {
     final Expr expr = ExprNormalizer.normalize(convert(targeting.getExpression()));
     final Set<String> includedRefs = new HashSet<>();
     collectRefs(expr, includedRefs);

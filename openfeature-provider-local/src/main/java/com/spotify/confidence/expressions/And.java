@@ -1,33 +1,33 @@
-package com.spotify.confidence;
+package com.spotify.confidence.expressions;
 
 import static java.util.stream.Collectors.toSet;
 
 import java.util.Set;
 import java.util.stream.Stream;
 
-record Or(Set<Expr> operands) implements AndOr {
+record And(Set<Expr> operands) implements AndOr {
 
   @Override
   public Type type() {
-    return Type.OR;
+    return Type.AND;
   }
 
   @Override
   public Expr simplify() {
     final Set<Expr> reduced =
-        reduceNegatedPairsTo(T)
-            .filter(o -> !o.isFalse())
-            .flatMap(o -> o.isOr() ? o.operands().stream() : Stream.of(o))
+        reduceNegatedPairsTo(Expr.F)
+            .filter(o -> !o.isTrue())
+            .flatMap(o -> o.isAnd() ? o.operands().stream() : Stream.of(o))
             .collect(toSet());
 
-    if (reduced.contains(T)) {
-      return T;
+    if (reduced.contains(Expr.F)) {
+      return Expr.F;
     } else if (reduced.size() == 1) {
       return reduced.iterator().next();
     } else if (reduced.isEmpty()) {
-      return F;
+      return Expr.T;
     }
-    return Expr.or(reduced);
+    return Expr.and(reduced);
   }
 
   @Override

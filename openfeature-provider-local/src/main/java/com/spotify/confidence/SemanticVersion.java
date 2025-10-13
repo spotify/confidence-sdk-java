@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class SemanticVersion implements Comparable<SemanticVersion> {
+public class SemanticVersion implements Comparable<SemanticVersion> {
 
   private static final Pattern VERSION_PATTERN =
       Pattern.compile("^(\\d{1,3})(\\.\\d{1,3})(\\.\\d{1,3})?(\\.\\d{1,10})?$");
@@ -29,7 +29,7 @@ class SemanticVersion implements Comparable<SemanticVersion> {
    * @return instance of Semantic version
    * @throws IllegalArgumentException in case an invalid Semver is provided
    */
-  static SemanticVersion fromVersionString(final String version) {
+  public static SemanticVersion fromVersionString(final String version) {
     if (version == null || version.isEmpty()) {
       throw new IllegalArgumentException("Invalid version, version must be non-empty and not null");
     }

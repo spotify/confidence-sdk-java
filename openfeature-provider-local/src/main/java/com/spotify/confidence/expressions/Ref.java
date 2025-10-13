@@ -1,4 +1,4 @@
-package com.spotify.confidence;
+package com.spotify.confidence.expressions;
 
 import java.util.Set;
 

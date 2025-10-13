@@ -58,10 +58,6 @@ class FlagsAdminStateFetcher {
     this.accountName = accountName;
   }
 
-  public AtomicReference<ResolverState> stateHolder() {
-    return stateHolder;
-  }
-
   public AtomicReference<com.spotify.confidence.shaded.flags.admin.v1.ResolverState>
       rawStateHolder() {
     return rawResolverStateHolder;

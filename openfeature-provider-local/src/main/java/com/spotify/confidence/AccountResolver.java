@@ -2,6 +2,7 @@ package com.spotify.confidence;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
+import com.spotify.confidence.expressions.TargetingExpr;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule;
 import com.spotify.confidence.shaded.flags.admin.v1.Flag.Rule.Assignment;

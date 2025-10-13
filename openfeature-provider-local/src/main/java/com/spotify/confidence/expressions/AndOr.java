@@ -1,4 +1,4 @@
-package com.spotify.confidence;
+package com.spotify.confidence.expressions;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
