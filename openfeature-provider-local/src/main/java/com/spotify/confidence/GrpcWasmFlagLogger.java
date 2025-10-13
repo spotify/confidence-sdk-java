@@ -1,17 +1,15 @@
 package com.spotify.confidence;
 
+import static com.spotify.confidence.GrpcUtil.createConfidenceChannel;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptors;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
@@ -23,7 +21,6 @@ interface FlagLogWriter {
 }
 
 public class GrpcWasmFlagLogger implements WasmFlagLogger {
-  private static final String CONFIDENCE_DOMAIN = "edge-grpc.spotify.com";
   private static final Logger logger = LoggerFactory.getLogger(GrpcWasmFlagLogger.class);
   // Max number of flag_assigned entries per chunk to avoid exceeding gRPC max message size
   private static final int MAX_FLAG_ASSIGNED_PER_CHUNK = 1000;
@@ -136,19 +133,5 @@ public class GrpcWasmFlagLogger implements WasmFlagLogger {
   @Override
   public void shutdown() {
     executorService.shutdown();
-  }
-
-  private static ManagedChannel createConfidenceChannel() {
-    final String confidenceDomain =
-        Optional.ofNullable(System.getenv("CONFIDENCE_DOMAIN")).orElse(CONFIDENCE_DOMAIN);
-    final boolean useGrpcPlaintext =
-        Optional.ofNullable(System.getenv("CONFIDENCE_GRPC_PLAINTEXT"))
-            .map(Boolean::parseBoolean)
-            .orElse(false);
-    ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forTarget(confidenceDomain);
-    if (useGrpcPlaintext) {
-      builder = builder.usePlaintext();
-    }
-    return builder.intercept(new DefaultDeadlineClientInterceptor(Duration.ofMinutes(1))).build();
   }
 }

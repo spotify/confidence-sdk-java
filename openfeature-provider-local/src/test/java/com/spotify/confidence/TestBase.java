@@ -40,10 +40,8 @@ public class TestBase {
                   .setClientSecret(secret)
                   .build()));
 
-  protected TestBase(ResolverState state, boolean isWasm) {
+  protected TestBase(ResolverState state) {
     this.desiredState = state;
-    final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
-    if (isWasm) {
       final var wasmResolverApi =
           new SwapWasmResolverApi(
               new WasmFlagLogger() {
@@ -58,12 +56,7 @@ public class TestBase {
               mockFallback);
       resolverServiceFactory =
           new LocalResolverServiceFactory(
-              wasmResolverApi, resolverState, resolveTokenConverter, mock(), mockFallback);
-    } else {
-      resolverServiceFactory =
-          new LocalResolverServiceFactory(
-              resolverState, resolveTokenConverter, mock(), mockFallback);
-    }
+              wasmResolverApi, mockFallback);
   }
 
   protected static void setup() {}

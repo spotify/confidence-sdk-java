@@ -11,8 +11,4 @@ record Account(String name, Optional<Region> region) {
   Account(String name) {
     this(name, Optional.empty());
   }
-
-  Region regionOrThrow() {
-    return region.orElseThrow();
-  }
 }

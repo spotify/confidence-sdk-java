@@ -182,7 +182,7 @@ abstract class ResolveTest extends TestBase {
   }
 
   protected ResolveTest(boolean isWasm) {
-    super(exampleState, isWasm);
+    super(exampleState);
   }
 
   @BeforeAll

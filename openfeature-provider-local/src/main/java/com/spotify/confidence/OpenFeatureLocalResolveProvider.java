@@ -22,24 +22,9 @@ import org.slf4j.Logger;
 /**
  * OpenFeature provider for Confidence feature flags using local resolution.
  *
- * <p>This provider evaluates feature flags locally using either a WebAssembly (WASM) resolver or a
- * pure Java implementation. It periodically syncs flag configurations from the Confidence service
- * and caches them locally for fast, low-latency flag evaluation.
- *
- * <p>The provider supports two resolution modes:
- *
- * <ul>
- *   <li><strong>WASM mode</strong> (default): Uses a WebAssembly resolver
- *   <li><strong>Java mode</strong>: Uses a pure Java resolver
- * </ul>
- *
- * <p>Resolution mode can be controlled via the {@code LOCAL_RESOLVE_MODE} environment variable:
- *
- * <ul>
- *   <li>{@code LOCAL_RESOLVE_MODE=WASM} - Forces WASM mode
- *   <li>{@code LOCAL_RESOLVE_MODE=JAVA} - Forces Java mode
- *   <li>Not set - Defaults to WASM mode
- * </ul>
+ * <p>This provider evaluates feature flags locally using either a WebAssembly (WASM) resolver . It
+ * periodically syncs flag configurations from the Confidence service and caches them locally for
+ * fast, low-latency flag evaluation.
  *
  * <p><strong>Usage Example:</strong>
  *
@@ -78,9 +63,6 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * which provides fallback to the remote Confidence service when the WASM resolver encounters
    * missing materializations. By default, no retry strategy is applied.
    *
-   * <p>The provider will automatically determine the resolution mode (WASM or Java) based on the
-   * {@code LOCAL_RESOLVE_MODE} environment variable, defaulting to WASM mode.
-   *
    * @param apiSecret the API credentials containing client ID and client secret for authenticating
    *     with the Confidence service. Create using {@code new ApiSecret("client-id",
    *     "client-secret")}
@@ -97,8 +79,7 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    * Creates a new OpenFeature provider for local flag resolution with full configuration control.
    *
    * <p>This is the primary constructor that allows full control over the provider configuration,
-   * including retry strategy. The provider will automatically determine the resolution mode (WASM
-   * or Java) based on the {@code LOCAL_RESOLVE_MODE} environment variable, defaulting to WASM mode.
+   * including retry strategy.
    *
    * @param apiSecret the API credentials containing client ID and client secret for authenticating
    *     with the Confidence service. Create using {@code new ApiSecret("client-id",
@@ -111,19 +92,9 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
    */
   public OpenFeatureLocalResolveProvider(
       ApiSecret apiSecret, String clientSecret, StickyResolveStrategy stickyResolveStrategy) {
-    final var env = System.getenv("LOCAL_RESOLVE_MODE");
-    if (env != null && env.equals("WASM")) {
-      this.flagResolverService =
-          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, stickyResolveStrategy);
-    } else if (env != null && env.equals("JAVA")) {
-      this.flagResolverService =
-          LocalResolverServiceFactory.from(apiSecret, clientSecret, false, stickyResolveStrategy);
-    } else {
-      this.flagResolverService =
-          LocalResolverServiceFactory.from(apiSecret, clientSecret, true, stickyResolveStrategy);
-    }
-    this.stickyResolveStrategy = stickyResolveStrategy;
+    this.flagResolverService = LocalResolverServiceFactory.from(apiSecret, stickyResolveStrategy);
     this.clientSecret = clientSecret;
+    this.stickyResolveStrategy = stickyResolveStrategy;
   }
 
   /**

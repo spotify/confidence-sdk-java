@@ -4,6 +4,10 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -11,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
  * main SDK to avoid dependencies.
  */
 final class GrpcUtil {
+
+  private static final String CONFIDENCE_DOMAIN = "edge-grpc.spotify.com";
 
   private GrpcUtil() {}
 
@@ -38,5 +44,19 @@ final class GrpcUtil {
         },
         MoreExecutors.directExecutor());
     return completableFuture;
+  }
+
+  static ManagedChannel createConfidenceChannel() {
+    final String confidenceDomain =
+        Optional.ofNullable(System.getenv("CONFIDENCE_DOMAIN")).orElse(CONFIDENCE_DOMAIN);
+    final boolean useGrpcPlaintext =
+        Optional.ofNullable(System.getenv("CONFIDENCE_GRPC_PLAINTEXT"))
+            .map(Boolean::parseBoolean)
+            .orElse(false);
+    ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forTarget(confidenceDomain);
+    if (useGrpcPlaintext) {
+      builder = builder.usePlaintext();
+    }
+    return builder.intercept(new DefaultDeadlineClientInterceptor(Duration.ofMinutes(1))).build();
   }
 }
