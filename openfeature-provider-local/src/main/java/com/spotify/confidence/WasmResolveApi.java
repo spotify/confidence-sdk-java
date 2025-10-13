@@ -31,9 +31,10 @@ import java.util.function.Function;
 
 class IsClosedException extends Exception {}
 
-@FunctionalInterface
 interface WasmFlagLogger {
   void write(WriteFlagLogsRequest request);
+
+  void shutdown();
 }
 
 class WasmResolveApi {
