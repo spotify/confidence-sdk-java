@@ -42,7 +42,7 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
     return createFlagResolverService(accountStateProvider, accountId, stickyResolveStrategy);
   }
 
-  static FlagResolverService createFlagResolverService(
+  private static FlagResolverService createFlagResolverService(
       ApiSecret apiSecret, StickyResolveStrategy stickyResolveStrategy) {
     final var channel = createConfidenceChannel();
     final AuthServiceBlockingStub authService = AuthServiceGrpc.newBlockingStub(channel);
@@ -123,10 +123,6 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
         POLL_LOG_INTERVAL.getSeconds(),
         TimeUnit.SECONDS);
     return new WasmFlagResolverService(wasmResolverApi, stickyResolveStrategy);
-  }
-
-  LocalResolverServiceFactory(StickyResolveStrategy stickyResolveStrategy) {
-    this(null, stickyResolveStrategy);
   }
 
   LocalResolverServiceFactory(

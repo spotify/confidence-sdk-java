@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 /**
  * OpenFeature provider for Confidence feature flags using local resolution.
  *
- * <p>This provider evaluates feature flags locally using either a WebAssembly (WASM) resolver . It
+ * <p>This provider evaluates feature flags locally using either a WebAssembly (WASM) resolver. It
  * periodically syncs flag configurations from the Confidence service and caches them locally for
  * fast, low-latency flag evaluation.
  *
@@ -56,8 +56,8 @@ public class OpenFeatureLocalResolveProvider implements FeatureProvider {
   private final StickyResolveStrategy stickyResolveStrategy;
 
   /**
-   * Creates a new OpenFeature provider for local flag resolution with default fallback strategy and
-   * no retry.
+   * Creates a new OpenFeature provider for local flag resolution with sticky default fallback
+   * strategy and no retry.
    *
    * <p>This constructor uses {@link RemoteResolverFallback} as the default sticky resolve strategy,
    * which provides fallback to the remote Confidence service when the WASM resolver encounters
