@@ -109,7 +109,7 @@ public class GrpcWasmFlagLogger implements WasmFlagLogger {
           WriteFlagLogsRequest.newBuilder()
               .addAllFlagAssigned(request.getFlagAssignedList().subList(i, end));
 
-      // Include metadata only in the first chunk
+      // Include telemetry and resolve info only in the first chunk
       if (i == 0) {
         if (request.hasTelemetryData()) {
           chunkBuilder.setTelemetryData(request.getTelemetryData());
