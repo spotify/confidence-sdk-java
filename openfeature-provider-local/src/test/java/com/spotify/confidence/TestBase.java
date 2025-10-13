@@ -42,21 +42,19 @@ public class TestBase {
 
   protected TestBase(ResolverState state) {
     this.desiredState = state;
-      final var wasmResolverApi =
-          new SwapWasmResolverApi(
-              new WasmFlagLogger() {
-                @Override
-                public void write(WriteFlagLogsRequest request) {}
+    final var wasmResolverApi =
+        new SwapWasmResolverApi(
+            new WasmFlagLogger() {
+              @Override
+              public void write(WriteFlagLogsRequest request) {}
 
-                @Override
-                public void shutdown() {}
-              },
-              desiredState.toProto().toByteArray(),
-              "",
-              mockFallback);
-      resolverServiceFactory =
-          new LocalResolverServiceFactory(
-              wasmResolverApi, mockFallback);
+              @Override
+              public void shutdown() {}
+            },
+            desiredState.toProto().toByteArray(),
+            "",
+            mockFallback);
+    resolverServiceFactory = new LocalResolverServiceFactory(wasmResolverApi, mockFallback);
   }
 
   protected static void setup() {}
