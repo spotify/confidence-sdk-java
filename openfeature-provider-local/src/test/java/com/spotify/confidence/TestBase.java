@@ -7,6 +7,7 @@ import com.google.protobuf.util.Structs;
 import com.google.protobuf.util.Values;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsRequest;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
 import java.util.BitSet;
@@ -45,7 +46,16 @@ public class TestBase {
     if (isWasm) {
       final var wasmResolverApi =
           new SwapWasmResolverApi(
-              request -> {}, desiredState.toProto().toByteArray(), "", mockFallback);
+              new WasmFlagLogger() {
+                @Override
+                public void write(WriteFlagLogsRequest request) {}
+
+                @Override
+                public void shutdown() {}
+              },
+              desiredState.toProto().toByteArray(),
+              "",
+              mockFallback);
       resolverServiceFactory =
           new LocalResolverServiceFactory(
               wasmResolverApi, resolverState, resolveTokenConverter, mock(), mockFallback);

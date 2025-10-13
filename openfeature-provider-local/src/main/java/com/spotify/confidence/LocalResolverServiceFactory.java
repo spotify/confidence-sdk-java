@@ -10,7 +10,7 @@ import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateServiceGrpc;
 import com.spotify.confidence.shaded.flags.admin.v1.ResolverStateServiceGrpc.ResolverStateServiceBlockingStub;
 import com.spotify.confidence.shaded.flags.resolver.v1.InternalFlagLoggerServiceGrpc;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
-import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsResponse;
+import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc;
 import com.spotify.confidence.shaded.iam.v1.AuthServiceGrpc.AuthServiceBlockingStub;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential.ClientSecret;
@@ -179,7 +179,15 @@ class LocalResolverServiceFactory implements ResolverServiceFactory {
             .orElse(Duration.ofMinutes(5).toSeconds());
     final AtomicReference<byte[]> resolverStateProtobuf =
         new AtomicReference<>(accountStateProvider.provide());
-    final WasmFlagLogger flagLogger = request -> WriteFlagLogsResponse.getDefaultInstance();
+    // No-op logger for wasm mode with AccountStateProvider
+    final WasmFlagLogger flagLogger =
+        new WasmFlagLogger() {
+          @Override
+          public void write(WriteFlagLogsRequest request) {}
+
+          @Override
+          public void shutdown() {}
+        };
     final ResolverApi wasmResolverApi =
         new ThreadLocalSwapWasmResolverApi(
             flagLogger, resolverStateProtobuf.get(), accountId, stickyResolveStrategy);

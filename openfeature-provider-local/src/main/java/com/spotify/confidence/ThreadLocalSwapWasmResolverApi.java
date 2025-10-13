@@ -121,6 +121,7 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
   @Override
   public void close() {
     resolverInstances.values().forEach(SwapWasmResolverApi::close);
+    flagLogger.shutdown();
     resolverInstances.clear();
   }
 }
