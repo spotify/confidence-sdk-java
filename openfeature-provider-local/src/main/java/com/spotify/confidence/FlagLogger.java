@@ -54,6 +54,7 @@ interface FlagLogger {
     return builder.build();
   }
 
+  @SuppressWarnings("deprecation")
   private static DefaultAssignmentReason resolveToAssignmentReason(ResolveReason reason) {
     return switch (reason) {
       case RESOLVE_REASON_NO_SEGMENT_MATCH -> DefaultAssignmentReason.NO_SEGMENT_MATCH;

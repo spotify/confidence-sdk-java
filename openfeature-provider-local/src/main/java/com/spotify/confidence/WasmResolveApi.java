@@ -29,14 +29,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
-class IsClosedException extends Exception {}
-
-interface WasmFlagLogger {
-  void write(WriteFlagLogsRequest request);
-
-  void shutdown();
-}
-
 class WasmResolveApi {
   private final FunctionType HOST_FN_TYPE =
       FunctionType.of(List.of(ValType.I32), List.of(ValType.I32));

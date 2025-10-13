@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 class DefaultDeadlineClientInterceptor implements ClientInterceptor {
 
-  private Duration duration;
+  private final Duration duration;
 
   DefaultDeadlineClientInterceptor(Duration duration) {
     checkNotNull(duration, "duration");

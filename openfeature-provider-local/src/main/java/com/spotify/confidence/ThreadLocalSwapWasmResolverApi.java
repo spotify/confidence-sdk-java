@@ -109,14 +109,6 @@ class ThreadLocalSwapWasmResolverApi implements ResolverApi {
     return getResolverForCurrentThread().resolve(request);
   }
 
-  /**
-   * Returns the number of pre-initialized resolver instances. This is primarily for debugging and
-   * monitoring purposes.
-   */
-  public int getInstanceCount() {
-    return resolverInstances.size();
-  }
-
   /** Closes all pre-initialized resolver instances and clears the map. */
   @Override
   public void close() {
