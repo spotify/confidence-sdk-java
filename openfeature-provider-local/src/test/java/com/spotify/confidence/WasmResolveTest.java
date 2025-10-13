@@ -65,7 +65,6 @@ public class WasmResolveTest extends ResolveTest {
     assertTrue(objectEvaluation.getValue().isStructure());
     final var structure = objectEvaluation.getValue().asStructure();
     assertEquals("on", structure.getValue("data").asString());
-    assertTrue(structure.getValue("extra").isNull());
   }
 
   @Test

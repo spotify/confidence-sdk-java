@@ -58,12 +58,7 @@ public class TestBase {
   protected void setUp() {}
 
   protected ResolveFlagsResponse resolveWithContext(
-      List<String> flags,
-      String username,
-      String structFieldName,
-      Struct struct,
-      boolean apply,
-      String secret) {
+      List<String> flags, String username, Struct struct, boolean apply, String secret) {
     try {
       return resolverServiceFactory
           .create(secret)
@@ -72,8 +67,7 @@ public class TestBase {
                   .addAllFlags(flags)
                   .setClientSecret(secret)
                   .setEvaluationContext(
-                      Structs.of(
-                          "targeting_key", Values.of(username), structFieldName, Values.of(struct)))
+                      Structs.of("targeting_key", Values.of(username), "bar", Values.of(struct)))
                   .setApply(apply)
                   .build())
           .get();
@@ -83,32 +77,22 @@ public class TestBase {
   }
 
   protected ResolveFlagsResponse resolveWithNumericTargetingKey(
-      List<String> flags,
-      Number targetingKey,
-      String structFieldName,
-      Struct struct,
-      boolean apply) {
+      List<String> flags, Number targetingKey, Struct struct) {
     try {
       final var builder =
           ResolveFlagsRequest.newBuilder()
               .addAllFlags(flags)
               .setClientSecret(secret.getSecret())
-              .setApply(apply);
+              .setApply(true);
 
       if (targetingKey instanceof Double || targetingKey instanceof Float) {
         builder.setEvaluationContext(
             Structs.of(
-                "targeting_key",
-                Values.of(targetingKey.doubleValue()),
-                structFieldName,
-                Values.of(struct)));
+                "targeting_key", Values.of(targetingKey.doubleValue()), "bar", Values.of(struct)));
       } else {
         builder.setEvaluationContext(
             Structs.of(
-                "targeting_key",
-                Values.of(targetingKey.longValue()),
-                structFieldName,
-                Values.of(struct)));
+                "targeting_key", Values.of(targetingKey.longValue()), "bar", Values.of(struct)));
       }
 
       return resolverServiceFactory.create(secret.getSecret()).resolveFlags(builder.build()).get();
@@ -118,7 +102,7 @@ public class TestBase {
   }
 
   protected ResolveFlagsResponse resolveWithContext(
-      List<String> flags, String username, String structFieldName, Struct struct, boolean apply) {
-    return resolveWithContext(flags, username, structFieldName, struct, apply, secret.getSecret());
+      List<String> flags, String username, Struct struct, boolean apply) {
+    return resolveWithContext(flags, username, struct, apply, secret.getSecret());
   }
 }

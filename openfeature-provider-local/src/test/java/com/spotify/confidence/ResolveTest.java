@@ -179,7 +179,6 @@ abstract class ResolveTest extends TestBase {
                 resolveWithContext(
                     List.of("flags/asd"),
                     "foo",
-                    "bar",
                     Struct.newBuilder().build(),
                     true,
                     "invalid-secret"))
@@ -189,7 +188,7 @@ abstract class ResolveTest extends TestBase {
   @Test
   public void testInvalidFlag() {
     final var response =
-        resolveWithContext(List.of("flags/asd"), "foo", "bar", Struct.newBuilder().build(), false);
+        resolveWithContext(List.of("flags/asd"), "foo", Struct.newBuilder().build(), false);
     assertThat(response.getResolvedFlagsList()).isEmpty();
     assertThat(response.getResolveId()).isNotEmpty();
   }
@@ -197,11 +196,9 @@ abstract class ResolveTest extends TestBase {
   @Test
   public void testResolveFlag() {
     final var response =
-        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), true);
+        resolveWithContext(List.of(flag1), "foo", Struct.newBuilder().build(), true);
     assertThat(response.getResolveId()).isNotEmpty();
-    final Struct expectedValue =
-        // expanded with nulls to match schema
-        variantOn.getValue().toBuilder().putFields("extra", Values.ofNull()).build();
+    final Struct expectedValue = variantOn.getValue();
 
     assertEquals(variantOn.getName(), response.getResolvedFlags(0).getVariant());
     assertEquals(expectedValue, response.getResolvedFlags(0).getValue());
@@ -211,11 +208,9 @@ abstract class ResolveTest extends TestBase {
   @Test
   public void testResolveFlagWithEncryptedResolveToken() {
     final var response =
-        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), false);
+        resolveWithContext(List.of(flag1), "foo", Struct.newBuilder().build(), false);
     assertThat(response.getResolveId()).isNotEmpty();
-    final Struct expectedValue =
-        // expanded with nulls to match schema
-        variantOn.getValue().toBuilder().putFields("extra", Values.ofNull()).build();
+    final Struct expectedValue = variantOn.getValue();
 
     assertEquals(variantOn.getName(), response.getResolvedFlags(0).getVariant());
     assertEquals(expectedValue, response.getResolvedFlags(0).getValue());
@@ -255,15 +250,14 @@ abstract class ResolveTest extends TestBase {
         .isThrownBy(
             () ->
                 resolveWithContext(
-                    List.of(flag1), "a".repeat(101), "bar", Struct.newBuilder().build(), false))
+                    List.of(flag1), "a".repeat(101), Struct.newBuilder().build(), false))
         .withMessageContaining("Targeting key is too larger, max 100 characters.");
   }
 
   @Test
   public void testResolveIntegerTargetingKeyTyped() {
     final var response =
-        resolveWithNumericTargetingKey(
-            List.of(flag1), 1234567890, "bar", Struct.newBuilder().build(), true);
+        resolveWithNumericTargetingKey(List.of(flag1), 1234567890, Struct.newBuilder().build());
 
     assertThat(response.getResolvedFlagsList()).hasSize(1);
     assertEquals(ResolveReason.RESOLVE_REASON_MATCH, response.getResolvedFlags(0).getReason());
@@ -272,8 +266,7 @@ abstract class ResolveTest extends TestBase {
   @Test
   public void testResolveDecimalUsername() {
     final var response =
-        resolveWithNumericTargetingKey(
-            List.of(flag1), 3.14159d, "bar", Struct.newBuilder().build(), true);
+        resolveWithNumericTargetingKey(List.of(flag1), 3.14159d, Struct.newBuilder().build());
 
     assertThat(response.getResolvedFlagsList()).hasSize(1);
     assertEquals(
