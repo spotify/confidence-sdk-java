@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.4](https://github.com/spotify/confidence-sdk-java/compare/v0.6.3...v0.6.4) (2025-10-13)
+
+
+### Bug Fixes
+
+* chunk down flag assigned to not hit the max grpc limit ([#310](https://github.com/spotify/confidence-sdk-java/issues/310)) ([e9e91c4](https://github.com/spotify/confidence-sdk-java/commit/e9e91c44194b202230d9d638c988a58c6ba68d2f))
+
+
+### Documentation
+
+* add docs about sticky resolve ([#295](https://github.com/spotify/confidence-sdk-java/issues/295)) ([4039dcc](https://github.com/spotify/confidence-sdk-java/commit/4039dccb7b6c1675eec3925b390e791962415b8b))
+
 ## [0.6.3](https://github.com/spotify/confidence-sdk-java/compare/v0.6.2...v0.6.3) (2025-10-12)
 
 
