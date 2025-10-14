@@ -1,51 +1,14 @@
 package com.spotify.confidence;
 
-import static com.spotify.confidence.ResolvedValue.resolveToAssignmentReason;
-
-import com.google.protobuf.Struct;
 import com.google.protobuf.Timestamp;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.resolver.v1.Sdk;
 import com.spotify.confidence.shaded.flags.resolver.v1.events.ClientInfo;
-import com.spotify.confidence.shaded.flags.resolver.v1.events.FallthroughAssignment;
 import com.spotify.confidence.shaded.flags.resolver.v1.events.FlagAssigned;
-import java.util.ArrayList;
+import com.spotify.confidence.shaded.flags.resolver.v1.events.FlagAssigned.DefaultAssignment.DefaultAssignmentReason;
 import java.util.List;
 
 interface FlagLogger {
-
-  void logResolve(
-      String resolveId,
-      Struct evaluationContext,
-      Sdk sdk,
-      AccountClient accountClient,
-      List<ResolvedValue> values);
-
-  void logAssigns(
-      String resolveId, Sdk sdk, List<FlagToApply> flagsToApply, AccountClient accountClient);
-
-  static List<String> getResources(FlagAssigned flagAssigned) {
-    final List<String> resources = new ArrayList<>();
-    for (var flag : flagAssigned.getFlagsList()) {
-      if (flag.hasAssignmentInfo()) {
-        if (!flag.getAssignmentInfo().getSegment().isBlank()) {
-          resources.add(flag.getAssignmentInfo().getSegment());
-        }
-        if (!flag.getAssignmentInfo().getVariant().isBlank()) {
-          resources.add(flag.getAssignmentInfo().getVariant());
-        }
-      }
-
-      for (FallthroughAssignment fallthroughAssignment : flag.getFallthroughAssignmentsList()) {
-        resources.add(fallthroughAssignment.getRule());
-      }
-
-      resources.add(flag.getFlag());
-      resources.add(flag.getRule());
-    }
-    resources.add(flagAssigned.getClientInfo().getClient());
-    resources.add(flagAssigned.getClientInfo().getClientCredential());
-    return resources;
-  }
 
   static FlagAssigned createFlagAssigned(
       String resolveId, Sdk sdk, List<FlagToApply> flagsToApply, AccountClient accountClient) {
@@ -89,5 +52,15 @@ interface FlagLogger {
     }
 
     return builder.build();
+  }
+
+  @SuppressWarnings("deprecation")
+  private static DefaultAssignmentReason resolveToAssignmentReason(ResolveReason reason) {
+    return switch (reason) {
+      case RESOLVE_REASON_NO_SEGMENT_MATCH -> DefaultAssignmentReason.NO_SEGMENT_MATCH;
+      case RESOLVE_REASON_NO_TREATMENT_MATCH -> DefaultAssignmentReason.NO_TREATMENT_MATCH;
+      case RESOLVE_REASON_FLAG_ARCHIVED -> DefaultAssignmentReason.FLAG_ARCHIVED;
+      default -> DefaultAssignmentReason.DEFAULT_ASSIGNMENT_REASON_UNSPECIFIED;
+    };
   }
 }

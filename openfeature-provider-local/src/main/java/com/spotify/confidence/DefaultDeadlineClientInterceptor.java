@@ -23,30 +23,12 @@ import java.util.concurrent.TimeUnit;
 
 class DefaultDeadlineClientInterceptor implements ClientInterceptor {
 
-  private Duration duration;
+  private final Duration duration;
 
   DefaultDeadlineClientInterceptor(Duration duration) {
     checkNotNull(duration, "duration");
     checkArgument(!duration.isNegative(), "duration must be greater than zero");
 
-    this.duration = duration;
-  }
-
-  /**
-   * Get the current default deadline duration.
-   *
-   * @return the current default deadline duration
-   */
-  Duration getDuration() {
-    return duration;
-  }
-
-  /**
-   * Set a new default deadline duration.
-   *
-   * @param duration the new default deadline duration
-   */
-  void setDuration(Duration duration) {
     this.duration = duration;
   }
 

@@ -10,21 +10,16 @@ import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
 import com.spotify.confidence.shaded.flags.resolver.v1.WriteFlagLogsRequest;
 import com.spotify.confidence.shaded.iam.v1.Client;
 import com.spotify.confidence.shaded.iam.v1.ClientCredential;
-import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 
 public class TestBase {
-  protected static final AtomicReference<ResolverState> resolverState =
-      new AtomicReference<>(new ResolverState(Map.of(), Map.of()));
-
   protected final ResolverFallback mockFallback = mock(ResolverFallback.class);
   protected static final ClientCredential.ClientSecret secret =
       ClientCredential.ClientSecret.newBuilder().setSecret("very-secret").build();
-  protected final ResolverState desiredState;
+  protected final byte[] desiredStateBytes;
   protected static LocalResolverServiceFactory resolverServiceFactory;
   static final String account = "accounts/foo";
   static final String clientName = "clients/client";
@@ -40,46 +35,30 @@ public class TestBase {
                   .setClientSecret(secret)
                   .build()));
 
-  protected TestBase(ResolverState state, boolean isWasm) {
-    this.desiredState = state;
-    final ResolveTokenConverter resolveTokenConverter = new PlainResolveTokenConverter();
-    if (isWasm) {
-      final var wasmResolverApi =
-          new SwapWasmResolverApi(
-              new WasmFlagLogger() {
-                @Override
-                public void write(WriteFlagLogsRequest request) {}
+  protected TestBase(byte[] stateBytes) {
+    this.desiredStateBytes = stateBytes;
+    final var wasmResolverApi =
+        new SwapWasmResolverApi(
+            new WasmFlagLogger() {
+              @Override
+              public void write(WriteFlagLogsRequest request) {}
 
-                @Override
-                public void shutdown() {}
-              },
-              desiredState.toProto().toByteArray(),
-              "",
-              mockFallback);
-      resolverServiceFactory =
-          new LocalResolverServiceFactory(
-              wasmResolverApi, resolverState, resolveTokenConverter, mock(), mockFallback);
-    } else {
-      resolverServiceFactory =
-          new LocalResolverServiceFactory(
-              resolverState, resolveTokenConverter, mock(), mockFallback);
-    }
+              @Override
+              public void shutdown() {}
+            },
+            desiredStateBytes,
+            "",
+            mockFallback);
+    resolverServiceFactory = new LocalResolverServiceFactory(wasmResolverApi, mockFallback);
   }
 
   protected static void setup() {}
 
   @BeforeEach
-  protected void setUp() {
-    resolverState.set(desiredState);
-  }
+  protected void setUp() {}
 
   protected ResolveFlagsResponse resolveWithContext(
-      List<String> flags,
-      String username,
-      String structFieldName,
-      Struct struct,
-      boolean apply,
-      String secret) {
+      List<String> flags, String username, Struct struct, boolean apply, String secret) {
     try {
       return resolverServiceFactory
           .create(secret)
@@ -88,8 +67,7 @@ public class TestBase {
                   .addAllFlags(flags)
                   .setClientSecret(secret)
                   .setEvaluationContext(
-                      Structs.of(
-                          "targeting_key", Values.of(username), structFieldName, Values.of(struct)))
+                      Structs.of("targeting_key", Values.of(username), "bar", Values.of(struct)))
                   .setApply(apply)
                   .build())
           .get();
@@ -99,32 +77,22 @@ public class TestBase {
   }
 
   protected ResolveFlagsResponse resolveWithNumericTargetingKey(
-      List<String> flags,
-      Number targetingKey,
-      String structFieldName,
-      Struct struct,
-      boolean apply) {
+      List<String> flags, Number targetingKey, Struct struct) {
     try {
       final var builder =
           ResolveFlagsRequest.newBuilder()
               .addAllFlags(flags)
               .setClientSecret(secret.getSecret())
-              .setApply(apply);
+              .setApply(true);
 
       if (targetingKey instanceof Double || targetingKey instanceof Float) {
         builder.setEvaluationContext(
             Structs.of(
-                "targeting_key",
-                Values.of(targetingKey.doubleValue()),
-                structFieldName,
-                Values.of(struct)));
+                "targeting_key", Values.of(targetingKey.doubleValue()), "bar", Values.of(struct)));
       } else {
         builder.setEvaluationContext(
             Structs.of(
-                "targeting_key",
-                Values.of(targetingKey.longValue()),
-                structFieldName,
-                Values.of(struct)));
+                "targeting_key", Values.of(targetingKey.longValue()), "bar", Values.of(struct)));
       }
 
       return resolverServiceFactory.create(secret.getSecret()).resolveFlags(builder.build()).get();
@@ -134,14 +102,7 @@ public class TestBase {
   }
 
   protected ResolveFlagsResponse resolveWithContext(
-      List<String> flags, String username, String structFieldName, Struct struct, boolean apply) {
-    return resolveWithContext(flags, username, structFieldName, struct, apply, secret.getSecret());
-  }
-
-  protected static BitSet getBitsetAllSet() {
-    final BitSet bitset = new BitSet(1000000);
-    bitset.flip(0, bitset.size());
-
-    return bitset;
+      List<String> flags, String username, Struct struct, boolean apply) {
+    return resolveWithContext(flags, username, struct, apply, secret.getSecret());
   }
 }

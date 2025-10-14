@@ -6,7 +6,7 @@ A high-performance OpenFeature provider for [Confidence](https://confidence.spot
 
 ## Features
 
-- **Local Resolution**: Evaluates feature flags locally using WebAssembly (WASM) or pure Java
+- **Local Resolution**: Evaluates feature flags locally using WebAssembly (WASM)
 - **Low Latency**: No network calls during flag evaluation
 - **Automatic Sync**: Periodically syncs flag configurations from Confidence
 - **Exposure Logging**: Fully supported exposure logging (and other resolve analytics)
@@ -49,22 +49,6 @@ String value = client.getStringValue("my-flag", "default-value");
 
 ## Configuration
 
-### Resolution Modes
-
-The provider supports two resolution modes:
-
-- **WASM mode** (default): Uses WebAssembly resolver
-- **Java mode**: Pure Java implementation of the resolver
-
-Control the mode with the `LOCAL_RESOLVE_MODE` environment variable:
-
-```bash
-# Force WASM mode
-export LOCAL_RESOLVE_MODE=WASM
-
-# Force Java mode  
-export LOCAL_RESOLVE_MODE=JAVA
-```
 
 ### Exposure Logging
 

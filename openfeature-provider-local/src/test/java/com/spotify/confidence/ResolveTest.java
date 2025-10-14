@@ -11,7 +11,6 @@ import com.spotify.confidence.shaded.flags.admin.v1.Flag;
 import com.spotify.confidence.shaded.flags.admin.v1.Segment;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.types.v1.FlagSchema;
-import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
@@ -48,8 +47,8 @@ abstract class ResolveTest extends TestBase {
                   .build())
           .build();
   private static final String segmentA = "segments/seg-a";
-  static final ResolverState exampleState;
-  static final ResolverState exampleStateWithMaterialization;
+  static final byte[] exampleStateBytes;
+  static final byte[] exampleStateWithMaterializationBytes;
   private static final Map<String, Flag> flags =
       Map.of(
           flag1,
@@ -157,32 +156,14 @@ abstract class ResolveTest extends TestBase {
               .build());
   protected static final Map<String, Segment> segments =
       Map.of(segmentA, Segment.newBuilder().setName(segmentA).build());
-  protected static final Map<String, BitSet> bitsets = Map.of(segmentA, getBitsetAllSet());
 
   static {
-    exampleState =
-        new ResolverState(
-            Map.of(
-                account,
-                new AccountState(
-                    new Account(account, Region.EU), flags, segments, bitsets, secrets, "abc")),
-            secrets);
-    exampleStateWithMaterialization =
-        new ResolverState(
-            Map.of(
-                account,
-                new AccountState(
-                    new Account(account, Region.EU),
-                    flagsWithMaterialization,
-                    segments,
-                    bitsets,
-                    secrets,
-                    "abc")),
-            secrets);
+    exampleStateBytes = buildResolverStateBytes(flags);
+    exampleStateWithMaterializationBytes = buildResolverStateBytes(flagsWithMaterialization);
   }
 
   protected ResolveTest(boolean isWasm) {
-    super(exampleState, isWasm);
+    super(exampleStateBytes);
   }
 
   @BeforeAll
@@ -198,7 +179,6 @@ abstract class ResolveTest extends TestBase {
                 resolveWithContext(
                     List.of("flags/asd"),
                     "foo",
-                    "bar",
                     Struct.newBuilder().build(),
                     true,
                     "invalid-secret"))
@@ -208,7 +188,7 @@ abstract class ResolveTest extends TestBase {
   @Test
   public void testInvalidFlag() {
     final var response =
-        resolveWithContext(List.of("flags/asd"), "foo", "bar", Struct.newBuilder().build(), false);
+        resolveWithContext(List.of("flags/asd"), "foo", Struct.newBuilder().build(), false);
     assertThat(response.getResolvedFlagsList()).isEmpty();
     assertThat(response.getResolveId()).isNotEmpty();
   }
@@ -216,11 +196,9 @@ abstract class ResolveTest extends TestBase {
   @Test
   public void testResolveFlag() {
     final var response =
-        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), true);
+        resolveWithContext(List.of(flag1), "foo", Struct.newBuilder().build(), true);
     assertThat(response.getResolveId()).isNotEmpty();
-    final Struct expectedValue =
-        // expanded with nulls to match schema
-        variantOn.getValue().toBuilder().putFields("extra", Values.ofNull()).build();
+    final Struct expectedValue = variantOn.getValue();
 
     assertEquals(variantOn.getName(), response.getResolvedFlags(0).getVariant());
     assertEquals(expectedValue, response.getResolvedFlags(0).getValue());
@@ -230,11 +208,9 @@ abstract class ResolveTest extends TestBase {
   @Test
   public void testResolveFlagWithEncryptedResolveToken() {
     final var response =
-        resolveWithContext(List.of(flag1), "foo", "bar", Struct.newBuilder().build(), false);
+        resolveWithContext(List.of(flag1), "foo", Struct.newBuilder().build(), false);
     assertThat(response.getResolveId()).isNotEmpty();
-    final Struct expectedValue =
-        // expanded with nulls to match schema
-        variantOn.getValue().toBuilder().putFields("extra", Values.ofNull()).build();
+    final Struct expectedValue = variantOn.getValue();
 
     assertEquals(variantOn.getName(), response.getResolvedFlags(0).getVariant());
     assertEquals(expectedValue, response.getResolvedFlags(0).getValue());
@@ -274,15 +250,14 @@ abstract class ResolveTest extends TestBase {
         .isThrownBy(
             () ->
                 resolveWithContext(
-                    List.of(flag1), "a".repeat(101), "bar", Struct.newBuilder().build(), false))
+                    List.of(flag1), "a".repeat(101), Struct.newBuilder().build(), false))
         .withMessageContaining("Targeting key is too larger, max 100 characters.");
   }
 
   @Test
   public void testResolveIntegerTargetingKeyTyped() {
     final var response =
-        resolveWithNumericTargetingKey(
-            List.of(flag1), 1234567890, "bar", Struct.newBuilder().build(), true);
+        resolveWithNumericTargetingKey(List.of(flag1), 1234567890, Struct.newBuilder().build());
 
     assertThat(response.getResolvedFlagsList()).hasSize(1);
     assertEquals(ResolveReason.RESOLVE_REASON_MATCH, response.getResolvedFlags(0).getReason());
@@ -291,11 +266,35 @@ abstract class ResolveTest extends TestBase {
   @Test
   public void testResolveDecimalUsername() {
     final var response =
-        resolveWithNumericTargetingKey(
-            List.of(flag1), 3.14159d, "bar", Struct.newBuilder().build(), true);
+        resolveWithNumericTargetingKey(List.of(flag1), 3.14159d, Struct.newBuilder().build());
 
     assertThat(response.getResolvedFlagsList()).hasSize(1);
     assertEquals(
         ResolveReason.RESOLVE_REASON_TARGETING_KEY_ERROR, response.getResolvedFlags(0).getReason());
+  }
+
+  private static byte[] buildResolverStateBytes(Map<String, Flag> flagsMap) {
+    final var builder = com.spotify.confidence.shaded.flags.admin.v1.ResolverState.newBuilder();
+    builder.addAllFlags(flagsMap.values());
+    builder.addAllSegmentsNoBitsets(segments.values());
+    // All-one bitset for each segment
+    segments
+        .keySet()
+        .forEach(
+            name ->
+                builder.addBitsets(
+                    com.spotify.confidence.shaded.flags.admin.v1.ResolverState.PackedBitset
+                        .newBuilder()
+                        .setSegment(name)
+                        .setFullBitset(true)
+                        .build()));
+    builder.addClients(
+        com.spotify.confidence.shaded.iam.v1.Client.newBuilder().setName(clientName).build());
+    builder.addClientCredentials(
+        com.spotify.confidence.shaded.iam.v1.ClientCredential.newBuilder()
+            .setName(credentialName)
+            .setClientSecret(TestBase.secret)
+            .build());
+    return builder.build().toByteArray();
   }
 }

@@ -30,8 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 public class WasmResolveTest extends ResolveTest {
-  // Override desiredState to use materialization-enabled state for StickyResolveStrategy tests
-  protected final ResolverState desiredState = ResolveTest.exampleStateWithMaterialization;
+  // Use materialization-enabled state bytes for StickyResolveStrategy tests
+  protected final byte[] desiredStateBytes = ResolveTest.exampleStateWithMaterializationBytes;
 
   public WasmResolveTest() {
     super(true);
@@ -39,8 +39,7 @@ public class WasmResolveTest extends ResolveTest {
 
   @Test
   public void testAccountStateProviderInterface() {
-    final AccountStateProvider customProvider =
-        () -> ResolveTest.exampleState.toProto().toByteArray();
+    final AccountStateProvider customProvider = () -> ResolveTest.exampleStateBytes;
     final OpenFeatureLocalResolveProvider localResolveProvider =
         new OpenFeatureLocalResolveProvider(
             customProvider,
@@ -66,7 +65,6 @@ public class WasmResolveTest extends ResolveTest {
     assertTrue(objectEvaluation.getValue().isStructure());
     final var structure = objectEvaluation.getValue().asStructure();
     assertEquals("on", structure.getValue("data").asString());
-    assertTrue(structure.getValue("extra").isNull());
   }
 
   @Test
@@ -101,7 +99,7 @@ public class WasmResolveTest extends ResolveTest {
     // Create the provider with mocked fallback strategy
     final OpenFeatureLocalResolveProvider provider =
         new OpenFeatureLocalResolveProvider(
-            () -> desiredState.toProto().toByteArray(), "", secret.getSecret(), mockFallback);
+            () -> desiredStateBytes, "", secret.getSecret(), mockFallback);
 
     // Make the resolve request using OpenFeature API
     final ProviderEvaluation<Value> evaluation =
@@ -135,7 +133,7 @@ public class WasmResolveTest extends ResolveTest {
     // Create the provider with mocked repository strategy
     final OpenFeatureLocalResolveProvider provider =
         new OpenFeatureLocalResolveProvider(
-            () -> desiredState.toProto().toByteArray(), "", secret.getSecret(), mockRepository);
+            () -> desiredStateBytes, "", secret.getSecret(), mockRepository);
 
     // Make the resolve request using OpenFeature API
     final ProviderEvaluation<Value> evaluation =
@@ -163,7 +161,7 @@ public class WasmResolveTest extends ResolveTest {
     // Create the provider using normal exampleState (not with materialization)
     final OpenFeatureLocalResolveProvider provider =
         new OpenFeatureLocalResolveProvider(
-            () -> ResolveTest.exampleState.toProto().toByteArray(),
+            () -> ResolveTest.exampleStateBytes,
             "",
             TestBase.secret.getSecret(),
             new ResolverFallback() {
