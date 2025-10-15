@@ -1,5 +1,6 @@
 package com.spotify.confidence;
 
+import com.dylibso.chicory.wasm.ChicoryException;
 import com.spotify.confidence.flags.resolver.v1.MaterializationMap;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyRequest;
 import com.spotify.confidence.flags.resolver.v1.ResolveWithStickyResponse;
@@ -17,6 +18,7 @@ class SwapWasmResolverApi implements ResolverApi {
   private final AtomicReference<WasmResolveApi> wasmResolverApiRef = new AtomicReference<>();
   private final StickyResolveStrategy stickyResolveStrategy;
   private final WasmFlagLogger flagLogger;
+  private final String accountId;
 
   public SwapWasmResolverApi(
       WasmFlagLogger flagLogger,
@@ -25,6 +27,7 @@ class SwapWasmResolverApi implements ResolverApi {
       StickyResolveStrategy stickyResolveStrategy) {
     this.stickyResolveStrategy = stickyResolveStrategy;
     this.flagLogger = flagLogger;
+    this.accountId = accountId;
 
     // Create initial instance
     final WasmResolveApi initialInstance = new WasmResolveApi(flagLogger);
@@ -36,7 +39,9 @@ class SwapWasmResolverApi implements ResolverApi {
   public void updateStateAndFlushLogs(byte[] state, String accountId) {
     // Create new instance with updated state
     final WasmResolveApi newInstance = new WasmResolveApi(flagLogger);
-    newInstance.setResolverState(state, accountId);
+    if (state != null) {
+      newInstance.setResolverState(state, accountId);
+    }
 
     // Get current instance before switching
     final WasmResolveApi oldInstance = wasmResolverApiRef.getAndSet(newInstance);
@@ -191,6 +196,9 @@ class SwapWasmResolverApi implements ResolverApi {
       return instance.resolve(request);
     } catch (IsClosedException e) {
       return resolve(request);
+    } catch (ChicoryException ce) {
+      updateStateAndFlushLogs(null, accountId);
+      throw ce;
     }
   }
 }
