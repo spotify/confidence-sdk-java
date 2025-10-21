@@ -6,7 +6,6 @@
     <module>sdk-java</module>
     <module>confidence-proto</module>
     <module>openfeature-provider</module>
-    <module>openfeature-provider-local</module>
     <module>openfeature-provider-shared</module>
   </modules>
 
