@@ -429,6 +429,46 @@ final class ConfidenceIntegrationTest {
   }
 
   @Test
+  public void resolveIntegerFromJsonBlob() {
+    mockResolve(
+        (request, streamObserver) -> {
+          final ResolveFlagsResponse response =
+              ResolveFlagsResponse.newBuilder()
+                  .addResolvedFlags(
+                      ResolvedFlag.newBuilder()
+                          .setFlag("flags/test-flag")
+                          .setVariant("flags/test-flag/variants/variant-1")
+                          .setValue(Structs.of("myinteger", Values.of(400)))
+                          .setFlagSchema(
+                              FlagSchema.StructFlagSchema.newBuilder()
+                                  .putSchema(
+                                      "myinteger",
+                                      FlagSchema.newBuilder()
+                                          .setIntSchema(
+                                              FlagSchema.IntFlagSchema.getDefaultInstance())
+                                          .build())
+                                  .build())
+                          .setReason(
+                              com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason
+                                  .RESOLVE_REASON_MATCH)
+                          .build())
+                  .setResolveToken(com.google.protobuf.ByteString.copyFromUtf8("token1"))
+                  .build();
+          streamObserver.onNext(response);
+          streamObserver.onCompleted();
+        });
+
+    final FlagEvaluation<Integer> evaluation =
+        confidence.withContext(SAMPLE_CONTEXT).getEvaluation("test-flag.myinteger", 0);
+
+    assertThat(evaluation.getValue()).isEqualTo(400);
+    assertThat(evaluation.getVariant()).isEqualTo("flags/test-flag/variants/variant-1");
+    assertThat(evaluation.getReason()).isEqualTo("RESOLVE_REASON_MATCH");
+    assertThat(evaluation.getErrorType()).isEmpty();
+    assertThat(evaluation.getErrorMessage()).isEmpty();
+  }
+
+  @Test
   public void castingWithWrongType() {
     mockSampleResponse();
 
