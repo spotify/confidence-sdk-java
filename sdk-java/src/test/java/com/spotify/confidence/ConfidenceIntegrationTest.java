@@ -438,7 +438,7 @@ final class ConfidenceIntegrationTest {
                       ResolvedFlag.newBuilder()
                           .setFlag("flags/test-flag")
                           .setVariant("flags/test-flag/variants/variant-1")
-                          .setValue(Structs.of("myinteger", Values.of(400)))
+                          .setValue(Structs.of("myinteger", Values.of(400.0)))
                           .setFlagSchema(
                               FlagSchema.StructFlagSchema.newBuilder()
                                   .putSchema(
