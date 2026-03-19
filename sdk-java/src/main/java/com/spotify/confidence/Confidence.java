@@ -128,8 +128,11 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     try {
       return getEvaluationFuture(key, defaultValue).get();
     } catch (Exception e) {
-      return new FlagEvaluation<>(
-          defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
+      final FlagEvaluation<T> evaluation =
+          new FlagEvaluation<>(
+              defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
+      client().trackEvaluation(evaluation.getReason(), evaluation.getErrorType().orElse(null));
+      return evaluation;
     }
   }
 
@@ -196,10 +199,27 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                   }
                 }
               })
-          .exceptionally(handleFlagEvaluationError(defaultValue));
+          .thenApply(
+              evaluation -> {
+                client()
+                    .trackEvaluation(
+                        evaluation.getReason(), evaluation.getErrorType().orElse(null));
+                return evaluation;
+              })
+          .exceptionally(
+              e -> {
+                final FlagEvaluation<T> evaluation =
+                    handleFlagEvaluationError(defaultValue).apply(e);
+                client()
+                    .trackEvaluation(
+                        evaluation.getReason(), evaluation.getErrorType().orElse(null));
+                return evaluation;
+              });
 
     } catch (Exception e) {
-      return CompletableFuture.completedFuture(handleFlagEvaluationError(defaultValue).apply(e));
+      final FlagEvaluation<T> evaluation = handleFlagEvaluationError(defaultValue).apply(e);
+      client().trackEvaluation(evaluation.getReason(), evaluation.getErrorType().orElse(null));
+      return CompletableFuture.completedFuture(evaluation);
     }
   }
 
@@ -240,7 +260,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     closer.register(eventSenderEngine);
     closer.register(flagResolverClient);
     return new RootInstance(
-        new ClientDelegate(closer, flagResolverClient, eventSenderEngine, clientSecret));
+        new ClientDelegate(closer, flagResolverClient, eventSenderEngine, clientSecret, null));
   }
 
   public static Confidence.Builder builder(String clientSecret) {
@@ -252,16 +272,19 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     private final FlagResolverClient flagResolverClient;
     private final EventSenderEngine eventSenderEngine;
     private String clientSecret;
+    @Nullable private final Telemetry telemetry;
 
     ClientDelegate(
         Closeable closeable,
         FlagResolverClient flagResolverClient,
         EventSenderEngine eventSenderEngine,
-        String clientSecret) {
+        String clientSecret,
+        @Nullable Telemetry telemetry) {
       this.closeable = closeable;
       this.flagResolverClient = flagResolverClient;
       this.eventSenderEngine = eventSenderEngine;
       this.clientSecret = clientSecret;
+      this.telemetry = telemetry;
     }
 
     @Override
@@ -279,6 +302,14 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     public CompletableFuture<ResolveFlagsResponse> resolveFlags(
         String flag, ConfidenceValue.Struct context) {
       return flagResolverClient.resolveFlags(flag, context);
+    }
+
+    void trackEvaluation(String resolveReason, @Nullable ErrorType errorType) {
+      if (telemetry != null) {
+        telemetry.appendEvaluation(
+            Telemetry.mapReason(resolveReason, errorType),
+            Telemetry.mapErrorCode(resolveReason, errorType));
+      }
     }
 
     @Override
@@ -417,7 +448,8 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       closer.register(flagResolverClient);
       closer.register(eventSenderEngine);
       return new RootInstance(
-          new ClientDelegate(closer, flagResolverClient, eventSenderEngine, clientSecret));
+          new ClientDelegate(
+              closer, flagResolverClient, eventSenderEngine, clientSecret, telemetry));
     }
 
     private void registerChannelForShutdown(ManagedChannel channel) {

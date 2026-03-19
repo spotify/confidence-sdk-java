@@ -525,10 +525,21 @@ final class FeatureProviderTest {
     assertThat(libraryTracesList).hasSize(1);
     final LibraryTraces traces = libraryTracesList.get(0);
     assertThat(traces.getLibrary()).isEqualTo(LibraryTraces.Library.LIBRARY_OPEN_FEATURE);
-    assertThat(traces.getTracesList()).hasSize(1);
-    final LibraryTraces.Trace trace = traces.getTraces(0);
-    assertThat(trace.getId()).isEqualTo(LibraryTraces.TraceId.TRACE_ID_RESOLVE_LATENCY);
-    assertThat(trace.getMillisecondDuration()).isNotNegative();
+    assertThat(traces.getTracesList()).hasSize(2);
+    final LibraryTraces.Trace latencyTrace = traces.getTraces(0);
+    assertThat(latencyTrace.getId()).isEqualTo(LibraryTraces.TraceId.TRACE_ID_RESOLVE_LATENCY);
+    assertThat(latencyTrace.getRequestTrace().getMillisecondDuration()).isNotNegative();
+    assertThat(latencyTrace.getRequestTrace().getStatus())
+        .isEqualTo(LibraryTraces.Trace.RequestTrace.Status.STATUS_SUCCESS);
+    final LibraryTraces.Trace evaluationTrace = traces.getTraces(1);
+    assertThat(evaluationTrace.getId()).isEqualTo(LibraryTraces.TraceId.TRACE_ID_FLAG_EVALUATION);
+    assertThat(evaluationTrace.getEvaluationTrace().getReason())
+        .isEqualTo(
+            LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_TARGETING_MATCH);
+    assertThat(evaluationTrace.getEvaluationTrace().getErrorCode())
+        .isEqualTo(
+            LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
+                .EVALUATION_ERROR_CODE_UNSPECIFIED);
 
     client.getIntegerDetails("flag.prop-Y", 1000, SAMPLE_CONTEXT);
   }
