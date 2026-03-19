@@ -192,6 +192,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
       }
 
       final ResolvedFlag resolvedFlag = resolveFlagResponse.getResolvedFlags(0);
+      final String reason = resolvedFlag.getReason().toString();
 
       if (resolvedFlag.getVariant().isEmpty()) {
         log.debug(
@@ -199,6 +200,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
                 "The server returned no assignment for the flag '%s'. Typically, this happens "
                     + "if no configured rules matches the given evaluation context.",
                 flagPath.getFlag()));
+        confidence.client().trackEvaluation(reason, null);
         return ProviderEvaluation.<Value>builder()
             .value(defaultValue)
             .reason(
@@ -216,10 +218,10 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
           value = defaultValue;
         }
 
-        // regular resolve was successful
+        confidence.client().trackEvaluation(reason, null);
         return ProviderEvaluation.<Value>builder()
             .value(value)
-            .reason(resolvedFlag.getReason().toString())
+            .reason(reason)
             .variant(resolvedFlag.getVariant())
             .build();
       }
