@@ -257,11 +257,20 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       EventSenderEngine eventSenderEngine,
       FlagResolverClient flagResolverClient,
       String clientSecret) {
+    return create(eventSenderEngine, flagResolverClient, clientSecret, null);
+  }
+
+  @VisibleForTesting
+  static Confidence create(
+      EventSenderEngine eventSenderEngine,
+      FlagResolverClient flagResolverClient,
+      String clientSecret,
+      @Nullable Telemetry telemetry) {
     final Closer closer = Closer.create();
     closer.register(eventSenderEngine);
     closer.register(flagResolverClient);
     return new RootInstance(
-        new ClientDelegate(closer, flagResolverClient, eventSenderEngine, clientSecret, null));
+        new ClientDelegate(closer, flagResolverClient, eventSenderEngine, clientSecret, telemetry));
   }
 
   public static Confidence.Builder builder(String clientSecret) {

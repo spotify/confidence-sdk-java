@@ -79,7 +79,7 @@ final class ConfidenceIntegrationTest {
     final FlagResolverClientImpl flagResolver =
         new FlagResolverClientImpl(
             new GrpcFlagResolver("fake-secret", channel, telemetryInterceptor, 1_000), telemetry);
-    confidence = Confidence.create(fakeEventSender, flagResolver, "");
+    confidence = Confidence.create(fakeEventSender, flagResolver, "", telemetry);
   }
 
   @AfterAll
