@@ -129,8 +129,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       return getEvaluationFuture(key, defaultValue).get();
     } catch (Exception e) {
       final FlagEvaluation<T> evaluation =
-          new FlagEvaluation<>(
-              defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
+          new FlagEvaluation<>(defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
       client().trackEvaluation(evaluation.getReason(), evaluation.getErrorType().orElse(null));
       return evaluation;
     }
@@ -169,8 +168,9 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                 if (resolvedFlag.getVariant().isEmpty()) {
                   final String errorMessage =
                       String.format(
-                          "The server returned no assignment for the flag '%s'. Typically, this happens "
-                              + "if no configured rules matches the given evaluation context.",
+                          "The server returned no assignment for the flag '%s'. Typically, this"
+                              + " happens if no configured rules matches the given evaluation"
+                              + " context.",
                           flagPath.getFlag());
                   log.debug(errorMessage);
                   return new FlagEvaluation<>(
@@ -238,7 +238,8 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
           Base64.getEncoder().encodeToString(jsonPrinter.print(resolveTesterLogging).getBytes());
       final String logMessage =
           String.format(
-              "Check your flag evaluation for '%s' by copy pasting the payload to the Resolve tester '%s'",
+              "Check your flag evaluation for '%s' by copy pasting the payload to the Resolve"
+                  + " tester '%s'",
               flag, base64);
       log.debug(logMessage);
     } catch (InvalidProtocolBufferException e) {
