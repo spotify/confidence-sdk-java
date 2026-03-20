@@ -82,6 +82,12 @@ public class Telemetry {
         case INVALID_CONTEXT:
           return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
               .EVALUATION_ERROR_CODE_INVALID_CONTEXT;
+        case PARSE_ERROR:
+          return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
+              .EVALUATION_ERROR_CODE_PARSE_ERROR;
+        case PROVIDER_NOT_READY:
+          return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
+              .EVALUATION_ERROR_CODE_PROVIDER_NOT_READY;
         default:
           return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
               .EVALUATION_ERROR_CODE_GENERAL;
