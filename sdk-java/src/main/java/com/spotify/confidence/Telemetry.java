@@ -59,6 +59,8 @@ public class Telemetry {
         return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_DEFAULT;
       case "RESOLVE_REASON_FLAG_ARCHIVED":
         return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_DISABLED;
+      case "RESOLVE_REASON_STALE":
+        return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_STALE;
       case "RESOLVE_REASON_TARGETING_KEY_ERROR":
       case "RESOLVE_REASON_ERROR":
       case "RESOLVE_REASON_UNRECOGNIZED_TARGETING_RULE":
@@ -98,10 +100,14 @@ public class Telemetry {
         return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
             .EVALUATION_ERROR_CODE_TARGETING_KEY_MISSING;
       case "RESOLVE_REASON_ERROR":
-      case "RESOLVE_REASON_UNRECOGNIZED_TARGETING_RULE":
-      case "RESOLVE_REASON_MATERIALIZATION_NOT_SUPPORTED":
         return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
             .EVALUATION_ERROR_CODE_GENERAL;
+      case "RESOLVE_REASON_UNRECOGNIZED_TARGETING_RULE":
+        return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
+            .EVALUATION_ERROR_CODE_UNRECOGNIZED_TARGETING_RULE;
+      case "RESOLVE_REASON_MATERIALIZATION_NOT_SUPPORTED":
+        return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
+            .EVALUATION_ERROR_CODE_MATERIALIZATION_NOT_SUPPORTED;
       default:
         return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
             .EVALUATION_ERROR_CODE_UNSPECIFIED;
