@@ -200,7 +200,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
                 "The server returned no assignment for the flag '%s'. Typically, this happens "
                     + "if no configured rules matches the given evaluation context.",
                 flagPath.getFlag()));
-        confidence.client().trackEvaluation(reason, null);
+        confidence.client().trackEvaluation(resolvedFlag.getReason(), null);
         return ProviderEvaluation.<Value>builder()
             .value(defaultValue)
             .reason(
@@ -218,7 +218,7 @@ public class ConfidenceFeatureProvider implements FeatureProvider {
           value = defaultValue;
         }
 
-        confidence.client().trackEvaluation(reason, null);
+        confidence.client().trackEvaluation(resolvedFlag.getReason(), null);
         return ProviderEvaluation.<Value>builder()
             .value(value)
             .reason(reason)

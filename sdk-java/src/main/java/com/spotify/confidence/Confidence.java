@@ -16,6 +16,7 @@ import com.spotify.confidence.Exceptions.IllegalValueType;
 import com.spotify.confidence.Exceptions.IncompatibleValueType;
 import com.spotify.confidence.Exceptions.ValueNotFound;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolveFlagsResponse;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.confidence.shaded.flags.resolver.v1.ResolvedFlag;
 import com.spotify.internal.v1.ResolveTesterLogging;
 import io.grpc.ManagedChannel;
@@ -130,7 +131,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     } catch (Exception e) {
       final FlagEvaluation<T> evaluation =
           new FlagEvaluation<>(defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
-      client().trackEvaluation(evaluation.getReason(), evaluation.getErrorType().orElse(null));
+      client().trackEvaluation(null, evaluation.getErrorType().orElse(null));
       return evaluation;
     }
   }
@@ -151,8 +152,11 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                   final String errorMessage =
                       String.format("No active flag '%s' was found", flagPath.getFlag());
                   log.warn(errorMessage);
-                  return new FlagEvaluation<>(
-                      defaultValue, "", "ERROR", ErrorType.FLAG_NOT_FOUND, errorMessage);
+                  final FlagEvaluation<T> evaluation =
+                      new FlagEvaluation<>(
+                          defaultValue, "", "ERROR", ErrorType.FLAG_NOT_FOUND, errorMessage);
+                  client().trackEvaluation(null, ErrorType.FLAG_NOT_FOUND);
+                  return evaluation;
                 }
                 final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
                 logResolveTesterHint(resolvedFlag);
@@ -162,8 +166,11 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                           "Unexpected flag '%s' from remote",
                           resolvedFlag.getFlag().replaceFirst("^flags/", ""));
                   log.warn(errorMessage);
-                  return new FlagEvaluation<>(
-                      defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
+                  final FlagEvaluation<T> evaluation =
+                      new FlagEvaluation<>(
+                          defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
+                  client().trackEvaluation(null, ErrorType.INTERNAL_ERROR);
+                  return evaluation;
                 }
                 if (resolvedFlag.getVariant().isEmpty()) {
                   final String errorMessage =
@@ -172,6 +179,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                               + "if no configured rules matches the given evaluation context.",
                           flagPath.getFlag());
                   log.debug(errorMessage);
+                  client().trackEvaluation(resolvedFlag.getReason(), null);
                   return new FlagEvaluation<>(
                       defaultValue, "", resolvedFlag.getReason().toString());
                 } else {
@@ -184,40 +192,35 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                                 resolvedFlag.getValue(), resolvedFlag.getFlagSchema()));
 
                     // regular resolve was successful
+                    client().trackEvaluation(resolvedFlag.getReason(), null);
                     return new FlagEvaluation<>(
                         getTyped(confidenceValue, defaultValue),
                         resolvedFlag.getVariant(),
                         resolvedFlag.getReason().toString());
                   } catch (ValueNotFound e) {
+                    client().trackEvaluation(resolvedFlag.getReason(), ErrorType.INVALID_VALUE_PATH);
                     return new FlagEvaluation<>(
                         defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
                   } catch (IllegalValueType | IncompatibleValueType e) {
                     log.warn(e.getMessage());
+                    client().trackEvaluation(resolvedFlag.getReason(), ErrorType.INVALID_VALUE_TYPE);
                     return new FlagEvaluation<>(
                         defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_TYPE, e.getMessage());
                   }
                 }
-              })
-          .thenApply(
-              evaluation -> {
-                client()
-                    .trackEvaluation(
-                        evaluation.getReason(), evaluation.getErrorType().orElse(null));
-                return evaluation;
               })
           .exceptionally(
               e -> {
                 final FlagEvaluation<T> evaluation =
                     handleFlagEvaluationError(defaultValue).apply(e);
                 client()
-                    .trackEvaluation(
-                        evaluation.getReason(), evaluation.getErrorType().orElse(null));
+                    .trackEvaluation(null, evaluation.getErrorType().orElse(null));
                 return evaluation;
               });
 
     } catch (Exception e) {
       final FlagEvaluation<T> evaluation = handleFlagEvaluationError(defaultValue).apply(e);
-      client().trackEvaluation(evaluation.getReason(), evaluation.getErrorType().orElse(null));
+      client().trackEvaluation(null, evaluation.getErrorType().orElse(null));
       return CompletableFuture.completedFuture(evaluation);
     }
   }
@@ -312,7 +315,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       return flagResolverClient.resolveFlags(flag, context);
     }
 
-    void trackEvaluation(String resolveReason, @Nullable ErrorType errorType) {
+    void trackEvaluation(@Nullable ResolveReason resolveReason, @Nullable ErrorType errorType) {
       if (telemetry != null) {
         telemetry.appendEvaluation(
             Telemetry.mapReason(resolveReason, errorType),

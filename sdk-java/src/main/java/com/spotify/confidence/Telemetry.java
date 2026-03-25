@@ -1,6 +1,7 @@
 package com.spotify.confidence;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.spotify.confidence.shaded.flags.resolver.v1.ResolveReason;
 import com.spotify.telemetry.v1.LibraryTraces;
 import com.spotify.telemetry.v1.Monitoring;
 import com.spotify.telemetry.v1.Platform;
@@ -46,25 +47,24 @@ public class Telemetry {
   }
 
   public static LibraryTraces.Trace.EvaluationTrace.EvaluationReason mapReason(
-      String resolveReason, @Nullable ErrorType errorType) {
+      @Nullable ResolveReason resolveReason, @Nullable ErrorType errorType) {
     if (errorType != null) {
       return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_ERROR;
     }
+    if (resolveReason == null) {
+      return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_UNSPECIFIED;
+    }
     switch (resolveReason) {
-      case "RESOLVE_REASON_MATCH":
+      case RESOLVE_REASON_MATCH:
         return LibraryTraces.Trace.EvaluationTrace.EvaluationReason
             .EVALUATION_REASON_TARGETING_MATCH;
-      case "RESOLVE_REASON_NO_SEGMENT_MATCH":
-      case "RESOLVE_REASON_NO_TREATMENT_MATCH":
+      case RESOLVE_REASON_NO_SEGMENT_MATCH:
+      case RESOLVE_REASON_NO_TREATMENT_MATCH:
         return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_DEFAULT;
-      case "RESOLVE_REASON_FLAG_ARCHIVED":
+      case RESOLVE_REASON_FLAG_ARCHIVED:
         return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_DISABLED;
-      case "RESOLVE_REASON_STALE":
-        return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_STALE;
-      case "RESOLVE_REASON_TARGETING_KEY_ERROR":
-      case "RESOLVE_REASON_ERROR":
-      case "RESOLVE_REASON_UNRECOGNIZED_TARGETING_RULE":
-      case "RESOLVE_REASON_MATERIALIZATION_NOT_SUPPORTED":
+      case RESOLVE_REASON_TARGETING_KEY_ERROR:
+      case RESOLVE_REASON_ERROR:
         return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_ERROR;
       default:
         return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_UNSPECIFIED;
@@ -72,7 +72,7 @@ public class Telemetry {
   }
 
   public static LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode mapErrorCode(
-      String resolveReason, @Nullable ErrorType errorType) {
+      @Nullable ResolveReason resolveReason, @Nullable ErrorType errorType) {
     if (errorType != null) {
       switch (errorType) {
         case FLAG_NOT_FOUND:
@@ -95,19 +95,17 @@ public class Telemetry {
               .EVALUATION_ERROR_CODE_GENERAL;
       }
     }
+    if (resolveReason == null) {
+      return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
+          .EVALUATION_ERROR_CODE_UNSPECIFIED;
+    }
     switch (resolveReason) {
-      case "RESOLVE_REASON_TARGETING_KEY_ERROR":
+      case RESOLVE_REASON_TARGETING_KEY_ERROR:
         return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
             .EVALUATION_ERROR_CODE_TARGETING_KEY_MISSING;
-      case "RESOLVE_REASON_ERROR":
+      case RESOLVE_REASON_ERROR:
         return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
             .EVALUATION_ERROR_CODE_GENERAL;
-      case "RESOLVE_REASON_UNRECOGNIZED_TARGETING_RULE":
-        return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
-            .EVALUATION_ERROR_CODE_UNRECOGNIZED_TARGETING_RULE;
-      case "RESOLVE_REASON_MATERIALIZATION_NOT_SUPPORTED":
-        return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
-            .EVALUATION_ERROR_CODE_MATERIALIZATION_NOT_SUPPORTED;
       default:
         return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
             .EVALUATION_ERROR_CODE_UNSPECIFIED;

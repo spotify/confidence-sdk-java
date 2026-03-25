@@ -5,17 +5,6 @@ option java_package = "com.spotify.telemetry.v1";
 option java_multiple_files = true;
 option java_outer_classname = "TelemetryProto";
 
-import "google/protobuf/descriptor.proto";
-
-message MetricAnnotation {
-  string name = 1;
-  string unit = 2;
-}
-
-extend google.protobuf.EnumValueOptions {
-  MetricAnnotation metric = 50641;
-}
-
 enum Platform {
   PLATFORM_UNSPECIFIED = 0;
   PLATFORM_JAVA = 1;
@@ -109,8 +98,8 @@ message LibraryTraces {
 
   enum TraceId {
     TRACE_ID_UNSPECIFIED = 0;
-    TRACE_ID_RESOLVE_LATENCY = 1 [(metric) = {name: "resolve_latency", unit: "ms"}];
-    TRACE_ID_STALE_FLAG = 2 [deprecated = true, (metric) = {name: "stale_flag"}];
-    TRACE_ID_FLAG_EVALUATION = 3 [(metric) = {name: "flag_evaluation"}];
+    TRACE_ID_RESOLVE_LATENCY = 1;
+    TRACE_ID_STALE_FLAG = 2 [deprecated = true];
+    TRACE_ID_FLAG_EVALUATION = 3;
   }
 }
