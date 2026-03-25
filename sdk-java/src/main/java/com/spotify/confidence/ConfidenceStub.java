@@ -161,7 +161,7 @@ public class ConfidenceStub extends Confidence {
   // Mock implementation of ClientDelegate
   private static class MockClientDelegate extends ClientDelegate {
     private MockClientDelegate() {
-      super(null, null, null, "");
+      super(null, null, null, "", null);
     }
 
     @Override
