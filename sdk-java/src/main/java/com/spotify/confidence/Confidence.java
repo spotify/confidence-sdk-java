@@ -131,7 +131,10 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
     } catch (Exception e) {
       final FlagEvaluation<T> evaluation =
           new FlagEvaluation<>(defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
-      client().trackEvaluation(null, evaluation.getErrorType().orElse(null));
+      client()
+          .trackEvaluation(
+              ResolveReason.RESOLVE_REASON_UNSPECIFIED,
+              evaluation.getErrorType().orElse(null));
       return evaluation;
     }
   }
@@ -155,7 +158,9 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                   final FlagEvaluation<T> evaluation =
                       new FlagEvaluation<>(
                           defaultValue, "", "ERROR", ErrorType.FLAG_NOT_FOUND, errorMessage);
-                  client().trackEvaluation(null, ErrorType.FLAG_NOT_FOUND);
+                  client()
+                    .trackEvaluation(
+                        ResolveReason.RESOLVE_REASON_UNSPECIFIED, ErrorType.FLAG_NOT_FOUND);
                   return evaluation;
                 }
                 final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
@@ -169,7 +174,9 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                   final FlagEvaluation<T> evaluation =
                       new FlagEvaluation<>(
                           defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
-                  client().trackEvaluation(null, ErrorType.INTERNAL_ERROR);
+                  client()
+                    .trackEvaluation(
+                        ResolveReason.RESOLVE_REASON_UNSPECIFIED, ErrorType.INTERNAL_ERROR);
                   return evaluation;
                 }
                 if (resolvedFlag.getVariant().isEmpty()) {
@@ -215,13 +222,19 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
               e -> {
                 final FlagEvaluation<T> evaluation =
                     handleFlagEvaluationError(defaultValue).apply(e);
-                client().trackEvaluation(null, evaluation.getErrorType().orElse(null));
+                client()
+                    .trackEvaluation(
+                        ResolveReason.RESOLVE_REASON_UNSPECIFIED,
+                        evaluation.getErrorType().orElse(null));
                 return evaluation;
               });
 
     } catch (Exception e) {
       final FlagEvaluation<T> evaluation = handleFlagEvaluationError(defaultValue).apply(e);
-      client().trackEvaluation(null, evaluation.getErrorType().orElse(null));
+      client()
+                    .trackEvaluation(
+                        ResolveReason.RESOLVE_REASON_UNSPECIFIED,
+                        evaluation.getErrorType().orElse(null));
       return CompletableFuture.completedFuture(evaluation);
     }
   }
@@ -316,7 +329,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
       return flagResolverClient.resolveFlags(flag, context);
     }
 
-    void trackEvaluation(@Nullable ResolveReason resolveReason, @Nullable ErrorType errorType) {
+    void trackEvaluation(ResolveReason resolveReason, @Nullable ErrorType errorType) {
       if (telemetry != null) {
         telemetry.appendEvaluation(
             Telemetry.mapReason(resolveReason, errorType),

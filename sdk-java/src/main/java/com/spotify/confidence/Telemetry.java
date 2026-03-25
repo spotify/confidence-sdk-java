@@ -47,12 +47,9 @@ public class Telemetry {
   }
 
   public static LibraryTraces.Trace.EvaluationTrace.EvaluationReason mapReason(
-      @Nullable ResolveReason resolveReason, @Nullable ErrorType errorType) {
+      ResolveReason resolveReason, @Nullable ErrorType errorType) {
     if (errorType != null) {
       return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_ERROR;
-    }
-    if (resolveReason == null) {
-      return LibraryTraces.Trace.EvaluationTrace.EvaluationReason.EVALUATION_REASON_UNSPECIFIED;
     }
     switch (resolveReason) {
       case RESOLVE_REASON_MATCH:
@@ -72,7 +69,7 @@ public class Telemetry {
   }
 
   public static LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode mapErrorCode(
-      @Nullable ResolveReason resolveReason, @Nullable ErrorType errorType) {
+      ResolveReason resolveReason, @Nullable ErrorType errorType) {
     if (errorType != null) {
       switch (errorType) {
         case FLAG_NOT_FOUND:
@@ -94,10 +91,6 @@ public class Telemetry {
           return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
               .EVALUATION_ERROR_CODE_GENERAL;
       }
-    }
-    if (resolveReason == null) {
-      return LibraryTraces.Trace.EvaluationTrace.EvaluationErrorCode
-          .EVALUATION_ERROR_CODE_UNSPECIFIED;
     }
     switch (resolveReason) {
       case RESOLVE_REASON_TARGETING_KEY_ERROR:
