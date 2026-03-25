@@ -198,12 +198,14 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                         resolvedFlag.getVariant(),
                         resolvedFlag.getReason().toString());
                   } catch (ValueNotFound e) {
-                    client().trackEvaluation(resolvedFlag.getReason(), ErrorType.INVALID_VALUE_PATH);
+                    client()
+                        .trackEvaluation(resolvedFlag.getReason(), ErrorType.INVALID_VALUE_PATH);
                     return new FlagEvaluation<>(
                         defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_PATH, e.getMessage());
                   } catch (IllegalValueType | IncompatibleValueType e) {
                     log.warn(e.getMessage());
-                    client().trackEvaluation(resolvedFlag.getReason(), ErrorType.INVALID_VALUE_TYPE);
+                    client()
+                        .trackEvaluation(resolvedFlag.getReason(), ErrorType.INVALID_VALUE_TYPE);
                     return new FlagEvaluation<>(
                         defaultValue, "", "ERROR", ErrorType.INVALID_VALUE_TYPE, e.getMessage());
                   }
@@ -213,8 +215,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
               e -> {
                 final FlagEvaluation<T> evaluation =
                     handleFlagEvaluationError(defaultValue).apply(e);
-                client()
-                    .trackEvaluation(null, evaluation.getErrorType().orElse(null));
+                client().trackEvaluation(null, evaluation.getErrorType().orElse(null));
                 return evaluation;
               });
 
