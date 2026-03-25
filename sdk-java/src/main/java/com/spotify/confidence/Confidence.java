@@ -133,8 +133,7 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
           new FlagEvaluation<>(defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, e.getMessage());
       client()
           .trackEvaluation(
-              ResolveReason.RESOLVE_REASON_ERROR,
-              evaluation.getErrorType().orElse(null));
+              ResolveReason.RESOLVE_REASON_ERROR, evaluation.getErrorType().orElse(null));
       return evaluation;
     }
   }
@@ -159,8 +158,8 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                       new FlagEvaluation<>(
                           defaultValue, "", "ERROR", ErrorType.FLAG_NOT_FOUND, errorMessage);
                   client()
-                    .trackEvaluation(
-                        ResolveReason.RESOLVE_REASON_ERROR, ErrorType.FLAG_NOT_FOUND);
+                      .trackEvaluation(
+                          ResolveReason.RESOLVE_REASON_ERROR, ErrorType.FLAG_NOT_FOUND);
                   return evaluation;
                 }
                 final ResolvedFlag resolvedFlag = response.getResolvedFlags(0);
@@ -175,8 +174,8 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                       new FlagEvaluation<>(
                           defaultValue, "", "ERROR", ErrorType.INTERNAL_ERROR, errorMessage);
                   client()
-                    .trackEvaluation(
-                        ResolveReason.RESOLVE_REASON_ERROR, ErrorType.INTERNAL_ERROR);
+                      .trackEvaluation(
+                          ResolveReason.RESOLVE_REASON_ERROR, ErrorType.INTERNAL_ERROR);
                   return evaluation;
                 }
                 if (resolvedFlag.getVariant().isEmpty()) {
@@ -224,17 +223,15 @@ public abstract class Confidence implements FlagEvaluator, EventSender, Closeabl
                     handleFlagEvaluationError(defaultValue).apply(e);
                 client()
                     .trackEvaluation(
-                        ResolveReason.RESOLVE_REASON_ERROR,
-                        evaluation.getErrorType().orElse(null));
+                        ResolveReason.RESOLVE_REASON_ERROR, evaluation.getErrorType().orElse(null));
                 return evaluation;
               });
 
     } catch (Exception e) {
       final FlagEvaluation<T> evaluation = handleFlagEvaluationError(defaultValue).apply(e);
       client()
-                    .trackEvaluation(
-                        ResolveReason.RESOLVE_REASON_ERROR,
-                        evaluation.getErrorType().orElse(null));
+          .trackEvaluation(
+              ResolveReason.RESOLVE_REASON_ERROR, evaluation.getErrorType().orElse(null));
       return CompletableFuture.completedFuture(evaluation);
     }
   }
