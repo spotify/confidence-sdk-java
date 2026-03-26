@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.7.0](https://github.com/spotify/confidence-sdk-java/compare/v0.6.4...v0.7.0) (2026-03-25)
+
+
+### Features
+
+* Local resolve uses new state url endpoint ([#306](https://github.com/spotify/confidence-sdk-java/issues/306)) ([8807e2a](https://github.com/spotify/confidence-sdk-java/commit/8807e2ae5b0bf3df72207d60b3443cbb3ffa5b75))
+* Remove Java-based Local OpenFeature Provider ([#314](https://github.com/spotify/confidence-sdk-java/issues/314)) ([938c40a](https://github.com/spotify/confidence-sdk-java/commit/938c40ad2c24295b893e4aaf996b752a2fcf1246))
+* split EvaluationTrace into reason + error_code ([#319](https://github.com/spotify/confidence-sdk-java/issues/319)) ([4bcdfc3](https://github.com/spotify/confidence-sdk-java/commit/4bcdfc394208a0983bff92002d75e34cce9c145f))
+
+
+### Bug Fixes
+
+* replace insteance on panic, add tests ([#315](https://github.com/spotify/confidence-sdk-java/issues/315)) ([bc67f93](https://github.com/spotify/confidence-sdk-java/commit/bc67f93c6a3acac03b4e625e13780ce5f771ce0c))
+
+
+### Documentation
+
+* add getting involved section to contribution guidelines ([#317](https://github.com/spotify/confidence-sdk-java/issues/317)) ([cf7b581](https://github.com/spotify/confidence-sdk-java/commit/cf7b5817c3222e976a36d8bc2ee8bf3dc646d1d1))
+
 ## [0.6.4](https://github.com/spotify/confidence-sdk-java/compare/v0.6.3...v0.6.4) (2025-10-13)
 
 
