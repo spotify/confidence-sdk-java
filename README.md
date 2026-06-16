@@ -2,6 +2,8 @@
 
 Java library for [Confidence](https://confidence.spotify.com/). This library is designed to work in a java backend environment. For Android, please visit [Confidence-SDK-Android](https://github.com/spotify/confidence-sdk-android).
 
+> **:bulb: Looking for better performance?** Check out the [Confidence Local Resolver Provider for Java](https://github.com/spotify/confidence-resolver/tree/main/openfeature-provider/java), which evaluates flags locally via WebAssembly for increased resilience and lower latency.
+
 We suggest you to use the OpenFeature SDK to consume the Confidence feature flags.
 
 ## Install
@@ -28,6 +30,9 @@ _Note: we strongly recommend to adopt the latest non-SNAPSHOT release [available
 OpenFeature providers connect the OpenFeature SDK to your flag system. Use the Confidence OpenFeature provider to evaluate flags with the Confidence platform.
 
 ### Quickstart: OpenFeature provider (Java)
+
+> [!TIP]
+> For better resilience and lower latency, see the [Confidence Local Resolver Provider](https://github.com/spotify/confidence-resolver/tree/main/openfeature-provider/java) which resolves flags locally without per-evaluation network calls.
 
 The Provider is instantiated using a client secret configured in the Confidence UI or via the management console.
 
