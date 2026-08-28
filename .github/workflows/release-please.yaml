@@ -15,9 +15,9 @@ jobs:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
-          command: manifest
-          release-type: maven
-          default-branch: main
+          target-branch: main
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       release_tag_name: ${{ steps.release.outputs.tag_name }}
