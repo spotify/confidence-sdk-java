@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.1](https://github.com/spotify/confidence-sdk-java/compare/v0.7.0...v0.7.1) (2026-10-01)
+
+
+### 🧹 Chore
+
+* **main:** release 0.7.1-SNAPSHOT ([#320](https://github.com/spotify/confidence-sdk-java/issues/320)) ([ba00de2](https://github.com/spotify/confidence-sdk-java/commit/ba00de2bd7010d86d3c502c22f2e0d6345868710))
+
+
+### 📚 Documentation
+
+* add reference to local resolver provider ([#324](https://github.com/spotify/confidence-sdk-java/issues/324)) ([8acb795](https://github.com/spotify/confidence-sdk-java/commit/8acb7951c4f8692b33cffc1dd13986ca42e3d0e6))
+
 ## [0.7.0](https://github.com/spotify/confidence-sdk-java/compare/v0.6.4...v0.7.0) (2026-03-25)
 
 
