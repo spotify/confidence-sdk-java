@@ -17,7 +17,7 @@ Add the OpenFeature provider dependency if you want to use Confidence via the Op
 <dependency>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>openfeature-provider</artifactId>
-    <version>0.6.1-SNAPSHOT</version>
+    <version>0.7.1</version>
 </dependency>
 ```
 <!---x-release-please-end-->
@@ -88,7 +88,7 @@ Use the Confidence SDK directly if you are not using OpenFeature.
 <dependency>
     <groupId>com.spotify.confidence</groupId>
     <artifactId>sdk-java</artifactId>
-    <version>0.2.8</version>
+    <version>0.7.1</version>
 </dependency>
 ```
 <!---x-release-please-end-->
