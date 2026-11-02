@@ -106,6 +106,16 @@ final String propertyValue =
         .getValue("flag-name.property-name", "defaultValue");
 ```
 
+### Deprecated: list/array flag values
+
+Using lists (arrays) as **flag schema/value types** is deprecated in this SDK. Flags with
+list-typed properties continue to be parsed and resolved exactly as before, including
+`ConfidenceValue.List` defaults in `getValue(...)` and nested lists mapped to an OpenFeature
+`Value` by the provider; no removal date is set. Prefer scalar or struct properties for new flags.
+
+This deprecation applies only to flag values. `ConfidenceValue.List` (and `ConfidenceValue.of(List)`,
+`ofStrings(...)`, etc.) remain fully supported for evaluation context and event data.
+
 ### Tracking events
 ```java
 confidence.track("my-event", ConfidenceValue.of(Map.of("field", ConfidenceValue.of("data"))));

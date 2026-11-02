@@ -67,6 +67,8 @@ class ConfidenceTypeMapper {
         }
         return from(value.getStructValue(), schema.getStructSchema());
       case LIST_VALUE:
+        // List/array flag schema/values are deprecated (see README); still mapped for
+        // compatibility.
         if (schema.getSchemaTypeCase() != SchemaTypeCase.LIST_SCHEMA) {
           throw new ParseError(
               String.format(
