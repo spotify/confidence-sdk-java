@@ -365,6 +365,14 @@ public abstract class ConfidenceValue {
     }
   }
 
+  /**
+   * A list of {@link ConfidenceValue}s.
+   *
+   * <p>Lists remain fully supported for evaluation context and event data. Using lists as
+   * <em>flag</em> schema/value types (e.g. as a default value when resolving a list-typed flag
+   * property) is deprecated; such flags still resolve as before, but scalar or struct properties
+   * are preferred for new flags.
+   */
   public static class List extends ConfidenceValue {
     private final ImmutableList<ConfidenceValue> values;
 
